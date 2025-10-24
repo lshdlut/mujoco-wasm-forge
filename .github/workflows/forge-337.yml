@@ -63,6 +63,26 @@ jobs:
             -DCMAKE_SKIP_INSTALL_RULES=ON \
             -DLIBM_LIBRARY:STRING=-lm
 
+      - name: Patch qhull CMake for static linking (Emscripten)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          QH=build/337/_deps/qhull-src/CMakeLists.txt
+          if [ -f "$QH" ]; then
+            sed -i 's/\bSHARED\b/STATIC/g' "$QH" || true
+            grep -q 'BUILD_SHARED_LIBS OFF' "$QH" || sed -i '1i set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)' "$QH"
+          fi
+
+      - name: Reconfigure (WASM) after qhull patch
+        shell: bash
+        run: |
+          emcmake cmake -S wrappers/official_app_337 -B build/337 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUJOCO_ENABLE_QHULL=OFF \
+            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
+            -DCMAKE_SKIP_INSTALL_RULES=ON \
+            -DLIBM_LIBRARY:STRING=-lm
+
       - name: Build (WASM)
         shell: bash
         run: cmake --build build/337 -j 2
