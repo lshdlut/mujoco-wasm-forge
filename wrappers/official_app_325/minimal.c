@@ -1,6 +1,13 @@
 #include <mujoco/mujoco.h>
-#include <emscripten/emscripten.h>
 #include <string.h>
+
+#if defined(__EMSCRIPTEN__)
+#include <emscripten/emscripten.h>
+#else
+#ifndef EMSCRIPTEN_KEEPALIVE
+#define EMSCRIPTEN_KEEPALIVE
+#endif
+#endif
 
 static mjModel* g_m = NULL;
 static mjData*  g_d = NULL;
