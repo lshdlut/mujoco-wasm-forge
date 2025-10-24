@@ -22,3 +22,7 @@ set_target_properties(mujoco_wasm325 PROPERTIES
 )
 
 target_link_libraries(mujoco_wasm325 PRIVATE mujoco)
+
+# Native comparison harness (for regression vs. official native)
+add_executable(mujoco_compare325 "native_compare.cpp")
+target_link_libraries(mujoco_compare325 PRIVATE mujoco)

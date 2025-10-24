@@ -40,3 +40,10 @@ double mjw_qpos0(void) {
   if (!g_d || !g_m || g_m->nq <= 0) return 0.0;
   return g_d->qpos[0];
 }
+
+// Return current qvel[0]
+EMSCRIPTEN_KEEPALIVE
+double mjw_qvel0(void) {
+  if (!g_d || !g_m || g_m->nv <= 0) return 0.0;
+  return g_d->qvel[0];
+}

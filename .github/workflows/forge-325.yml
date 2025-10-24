@@ -49,6 +49,17 @@ jobs:
         shell: bash
         run: cmake --build build/325 -j 2
 
+      - name: Configure (Native)
+        shell: bash
+        run: |
+          cmake -S wrappers/official_app_325 -B build/325_native \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF
+
+      - name: Build (Native)
+        shell: bash
+        run: cmake --build build/325_native -j 2
+
       - name: Collect artifacts
         shell: bash
         run: |
@@ -60,6 +71,12 @@ jobs:
       - name: Run smoke test (Node)
         shell: bash
         run: node tests/smoke-325.mjs
+
+      - name: Run regression test (WASM vs Native)
+        shell: bash
+        env:
+          MJ_NATIVE_BIN: ${{ github.workspace }}/build/325_native/mujoco_compare325
+        run: node tests/regression-325.mjs
 
 
       - name: Generate version.json
@@ -87,11 +104,44 @@ jobs:
           }
 JSON
 
+      - name: Generate SBOM (SPDX json)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          EMVER=3.1.55
+          MJVER=3.2.5
+          MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          NS="https://github.com/lshdlut/mujoco-wasm-forge/sbom/${GITHUB_RUN_ID}"
+          cat > dist/sbom.spdx.json <<SBOM
+          {
+            "spdxVersion": "SPDX-2.3",
+            "dataLicense": "CC0-1.0",
+            "SPDXID": "SPDXRef-DOCUMENT",
+            "name": "mujoco-wasm-forge-${MJVER}",
+            "documentNamespace": "${NS}",
+            "creationInfo": {"created": "${NOW}", "creators": ["Tool: forge-325 workflow"]},
+            "packages": [
+              {"name": "mujoco", "SPDXID": "SPDXRef-Pkg-MuJoCo", "versionInfo": "${MJVER}", "downloadLocation": "https://github.com/google-deepmind/mujoco", "sourceInfo": "git@${MJ_SHA}"},
+              {"name": "emscripten", "SPDXID": "SPDXRef-Pkg-Emscripten", "versionInfo": "${EMVER}", "downloadLocation": "https://github.com/emscripten-core/emsdk"}
+            ]
+          }
+SBOM
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: mujoco-3.2.5
           path: dist/
+
+      - name: Quality gates (size + init time)
+        shell: bash
+        env:
+          QUALITY_ENFORCE: '0'
+          WASM_MAX_BYTES: '16000000'
+          JS_MAX_BYTES: '2000000'
+          MAX_INIT_MS: '8000'
+        run: node tests/gates-325.mjs
 
       - name: Create Release (optional)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == 'true' }}
