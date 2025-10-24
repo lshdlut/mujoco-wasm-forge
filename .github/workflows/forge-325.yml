@@ -23,10 +23,11 @@ jobs:
           node-version: '20'
 
       - name: Setup Emscripten SDK (3.1.55)
-        uses: mymindstorm/setup-emsdk@v13
+        uses: mymindstorm/setup-emsdk@v14
         with:
           version: 3.1.55
-          actions-cache-folder: emsdk-cache
+          # Avoid cache reservation conflicts; rely on fresh install
+          cache: false
 
       - name: Prepare MuJoCo 3.2.5 sources
         shell: bash
