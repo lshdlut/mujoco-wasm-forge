@@ -52,6 +52,15 @@ jobs:
             sed -i "s/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/" "$f"
             sed -i "s/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/" "$f"
           fi
+      - name: Patch MuJoCo to skip qhull fetch (Emscripten)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dep=external/mujoco/cmake/MujocoDependencies.cmake
+          if [ -f "$dep" ]; then
+            # Comment out qhull findorfetch to avoid pulling qhull under emscripten
+            sed -i 's/^\s*findorfetch(\s*qhull/# disabled for emscripten: &/' "$dep" || true
+          fi
 
       - name: Configure (WASM)
         shell: bash
