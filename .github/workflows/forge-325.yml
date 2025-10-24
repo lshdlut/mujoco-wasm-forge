@@ -102,7 +102,7 @@ jobs:
             "size": {"wasmBytes": ${WSB}, "jsBytes": ${JSB}},
             "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
           }
-JSON
+          JSON
 
       - name: Generate SBOM (SPDX json)
         shell: bash
@@ -126,7 +126,7 @@ JSON
               {"name": "emscripten", "SPDXID": "SPDXRef-Pkg-Emscripten", "versionInfo": "${EMVER}", "downloadLocation": "https://github.com/emscripten-core/emsdk"}
             ]
           }
-SBOM
+          SBOM
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
