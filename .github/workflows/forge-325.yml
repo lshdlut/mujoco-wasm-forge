@@ -88,7 +88,7 @@ jobs:
       - name: Run regression test (WASM vs Native)
         shell: bash
         env:
-          MJ_NATIVE_BIN: ${{ github.workspace }}/build/325_native/mujoco_compare325
+          MJ_NATIVE_BIN: ${{ github.workspace }}/build/325_native/_wasm/mujoco_compare325
         run: node tests/regression-325.mjs
 
 
