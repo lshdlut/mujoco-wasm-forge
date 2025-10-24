@@ -9,6 +9,8 @@ on:
         default: 'false'
   push:
     branches: [ main, master ]
+    tags:
+      - forge-3.2.5-*
 
 jobs:
   build:
@@ -193,11 +195,11 @@ jobs:
         run: node tests/gates-325.mjs
 
       - name: Create Release (optional)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == 'true' }}
+        if: ${{ startsWith(github.ref, 'refs/tags/forge-3.2.5-') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'true') }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: forge-3.2.5-r1
-          name: Mujoco 3.2.5 WASM r1
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'forge-3.2.5-r1' }}
+          name: MuJoCo 3.2.5 WASM r1
           body_path: dist/RELEASE_NOTES.md
           draft: false
           prerelease: false

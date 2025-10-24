@@ -14,6 +14,14 @@ Status: usable. CI builds a single-module WASM + glue JS, runs Node smoke + a na
 
 Repository: https://github.com/lshdlut/mujoco-wasm-forge
 
+## Acknowledgements
+
+This work builds on prior MuJoCo → WebAssembly exploration:
+
+- stillonearth: https://github.com/stillonearth/MuJoCo-WASM
+- zalo: https://github.com/zalo/mujoco_wasm
+- hashb: https://github.com/hashb/mujoco_web
+
 ## Artifacts
 
 After a successful build (locally or in CI), you get:
@@ -89,3 +97,8 @@ Artifacts will be placed under `dist/` by the workflow; for local runs, copy fro
 
 - This repo does not ship a front-end demo; for UI demos consider the maintainer’s fork: https://github.com/lshdlut/mujoco_webfork
 - Local tools, caches, and experimental scripts are ignored via `.gitignore` by design.
+
+## Provenance
+
+Portions of this repository’s configurations, CI workflows, and documentation were authored or adapted with the assistance of generative AI, and were subsequently reviewed and validated by a human maintainer.
+
