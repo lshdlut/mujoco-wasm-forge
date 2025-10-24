@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
@@ -12,21 +12,21 @@ const jsURL = path.join(distDir, 'mujoco-3.2.5.js');
 assert.ok(fs.existsSync(jsURL), 'dist/mujoco-3.2.5.js missing');
 assert.ok(fs.existsSync(wasmURL), 'dist/mujoco-3.2.5.wasm missing');
 
-const modFactory = (await import(jsURL)).default;
+const modFactory = (await import(pathToFileURL(jsURL).href)).default;
 const Module = await modFactory({
   locateFile: (p) => (p.endsWith('.wasm') ? wasmURL : p),
 });
 
-const xml = <?xml version=\"1.0\"?>
-<mujoco model=\"pendulum\">
-  <option timestep=\"0.002\" gravity=\"0 0 -9.81\"/>
+const xml = `<?xml version="1.0"?>
+<mujoco model="pendulum">
+  <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
-    <body name=\"link\" pos=\"0 0 0.1\">
-      <joint name=\"hinge\" type=\"hinge\" axis=\"0 1 0\" damping=\"0.01\"/>
-      <geom type=\"capsule\" fromto=\"0 0 0 0 0 0.2\" size=\"0.02\" density=\"1000\"/>
+    <body name="link" pos="0 0 0.1">
+      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.01"/>
+      <geom type="capsule" fromto="0 0 0 0 0 0.2" size="0.02" density="1000"/>
     </body>
   </worldbody>
-</mujoco>;
+</mujoco>`;
 
 Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
 const init = Module.cwrap('mjw_init','number',['string']);
@@ -40,4 +40,4 @@ const before = qpos0();
 step_demo(200);
 const after = qpos0();
 if (!Number.isFinite(after)) { throw new Error('qpos0 not finite'); }
-console.log(qpos0 before=, after=);
+console.log('qpos0 before=%d, after=%d', before, after);
