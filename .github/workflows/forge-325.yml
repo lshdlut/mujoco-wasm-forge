@@ -55,7 +55,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
             -DCMAKE_SKIP_INSTALL_RULES=ON \
-            -DLIBM_LIBRARY=m
+            -DLIBM_LIBRARY:STRING=-lm
 
       - name: Build
         shell: bash
