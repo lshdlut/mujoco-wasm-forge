@@ -17,6 +17,10 @@ option(MUJOCO_BUILD_TESTS "" OFF)
 option(MUJOCO_BUILD_SAMPLES "" OFF)
 
 # Expect MuJoCo sources cloned to ../../external/mujoco
+# On Emscripten, provide a stub qhull target to prevent downstream FetchContent(qhull)
+if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  add_library(qhull INTERFACE)
+endif()
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
@@ -31,4 +35,3 @@ endif()
 # Native comparison harness (for regression vs. official native)
 add_executable(mujoco_compare337 "native_compare.cpp")
 target_link_libraries(mujoco_compare337 PRIVATE mujoco)
-

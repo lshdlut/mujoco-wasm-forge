@@ -79,6 +79,7 @@ jobs:
           emcmake cmake -S wrappers/official_app_337 -B build/337 \
             -DCMAKE_BUILD_TYPE=Release \
             -DMUJOCO_ENABLE_QHULL=OFF \
+            -DMUJOCO_BUILD_PLUGINS=OFF \
             -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
             -DCMAKE_SKIP_INSTALL_RULES=ON \
             -DLIBM_LIBRARY:STRING=-lm
