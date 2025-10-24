@@ -19,7 +19,10 @@ option(MUJOCO_BUILD_SAMPLES "" OFF)
 # Expect MuJoCo sources cloned to ../../external/mujoco
 # On Emscripten, provide a stub qhull target to prevent downstream FetchContent(qhull)
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-  add_library(qhull INTERFACE)
+  # Provide stub qhull targets so upstream scripts detect them and skip FetchContent.
+  add_library(qhull INTERFACE IMPORTED)
+  add_library(qhullstatic_r INTERFACE IMPORTED)
+  add_library(qhull_r INTERFACE IMPORTED)
 endif()
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
 
