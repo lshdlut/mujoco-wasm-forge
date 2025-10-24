@@ -8,3 +8,10 @@
 Outputs are placed under _dist/. This script expects the corresponding sources to exist locally (not vendored in this repo). See comments in the script for workarounds applied to qhull/libccd under Emscripten.
 
 Note: This script is a stopgap to unblock development and will be replaced by a standardized CMake-based build with a pinned emscripten toolchain and regression harness.
+
+Local-only scripts and tooling
+- Place any developer-specific scripts or experiments under `local_tools/` at the repo root.
+- The `local_tools/` directory is git-ignored (see .gitignore) to avoid committing machine-specific paths (e.g., Windows short path mirrors or global emsdk installs).
+- You may also create per-developer helpers under `scripts/*.local.ps1` or `scripts/private/`; these paths are ignored as well.
+
+

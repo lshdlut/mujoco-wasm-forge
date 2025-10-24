@@ -10,6 +10,8 @@ node_modules/
 build/
 emsdk-cache/
 dist/
+_tools/
+local_tools/
 
 ## Tests temp files
 tests/tmp_model.xml
@@ -18,3 +20,8 @@ tests/tmp_model.xml
 AGENTS.md
 docs/DEV_NOTES.md
 
+## Local developer-only scripts and sandbox content
+scripts/*.local.ps1
+scripts/*.local.sh
+scripts/private/
+local_tools/**
