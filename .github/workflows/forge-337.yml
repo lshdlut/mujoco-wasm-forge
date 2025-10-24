@@ -52,37 +52,17 @@ jobs:
             sed -i "s/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/" "$f"
             sed -i "s/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/" "$f"
           fi
-      - name: Patch MuJoCo to skip qhull fetch (Emscripten)
-        shell: bash
-        run: |
-          set -euxo pipefail
-          dep=external/mujoco/cmake/MujocoDependencies.cmake
-          if [ -f "$dep" ]; then
-            # Comment out qhull findorfetch to avoid pulling qhull under emscripten
-            awk 'BEGIN{skip=0} { if ($0 ~ /^[[:space:]]*findorfetch\([[:space:]]*qhull/) { print "# disabled for emscripten: "$0; next } print }' "$dep" > "$dep.tmp" && mv "$dep.tmp" "$dep"
-          fi
-          fof=external/mujoco/cmake/FindOrFetch.cmake
-          if [ -f "$fof" ]; then
-            # Inject early return in findorfetch() when the requested package is qhull
-            # Match signatures like: function(findorfetch name ...)
-            awk 'BEGIN{ins=0} { print; if (!ins && $0 ~ /^[[:space:]]*function[[:space:]]*\(findorfetch\b/) {
-              print "  if(\"${ARGV0}\" STREQUAL \"qhull\")";
-              print "    message(STATUS \"Skipping qhull under emscripten\")";
-              print "    return()";
-              print "  endif()";
-              ins=1 } }' "$fof" > "$fof.tmp" && mv "$fof.tmp" "$fof"
-          fi
-
       - name: Configure (WASM)
         shell: bash
         run: |
+          # Stage-1: initial configure to fetch deps (qhull, ccd, etc.). Allow failure.
           emcmake cmake -S wrappers/official_app_337 -B build/337 \
             -DCMAKE_BUILD_TYPE=Release \
             -DMUJOCO_ENABLE_QHULL=OFF \
             -DMUJOCO_BUILD_PLUGINS=OFF \
             -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
             -DCMAKE_SKIP_INSTALL_RULES=ON \
-            -DLIBM_LIBRARY:STRING=-lm
+            -DLIBM_LIBRARY:STRING=-lm || true
 
       - name: Patch qhull CMake for static linking (Emscripten)
         shell: bash
@@ -90,8 +70,12 @@ jobs:
           set -euxo pipefail
           QH=build/337/_deps/qhull-src/CMakeLists.txt
           if [ -f "$QH" ]; then
+            # Force static libraries and map shared variables to static targets
             sed -i 's/\bSHARED\b/STATIC/g' "$QH" || true
-            grep -q 'BUILD_SHARED_LIBS OFF' "$QH" || sed -i '1i set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)' "$QH"
+            awk 'BEGIN{print "set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)"} {print}' "$QH" > "$QH.tmp" && mv "$QH.tmp" "$QH"
+            sed -i 's/set(\s*qhull_SHAREDR\s*qhull_r\s*)/set(qhull_SHAREDR qhullstatic_r)/' "$QH" || true
+            sed -i 's/set(\s*qhull_SHARED\s*libqhull\s*)/set(qhull_SHARED qhullstatic)/' "$QH" || true
+            sed -i 's/set(\s*qhull_SHAREDP\s*qhull_p\s*)/set(qhull_SHAREDP qhullstatic)/' "$QH" || true
           fi
 
       - name: Reconfigure (WASM) after qhull patch
