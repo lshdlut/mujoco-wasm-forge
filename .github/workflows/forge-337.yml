@@ -120,6 +120,10 @@ jobs:
           MJ_NATIVE_BIN: ${{ github.workspace }}/build/337_native/_wasm/mujoco_compare337
         run: node tests/regression-337.mjs
 
+      - name: Run mesh smoke (Node)
+        shell: bash
+        run: node tests/mesh-smoke-337.mjs
+
       - name: Generate version.json
         shell: bash
         run: |
@@ -139,7 +143,16 @@ jobs:
             "emscripten": "${EMVER}",
             "buildTime": "${NOW}",
             "gitSha": "${MJ_SHA}",
-            "features": {"qhulloff": true, "render": false, "plugins": false, "libccd": "static"},
+            "features": {
+              "qhull": "static",
+              "libccd": "static",
+              "plugins": false,
+              "render": false,
+              "exceptions": "off",
+              "pthreads": false,
+              "filesystem": true,
+              "env": "node,web"
+            },
             "size": {"wasmBytes": ${WSB}, "jsBytes": ${JSB}},
             "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
           }

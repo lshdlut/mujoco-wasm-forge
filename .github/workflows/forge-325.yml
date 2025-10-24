@@ -116,7 +116,16 @@ jobs:
             "emscripten": "${EMVER}",
             "buildTime": "${NOW}",
             "gitSha": "${MJ_SHA}",
-            "features": {"qhulloff": true, "render": false, "plugins": false, "libccd": "static"},
+            "features": {
+              "qhull": "static",
+              "libccd": "static",
+              "plugins": false,
+              "render": false,
+              "exceptions": "off",
+              "pthreads": false,
+              "filesystem": true,
+              "env": "node,web"
+            },
             "size": {"wasmBytes": ${WSB}, "jsBytes": ${JSB}},
             "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
           }
