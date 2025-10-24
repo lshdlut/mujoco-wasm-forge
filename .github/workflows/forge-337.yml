@@ -38,7 +38,10 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p external
-          (git clone --depth 1 --branch v3.3.7 https://github.com/google-deepmind/mujoco external/mujoco) || true
+          (git clone --depth 1 --branch 3.3.7 https://github.com/google-deepmind/mujoco external/mujoco) || {
+            rm -rf external/mujoco || true
+            git clone --depth 1 --branch v3.3.7 https://github.com/google-deepmind/mujoco external/mujoco
+          }
 
       - name: Patch MuJoCo for Emscripten localtime_r
         shell: bash
