@@ -64,12 +64,12 @@ jobs:
           fof=external/mujoco/cmake/FindOrFetch.cmake
           if [ -f "$fof" ]; then
             # Inject early return in findorfetch() when the requested package is qhull
-            # Use awk to avoid YAML escaping issues with sed multiline inserts
-            awk 'BEGIN{ins=0} { print; if (!ins && $0 ~ /^[[:space:]]*function[[:space:]]*\(findorfetch\)/) { 
-              print "  if(\"${ARGV0}\" STREQUAL \"qhull\")"; 
-              print "    message(STATUS \"Skipping qhull under emscripten\")"; 
-              print "    return()"; 
-              print "  endif()"; 
+            # Match signatures like: function(findorfetch name ...)
+            awk 'BEGIN{ins=0} { print; if (!ins && $0 ~ /^[[:space:]]*function[[:space:]]*\(findorfetch\b/) {
+              print "  if(\"${ARGV0}\" STREQUAL \"qhull\")";
+              print "    message(STATUS \"Skipping qhull under emscripten\")";
+              print "    return()";
+              print "  endif()";
               ins=1 } }' "$fof" > "$fof.tmp" && mv "$fof.tmp" "$fof"
           fi
 
