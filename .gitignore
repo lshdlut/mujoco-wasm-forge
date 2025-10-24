@@ -1,0 +1,20 @@
+## OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+## Node / package
+node_modules/
+
+## Build outputs
+build/
+emsdk-cache/
+dist/
+
+## Tests temp files
+tests/tmp_model.xml
+
+## Internal files (must never be committed)
+AGENTS.md
+docs/DEV_NOTES.md
+
