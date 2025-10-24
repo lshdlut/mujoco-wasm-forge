@@ -12,6 +12,9 @@ on:
     tags:
       - forge-3.2.5-*
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -206,7 +209,6 @@ jobs:
           files: |
             dist/mujoco-3.2.5.js
             dist/mujoco-3.2.5.wasm
-            dist/mujoco-3.2.5.wasm.map
             dist/version.json
             dist/sbom.spdx.json
             dist/SHA256SUMS.txt
