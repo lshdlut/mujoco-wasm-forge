@@ -44,7 +44,8 @@ jobs:
         run: |
           emcmake cmake -S wrappers/official_app_325 -B build/325 \
             -DCMAKE_BUILD_TYPE=Release \
-            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF
+            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
+            -DLIBM_LIBRARY=m
 
       - name: Build
         shell: bash
