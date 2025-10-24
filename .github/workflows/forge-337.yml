@@ -73,9 +73,6 @@ jobs:
             # Force static libraries and map shared variables to static targets
             sed -i 's/\bSHARED\b/STATIC/g' "$QH" || true
             awk 'BEGIN{print "set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)"} {print}' "$QH" > "$QH.tmp" && mv "$QH.tmp" "$QH"
-            sed -i 's/set(\s*qhull_SHAREDR\s*qhull_r\s*)/set(qhull_SHAREDR qhullstatic_r)/' "$QH" || true
-            sed -i 's/set(\s*qhull_SHARED\s*libqhull\s*)/set(qhull_SHARED qhullstatic)/' "$QH" || true
-            sed -i 's/set(\s*qhull_SHAREDP\s*qhull_p\s*)/set(qhull_SHAREDP qhullstatic)/' "$QH" || true
           fi
 
       - name: Reconfigure (WASM) after qhull patch
