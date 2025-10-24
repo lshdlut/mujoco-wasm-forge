@@ -59,14 +59,18 @@ jobs:
           dep=external/mujoco/cmake/MujocoDependencies.cmake
           if [ -f "$dep" ]; then
             # Comment out qhull findorfetch to avoid pulling qhull under emscripten
-            sed -i 's/^\s*findorfetch(\s*qhull/# disabled for emscripten: &/' "$dep" || true
+            awk 'BEGIN{skip=0} { if ($0 ~ /^[[:space:]]*findorfetch\([[:space:]]*qhull/) { print "# disabled for emscripten: "$0; next } print }' "$dep" > "$dep.tmp" && mv "$dep.tmp" "$dep"
           fi
           fof=external/mujoco/cmake/FindOrFetch.cmake
           if [ -f "$fof" ]; then
             # Inject early return in findorfetch() when the requested package is qhull
-            # This is robust against different call sites and arguments layout.
-            sed -i '/^\s*function\s*\(findorfetch\)/a \
-  if("${ARGV0}" STREQUAL "qhull")\n    message(STATUS "Skipping qhull under emscripten")\n    return()\n  endif()' "$fof" || true
+            # Use awk to avoid YAML escaping issues with sed multiline inserts
+            awk 'BEGIN{ins=0} { print; if (!ins && $0 ~ /^[[:space:]]*function[[:space:]]*\(findorfetch\)/) { 
+              print "  if(\"${ARGV0}\" STREQUAL \"qhull\")"; 
+              print "    message(STATUS \"Skipping qhull under emscripten\")"; 
+              print "    return()"; 
+              print "  endif()"; 
+              ins=1 } }' "$fof" > "$fof.tmp" && mv "$fof.tmp" "$fof"
           fi
 
       - name: Configure (WASM)
