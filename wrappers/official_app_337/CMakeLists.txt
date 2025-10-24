@@ -27,6 +27,19 @@ endif()
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  # Upstream may try to attach interface properties to qhull targets; clear them to avoid
+  # non-existent include paths (e.g., "/src/libqhull_r") in generated build files.
+  foreach(tgt qhullstatic_r qhull_r qhull)
+    if (TARGET ${tgt})
+      set_property(TARGET ${tgt} PROPERTY INTERFACE_INCLUDE_DIRECTORIES "")
+      set_property(TARGET ${tgt} PROPERTY INTERFACE_COMPILE_OPTIONS "")
+      set_property(TARGET ${tgt} PROPERTY INTERFACE_LINK_OPTIONS "")
+      set_property(TARGET ${tgt} PROPERTY INTERFACE_LINK_LIBRARIES "")
+    endif()
+  endforeach()
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   add_executable(mujoco_wasm337 "minimal.c")
   # Lean runtime: ES6, modularize, multi-env; keep FS for demo convenience for now
   set_target_properties(mujoco_wasm337 PROPERTIES
