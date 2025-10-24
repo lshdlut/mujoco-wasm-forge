@@ -117,6 +117,42 @@ jobs:
           }
           JSON
 
+      - name: Generate checksums and release notes
+        shell: bash
+        run: |
+          set -euxo pipefail
+          EMVER=3.1.55
+          MJVER=3.2.5
+          JS=dist/mujoco-${MJVER}.js; WASM=dist/mujoco-${MJVER}.wasm
+          JSB=$(stat -c %s "$JS") || JSB=0
+          WSB=$(stat -c %s "$WASM") || WSB=0
+          JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
+          WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
+          {
+            echo "$JSUM  $(basename "$JS")"
+            echo "$WSUM  $(basename "$WASM")"
+          } > dist/SHA256SUMS.txt
+          cat > dist/RELEASE_NOTES.md <<EOF
+          Mujoco ${MJVER} WASM r1
+
+          Toolchain
+          - Emscripten: ${EMVER}
+          - Node: 20
+
+          Artifacts
+          - mujoco-${MJVER}.js (${JSB} bytes), sha256=${JSUM}
+          - mujoco-${MJVER}.wasm (${WSB} bytes), sha256=${WSUM}
+          - version.json, sbom.spdx.json, SHA256SUMS.txt
+
+          Tests
+          - Smoke (Node): minimal pendulum, 200 steps, finite checks
+          - Regression: WASM vs native harness (see workflow logs)
+
+          Notes
+          - ES module factory: createMuJoCo; runtime methods: cwrap/ccall
+          - Exports: _mjw_init,_mjw_step_demo,_mjw_nq,_mjw_qpos0,_mjw_qvel0,_mjw_term,_malloc,_free
+          EOF
+
       - name: Generate SBOM (SPDX json)
         shell: bash
         run: |
@@ -160,8 +196,9 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: mujoco-3.2.5-wasm
-          name: Mujoco 3.2.5 WASM
+          tag_name: forge-3.2.5-r1
+          name: Mujoco 3.2.5 WASM r1
+          body_path: dist/RELEASE_NOTES.md
           draft: false
           prerelease: false
           files: |
@@ -169,6 +206,8 @@ jobs:
             dist/mujoco-3.2.5.wasm
             dist/mujoco-3.2.5.wasm.map
             dist/version.json
+            dist/sbom.spdx.json
+            dist/SHA256SUMS.txt
 
 
 
