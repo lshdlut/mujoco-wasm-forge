@@ -1,0 +1,9 @@
+{
+  "name": "mujoco-wasm-forge",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "scripts": {
+    "test:smoke-325": "node tests/smoke-325.mjs"
+  }
+}

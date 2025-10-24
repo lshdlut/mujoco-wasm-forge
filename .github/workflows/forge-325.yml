@@ -1,0 +1,111 @@
+name: forge-325
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Create GitHub Release after build"
+        required: false
+        default: 'false'
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Emscripten SDK (3.1.55)
+        uses: mymindstorm/setup-emsdk@v13
+        with:
+          version: 3.1.55
+          actions-cache-folder: emsdk-cache
+
+      - name: Prepare MuJoCo 3.2.5 sources
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p external
+          (git clone --depth 1 --branch 3.2.5 https://github.com/google-deepmind/mujoco external/mujoco) || {
+            rm -rf external/mujoco || true
+            git clone --depth 1 --branch v3.2.5 https://github.com/google-deepmind/mujoco external/mujoco
+          }
+
+      - name: Configure (WASM)
+        shell: bash
+        run: |
+          emcmake cmake -S wrappers/official_app_325 -B build/325 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF
+
+      - name: Build
+        shell: bash
+        run: cmake --build build/325 -j 2
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p dist
+          cp build/325/_wasm/mujoco_wasm325.js dist/mujoco-3.2.5.js
+          cp build/325/_wasm/mujoco_wasm325.wasm dist/mujoco-3.2.5.wasm
+          if [ -f build/325/_wasm/mujoco_wasm325.wasm.map ]; then cp build/325/_wasm/mujoco_wasm325.wasm.map dist/mujoco-3.2.5.wasm.map; fi
+      - name: Run smoke test (Node)
+        shell: bash
+        run: node tests/smoke-325.mjs
+
+
+      - name: Generate version.json
+        shell: bash
+        run: |
+          set -euxo pipefail
+          EMVER=3.1.55
+          MJVER=3.2.5
+          MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
+          JS=dist/mujoco-${MJVER}.js; WASM=dist/mujoco-${MJVER}.wasm
+          JSB=$(stat -c %s "$JS") || JSB=0
+          WSB=$(stat -c %s "$WASM") || WSB=0
+          JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
+          WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          cat > dist/version.json <<JSON
+          {
+            "mujocoVersion": "${MJVER}",
+            "emscripten": "${EMVER}",
+            "buildTime": "${NOW}",
+            "gitSha": "${MJ_SHA}",
+            "features": {"qhulloff": true, "render": false, "plugins": false, "libccd": "static"},
+            "size": {"wasmBytes": ${WSB}, "jsBytes": ${JSB}},
+            "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
+          }
+JSON
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mujoco-3.2.5
+          path: dist/
+
+      - name: Create Release (optional)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mujoco-3.2.5-wasm
+          name: Mujoco 3.2.5 WASM
+          draft: false
+          prerelease: false
+          files: |
+            dist/mujoco-3.2.5.js
+            dist/mujoco-3.2.5.wasm
+            dist/mujoco-3.2.5.wasm.map
+            dist/version.json
+
+
+
