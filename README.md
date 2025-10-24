@@ -2,17 +2,15 @@
 
 English | [简体中文](README.zh-CN.md)
 
-Reproducible build pipeline for compiling MuJoCo to WebAssembly. This repo focuses on producing versioned WASM artifacts from MuJoCo tags, together with minimal smoke/regression validation and machine-readable metadata.
+Reproducible build pipeline for compiling MuJoCo to WebAssembly. This repo focuses on producing versioned WASM artifacts from MuJoCo tags, together with minimal smoke/regression validation and machine‑readable metadata.
 
 This repository is a fork/continuation of MuJoCo WASM efforts by stillonearth, zalo, and hashb. We acknowledge and build upon their ideas and prior work in the MuJoCo → WebAssembly space.
 
-• Input: MuJoCo tag (e.g., 3.2.5, 3.3.7)
-• Output: `dist/mujoco-{version}.{js,wasm[,wasm.map]}`, `dist/version.json`, `dist/sbom.spdx.json`
-• Toolchain: pinned Emscripten; minimal exports; no rendering UI here
+- Input: MuJoCo tag (e.g., 3.2.5, 3.3.7)
+- Output: `dist/mujoco-{version}.{js,wasm[,wasm.map]}`, `dist/version.json`, `dist/sbom.spdx.json`
+- Toolchain: pinned Emscripten; minimal exports; no rendering UI here
 
-Roadmap and internal development notes are maintained locally and are intentionally not included in the repository history.
-
-Status: usable. CI builds a single-module WASM + glue JS, runs Node smoke + a native-vs-wasm regression, and uploads artifacts.
+Status: usable. CI builds a single‑module WASM + glue JS, runs Node smoke + a native‑vs‑wasm regression, and uploads artifacts.
 
 Repository: https://github.com/lshdlut/mujoco-wasm-forge
 
@@ -60,27 +58,27 @@ console.log({ before, after });
 
 ## CI and reproducibility
 
-Workflow `forge-325` (GitHub Actions):
+Workflow `forge-325` / `forge-337` (GitHub Actions):
 
 - Pin emsdk (3.1.55) and Node (20)
-- Fetch upstream MuJoCo tag (3.2.5)
+- Fetch upstream MuJoCo tag (3.2.5 / 3.3.7)
 - Build WASM module and a small native harness
 - Run smoke test (Node ESM)
 - Run regression: WASM vs native harness on the same XML for N steps
 - Upload `dist/` as artifact + generate `version.json` and `sbom.spdx.json`
 
-Quality gates (size/init-time) run in “warn” mode (not gating) for the first release.
+Quality gates (size/init‑time) run in warn mode (not gating) for the first releases.
 
 ## Versioning and tags
 
-- Releases are tagged `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r1`.
-- Pre-releases use `forge-<mujocoVersion>-rc.<n>` and are marked as prerelease.
+- Releases are tagged `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r1`, `forge-3.3.7-r1`.
+- Pre‑releases use `forge-<mujocoVersion>-rc.<n>` and are marked as prerelease.
 - Artifacts are immutable; fixes publish a new revision (e.g., `-r2`).
 
 ## Regression baseline
 
-- Baseline: `native-3.2.5` ↔ `wasm-3.2.5` using the minimal pendulum XML.
-- Determinism: fixed timestep, no randomization, warmstart disabled.
+- Baselines: `native-3.2.5` <-> `wasm-3.2.5`, and `native-3.3.7` <-> `wasm-3.3.7`
+- Determinism: fixed timestep, no randomization, warmstart disabled
 
 ## Building locally
 
@@ -93,12 +91,11 @@ emcmake cmake -S wrappers/official_app_325 -B build/325 -DCMAKE_BUILD_TYPE=Relea
 cmake --build build/325 -j
 ```
 
-Artifacts will be placed under `dist/` by the workflow; for local runs, copy from `build/325/_wasm/`.
+Artifacts will be placed under `dist/` by the workflow; for local runs, copy from `build/<ver>/_wasm/`.
 
 ## Notes
 
-- This repo does not ship a front-end demo; for UI demos consider the maintainer’s fork: https://github.com/lshdlut/mujoco_webfork
-- Local tools, caches, and experimental scripts are ignored via `.gitignore` by design.
+- Front‑end demo: TODO (planned). Reference: https://github.com/lshdlut/mujoco_webfork
 
 ## Provenance
 

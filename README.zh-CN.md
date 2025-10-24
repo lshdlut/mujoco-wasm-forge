@@ -98,10 +98,8 @@ CI 会将工件整理到 `dist/`；本地构建可从 `build/325/_wasm/` 拷贝�
 
 ## 备注（Notes）
 
-- 本仓库不包含前端演示页面；如需 Web UI，请参考维护者分支：https://github.com/lshdlut/mujoco_webfork
-- 本地工具、缓存与实验脚本通过 `.gitignore` 统一忽略
+- 前端演示：TODO（计划中）。可参考维护者仓库：https://github.com/lshdlut/mujoco_webfork
 
 ## 溯源（Provenance）
 
 本仓库部分配置、CI 工作流与文档由生成式 AI 协助撰写或改写，并由维护者进行人工审阅与验证。
-
