@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 project(mujoco_official_325_wasm)
 
-if(NOT DEFINED ENV{EMSDK})
-  message(FATAL_ERROR "EMSDK not set; run emsdk_env")
+# Only require EMSDK when targeting Emscripten
+if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  if(NOT DEFINED ENV{EMSDK})
+    message(FATAL_ERROR "EMSDK not set; run emsdk_env")
+  endif()
 endif()
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/_wasm")
