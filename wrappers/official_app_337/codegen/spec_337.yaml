@@ -1,0 +1,31 @@
+views:
+  - name: qpos
+    src: d->qpos
+    dtype: f64
+    len: m->nq
+    rw: rw
+  - name: qvel
+    src: d->qvel
+    dtype: f64
+    len: m->nv
+    rw: rw
+  - name: ctrl
+    src: d->ctrl
+    dtype: f64
+    len: m->nu
+    rw: rw
+  - name: sensordata
+    src: d->sensordata
+    dtype: f64
+    len: m->nsensordata
+    rw: ro
+
+dims:
+  - nq: m->nq
+  - nv: m->nv
+  - nu: m->nu
+  - nsensordata: m->nsensordata
+
+names:
+  enabled: true
+

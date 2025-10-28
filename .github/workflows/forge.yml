@@ -1,0 +1,259 @@
+name: forge
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Create GitHub Release after build"
+        required: false
+        default: 'false'
+  push:
+    branches:
+      - main
+      - master
+      - chore/audit-forge
+    tags:
+      - forge-3.2.5-*
+      - forge-3.3.7-*
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EMSDK_VERSION: '3.1.55'
+      # Optional toggles (defaults preserved; uncomment to change behavior):
+      # OPT_LEVEL: '-O2'
+      # ENABLE_SIMD: '0'
+      # ENABLE_PTHREADS: '0'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - short: 325
+            mjver: 3.2.5
+            app: wrappers/official_app_325
+            smoke: tests/smoke-325.mjs
+            reg: tests/regression-325.mjs
+            mesh: ""
+          - short: 337
+            mjver: 3.3.7
+            app: wrappers/official_app_337
+            smoke: tests/smoke-337.mjs
+            reg: tests/regression-337.mjs
+            mesh: tests/mesh-smoke-337.mjs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Emscripten SDK
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSDK_VERSION }}
+
+      - name: Prepare MuJoCo ${{ matrix.mjver }} sources
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p external
+          (git clone --depth 1 --branch ${{ matrix.mjver }} https://github.com/google-deepmind/mujoco external/mujoco) || {
+            rm -rf external/mujoco || true
+            git clone --depth 1 --branch v${{ matrix.mjver }} https://github.com/google-deepmind/mujoco external/mujoco
+          }
+
+      - name: Patch MuJoCo for Emscripten localtime_r
+        shell: bash
+        run: |
+          set -euxo pipefail
+          f=external/mujoco/src/engine/engine_util_errmem.c
+          if [ -f "$f" ]; then
+            sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/' "$f"
+            sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/' "$f"
+          fi
+
+      - name: "[GATE:SYM] Sym-from-JSON (skipped)"
+        shell: bash
+        run: echo "[GATE:SYM] skipped (symcheck tooling not wired in this repo)"
+
+      - name: Configure (WASM)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if [ "${{ matrix.short }}" = "337" ]; then
+            # Stage-1 configure to fetch deps; allow failure
+            emcmake cmake -S ${{ matrix.app }} -B build/${{ matrix.short }} \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DMUJOCO_ENABLE_QHULL=OFF \
+              -DMUJOCO_BUILD_PLUGINS=OFF \
+              -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
+              -DCMAKE_SKIP_INSTALL_RULES=ON \
+              -DLIBM_LIBRARY:STRING=-lm || true
+            # qhull static patch (Emscripten)
+            QH="build/${{ matrix.short }}/_deps/qhull-src/CMakeLists.txt"
+            if [ -f "$QH" ]; then
+              sed -i 's/\bSHARED\b/STATIC/g' "$QH" || true
+              awk 'BEGIN{print "set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)"} {print}' "$QH" > "$QH.tmp" && mv "$QH.tmp" "$QH"
+            fi
+          fi
+          # Final configure
+          emcmake cmake -S ${{ matrix.app }} -B build/${{ matrix.short }} \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
+            -DCMAKE_SKIP_INSTALL_RULES=ON \
+            -DLIBM_LIBRARY:STRING=-lm
+
+      - name: Build (WASM)
+        shell: bash
+        run: cmake --build build/${{ matrix.short }} -j 2
+
+      - name: Configure (Native)
+        shell: bash
+        run: |
+          cmake -S ${{ matrix.app }} -B build/${{ matrix.short }}_native \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
+            -DCMAKE_SKIP_INSTALL_RULES=ON
+
+      - name: Build (Native)
+        shell: bash
+        run: cmake --build build/${{ matrix.short }}_native -j 2
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p dist
+          cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.js dist/mujoco-${{ matrix.mjver }}.js
+          cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm dist/mujoco-${{ matrix.mjver }}.wasm
+          if [ -f build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map ]; then cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map dist/mujoco-${{ matrix.mjver }}.wasm.map; fi
+
+      - name: "[GATE:DTS] d.ts drift (skipped)"
+        shell: bash
+        run: echo "[GATE:DTS] skipped (d.ts generation tooling not wired in this repo)"
+
+      - name: "[GATE:RUN] Smoke / Regression"
+        shell: bash
+        env:
+          MJ_NATIVE_BIN: ${{ github.workspace }}/build/${{ matrix.short }}_native/_wasm/mujoco_compare${{ matrix.short }}
+        run: |
+          set -euxo pipefail
+          node ${{ matrix.smoke }}
+          node ${{ matrix.reg }}
+          if [ -n "${{ matrix.mesh }}" ] && [ -f "${{ matrix.mesh }}" ]; then node ${{ matrix.mesh }}; else echo "mesh-smoke: skipped"; fi
+
+      - name: Generate version.json
+        shell: bash
+        run: |
+          set -euxo pipefail
+          EMVER=${EMSDK_VERSION}
+          MJVER=${{ matrix.mjver }}
+          MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
+          JS=dist/mujoco-${MJVER}.js; WASM=dist/mujoco-${MJVER}.wasm
+          JSB=$(stat -c %s "$JS") || JSB=0
+          WSB=$(stat -c %s "$WASM") || WSB=0
+          JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
+          WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          cat > dist/version.json <<JSON
+          {
+            "mujocoVersion": "${MJVER}",
+            "emscripten": "${EMVER}",
+            "buildTime": "${NOW}",
+            "gitSha": "${MJ_SHA}",
+            "emsdk_root": "${EMSDK:-}",
+            "emsdk_node": "${EMSDK_NODE:-}",
+            "emsdk_python": "${EMSDK_PYTHON:-}",
+            "flags": [
+              "WASM=1",
+              "MODULARIZE=1",
+              "EXPORT_ES6=1",
+              "ALLOW_MEMORY_GROWTH=1"
+            ],
+            "features": {
+              "qhull": "static",
+              "libccd": "static",
+              "plugins": false,
+              "render": false,
+              "exceptions": "off",
+              "pthreads": false,
+              "filesystem": true,
+              "env": "node,web"
+            },
+            "size": {"wasmBytes": ${WSB}, "jsBytes": ${JSB}},
+            "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
+          }
+          JSON
+
+      - name: Generate SBOM (SPDX json)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          EMVER=${EMSDK_VERSION}
+          MJVER=${{ matrix.mjver }}
+          MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          NS="https://github.com/lshdlut/mujoco-wasm-forge/sbom/${GITHUB_RUN_ID}"
+          cat > dist/sbom.spdx.json <<SBOM
+          {
+            "spdxVersion": "SPDX-2.3",
+            "dataLicense": "CC0-1.0",
+            "SPDXID": "SPDXRef-DOCUMENT",
+            "name": "mujoco-wasm-forge-${MJVER}",
+            "documentNamespace": "${NS}",
+            "creationInfo": {"created": "${NOW}", "creators": ["Tool: forge workflow"]},
+            "packages": [
+              {"name": "mujoco", "SPDXID": "SPDXRef-Pkg-MuJoCo", "versionInfo": "${MJVER}", "downloadLocation": "https://github.com/google-deepmind/mujoco", "sourceInfo": "git@${MJ_SHA}"},
+              {"name": "emscripten", "SPDXID": "SPDXRef-Pkg-Emscripten", "versionInfo": "${EMVER}", "downloadLocation": "https://github.com/emscripten-core/emsdk"}
+            ]
+          }
+          SBOM
+
+      - name: Generate checksums and release notes
+        shell: bash
+        run: |
+          set -euxo pipefail
+          EMVER=${EMSDK_VERSION}
+          MJVER=${{ matrix.mjver }}
+          JS=dist/mujoco-${MJVER}.js; WASM=dist/mujoco-${MJVER}.wasm
+          JSB=$(stat -c %s "$JS") || JSB=0
+          WSB=$(stat -c %s "$WASM") || WSB=0
+          JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
+          WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
+          {
+            echo "$JSUM  $(basename "$JS")"
+            echo "$WSUM  $(basename "$WASM")"
+          } > dist/SHA256SUMS.txt
+          cat > dist/RELEASE_NOTES.md <<EOF
+
+          Build with Emscripten ${EMVER}. Artifacts:
+          - mujoco-${MJVER}.js (${JSB} bytes)
+          - mujoco-${MJVER}.wasm (${WSB} bytes)
+
+          Quality gates:
+          - [GATE:SYM] skipped
+          - [GATE:DTS] skipped
+          - [GATE:RUN] pass
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mujoco-${{ matrix.mjver }}
+          path: |
+            dist/mujoco-${{ matrix.mjver }}.js
+            dist/mujoco-${{ matrix.mjver }}.wasm
+            dist/version.json
+            dist/sbom.spdx.json
+            dist/SHA256SUMS.txt
+            dist/RELEASE_NOTES.md

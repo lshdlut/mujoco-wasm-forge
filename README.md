@@ -45,9 +45,9 @@ const Module = await createMuJoCo({
 const xml = `<?xml version="1.0"?>\n<mujoco model="pendulum">\n  <option timestep="0.002" gravity="0 0 -9.81"/>\n  <worldbody>\n    <body name="link" pos="0 0 0.1">\n      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.01"/>\n      <geom type="capsule" fromto="0 0 0 0 0 0.2" size="0.02" density="1000"/>\n    </body>\n  </worldbody>\n</mujoco>`;
 
 Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
-const init = Module.cwrap('mjw_init','number',['string']);
-const step = Module.cwrap('mjw_step_demo', null, ['number']);
-const qpos0 = Module.cwrap('mjw_qpos0','number',[]);
+const init = Module.cwrap('mjwf_init','number',['string']);
+const step = Module.cwrap('mjwf_step_demo', null, ['number']);
+const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
 
 if (init('/model.xml') !== 1) throw new Error('init failed');
 const before = qpos0();
@@ -58,16 +58,14 @@ console.log({ before, after });
 
 ## CI and reproducibility
 
-Workflow `forge-325` / `forge-337` (GitHub Actions):
+Unified workflow entrance (GitHub Actions):
 
-- Pin emsdk (3.1.55) and Node (20)
-- Fetch upstream MuJoCo tag (3.2.5 / 3.3.7)
-- Build WASM module and a small native harness
-- Run smoke test (Node ESM)
-- Run regression: WASM vs native harness on the same XML for N steps
-- Upload `dist/` as artifact + generate `version.json` and `sbom.spdx.json`
-
-Quality gates (size/init‑time) run in warn mode (not gating) for the first releases.
+- Single entry `.github/workflows/forge.yml` with a version matrix (3.2.5, 3.3.7)
+- Pinned emsdk (3.1.55) and Node (20)
+- Two‑stage configure for 3.3.7 to statically link qhull (SHARED→STATIC, BUILD_SHARED_LIBS=OFF); 3.2.5 does not require the qhull patch
+- Three gates (by intent): [GATE:SYM] Sym‑from‑JSON → [GATE:DTS] d.ts drift → [GATE:RUN] runtime smoke/regression/mesh‑smoke
+  - If a gate is not yet implemented in code, the workflow logs it as `skipped` without changing behavior.
+- Artifacts: upload `dist/` (+ `version.json`, `sbom.spdx.json`)
 
 ## Versioning and tags
 

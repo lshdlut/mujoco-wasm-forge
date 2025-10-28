@@ -10,6 +10,7 @@ node_modules/
 build/
 emsdk-cache/
 dist/
+external/
 _tools/
 local_tools/
 
@@ -25,3 +26,7 @@ scripts/*.local.ps1
 scripts/*.local.sh
 scripts/private/
 local_tools/**
+tmp_*
+*.tmp
+coverage/**
+scripts/*_local.*
