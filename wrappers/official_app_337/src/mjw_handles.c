@@ -142,21 +142,12 @@ EMSCRIPTEN_KEEPALIVE const char* mjw_errmsg_last(int h) {
   return g_pool[h].last_errmsg;
 }
 
-// --- Dims ---
-EMSCRIPTEN_KEEPALIVE int mjw_nq(int h) { return mjw_valid(h) ? g_pool[h].m->nq : 0; }
-EMSCRIPTEN_KEEPALIVE int mjw_nv(int h) { return mjw_valid(h) ? g_pool[h].m->nv : 0; }
-EMSCRIPTEN_KEEPALIVE int mjw_nu(int h) { return mjw_valid(h) ? g_pool[h].m->nu : 0; }
-EMSCRIPTEN_KEEPALIVE int mjw_nsensordata(int h) { return mjw_valid(h) ? g_pool[h].m->nsensordata : 0; }
-
 // --- Time ---
 EMSCRIPTEN_KEEPALIVE double mjw_timestep(int h) { return mjw_valid(h) ? g_pool[h].m->opt.timestep : 0.0; }
 EMSCRIPTEN_KEEPALIVE double mjw_time(int h) { return mjw_valid(h) ? g_pool[h].d->time : 0.0; }
 
-// --- Views ---
-EMSCRIPTEN_KEEPALIVE double* mjw_qpos_ptr(int h) { return mjw_valid(h) ? g_pool[h].d->qpos : NULL; }
-EMSCRIPTEN_KEEPALIVE double* mjw_qvel_ptr(int h) { return mjw_valid(h) ? g_pool[h].d->qvel : NULL; }
-EMSCRIPTEN_KEEPALIVE double* mjw_ctrl_ptr(int h) { return mjw_valid(h) ? g_pool[h].d->ctrl : NULL; }
-EMSCRIPTEN_KEEPALIVE double* mjw_sensordata_ptr(int h) { return mjw_valid(h) ? g_pool[h].d->sensordata : NULL; }
+// Dims and pointer getters are generated from spec into mjw_exports_generated.c.
+// This file provides handle lifecycle and helpers only.
 
 static void mjw_copy_doubles(double* dst, const double* src, int n) {
   if (!dst || !src || n <= 0) return;
