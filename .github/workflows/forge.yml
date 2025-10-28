@@ -61,7 +61,6 @@ jobs:
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: ${{ env.EMSDK_VERSION }}
-          cache: false
 
       - name: Prepare MuJoCo ${{ matrix.mjver }} sources
         shell: bash

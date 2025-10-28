@@ -40,6 +40,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   add_executable(mujoco_wasm337
     src/mjw_handles.c
     src/mjw_entrypoints.c
+    src/mjw_compat_minimal.c
     ${GEN_C}
   )
 
