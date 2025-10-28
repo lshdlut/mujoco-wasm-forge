@@ -19,9 +19,33 @@ option(MUJOCO_BUILD_SAMPLES "" OFF)
 # Expect MuJoCo sources cloned to ../../external/mujoco
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+find_package(Python3 COMPONENTS Interpreter)
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-  add_executable(mujoco_wasm337 "minimal.c")
-  # Lean runtime: ES6, modularize, multi-env; keep FS for demo convenience for now
+  set(GEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  set(SPEC_YAML ${CMAKE_CURRENT_SOURCE_DIR}/codegen/spec_337.yaml)
+  set(GEN_H ${CMAKE_CURRENT_SOURCE_DIR}/include/mjw_exports_generated.h)
+  set(GEN_C ${GEN_DIR}/mjw_exports_generated.c)
+
+  add_custom_command(
+    OUTPUT ${GEN_H} ${GEN_C}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_exports.py ${SPEC_YAML} ${GEN_H} ${GEN_C}
+    DEPENDS ${SPEC_YAML} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_exports.py
+    VERBATIM
+    COMMENT "Generating mjw exports from spec_337.yaml"
+  )
+
+  add_executable(mujoco_wasm337
+    src/mjw_handles.c
+    src/mjw_entrypoints.c
+    ${GEN_C}
+  )
+
+  add_dependencies(mujoco_wasm337 mujoco)
+
+  # Lean runtime: ES6, modularize, multi-env; keep FS and runtime helpers for JS side
   set_target_properties(mujoco_wasm337 PROPERTIES
     LINK_FLAGS "-s WASM=1 -s STACK_SIZE=5MB -s INITIAL_MEMORY=134217728 -s MAXIMUM_MEMORY=536870912 -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT=web,worker,node -s ASSERTIONS=1 -s EXPORT_ES6=1 -s MODULARIZE=1 -s FORCE_FILESYSTEM=1 -s EXPORTED_RUNTIME_METHODS=['FS','MEMFS','cwrap','ccall'] -s DISABLE_EXCEPTION_CATCHING=1 -s EXPORT_NAME=load_mujoco -Oz -flto"
   )
