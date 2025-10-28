@@ -58,6 +58,20 @@ cmake --build build/325 -j
 
 工作流默认把工件放在 `dist/`；本地跑时可从 `build/<ver>/_wasm/` 拷贝。
 
+## 版本与标签
+
+- 稳定版采用 `forge-<mujocoVersion>-r<rev>`；当前推荐：`forge-3.2.5-r3`、`forge-3.3.7-r2`。
+- 预发布采用 `forge-<mujocoVersion>-rc.<n>`，标注为 Pre‑release。
+- 产物不可变；修订号递增（如 `-r2`）。
+
+### 发布状态（当前）
+- 推荐（稳定）：
+  - `forge-3.2.5-r3`
+  - `forge-3.3.7-r2`
+- 已废弃（被统一入口替代）：
+  - `forge-3.2.5-r1`、`forge-3.2.5-r2`
+  - `forge-3.3.7-r1`、所有 `forge-3.3.7-rc.*`
+
 ## 元数据 schema（对齐方向）
 
 - 文件：`dist/version.json`

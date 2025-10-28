@@ -69,9 +69,17 @@ Unified workflow entrance (GitHub Actions):
 
 ## Versioning and tags
 
-- Releases are tagged `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r1`, `forge-3.3.7-r1`.
-- Pre‑releases use `forge-<mujocoVersion>-rc.<n>` and are marked as prerelease.
+- Stable releases use `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r3`, `forge-3.3.7-r2`.
+- Pre‑releases use `forge-<mujocoVersion>-rc.<n>` and are marked as pre‑release.
 - Artifacts are immutable; fixes publish a new revision (e.g., `-r2`).
+
+### Release status (current)
+- Recommended (stable):
+  - `forge-3.2.5-r3`
+  - `forge-3.3.7-r2`
+- Deprecated (superseded by unified workflow):
+  - `forge-3.2.5-r1`, `forge-3.2.5-r2`
+  - `forge-3.3.7-r1`, all `forge-3.3.7-rc.*`
 
 ## Regression baseline
 
