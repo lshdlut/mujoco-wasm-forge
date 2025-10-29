@@ -9,8 +9,11 @@
 
 Compatibility & naming
 - Unified handle prefix: `mjwf_`.
-- Script entrypoints (recommended):
+- Script entrypoints (planned; WIP):
   - `scripts/symcheck_from_list.ps1`
   - `scripts/smoke/smoke.mjs`, `scripts/det/det.mjs`, `scripts/smoke/smoke_ext.mjs`
-- Legacy `*_local` names may temporarily remain as thin forwarders; the CI must not reference them.
+- Legacy `*_local` names may temporarily remain as thin forwarders; CI must not reference them.
+
+Front‑end demo
+- On-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git
 

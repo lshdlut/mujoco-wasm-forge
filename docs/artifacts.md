@@ -9,9 +9,9 @@ Artifacts
 
 version.json schema (current)
 - Fields: `mujocoVersion`, `emscripten`, `buildTime`, `gitSha`
+- Provenance: `emsdk_root`, `emsdk_node`, `emsdk_python`, and `flags`
 - Blocks: `features`, `size`, `hash`
 
-version.json schema (alignment direction; no behavior change now)
-- Add provenance: `emsdk_root`, `emsdk_node`, `emsdk_python`, and `flags`
-- Keep field names consistent across 3.2.5 and 3.3.7
+Notes
+- Schema is unified across 3.2.5 and 3.3.7. Provenance fields are present in CI builds.
 

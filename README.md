@@ -101,7 +101,8 @@ Artifacts will be placed under `dist/` by the workflow; for local runs, copy fro
 
 ## Notes
 
-- Front‑end demo: TODO (planned). Reference: https://github.com/lshdlut/mujoco_webfork
+- Front-end demo: on-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git
+
 
 ## Provenance
 

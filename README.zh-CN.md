@@ -1,5 +1,9 @@
 # mujoco-wasm-forge
 
+## Notes
+
+- Front-end demo: on-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git
+
 English | 简体中文
 
 本仓库提供可复现的 MuJoCo → WebAssembly 构建产线。目标是在固定工具链与接口的前提下，从上游 MuJoCo 标签（3.2.5 / 3.3.7）产出版本化的 WASM 工件，并附最小的运行验证与机器可读元数据。
