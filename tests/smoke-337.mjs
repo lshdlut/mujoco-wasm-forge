@@ -29,10 +29,10 @@ const xml = `<?xml version="1.0"?>
 </mujoco>`;
 
 Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
-const init = Module.cwrap('mjw_init','number',['string']);
-const step_demo = Module.cwrap('mjw_step_demo', null, ['number']);
-const nq = Module.cwrap('mjw_nq','number',[]);
-const qpos0 = Module.cwrap('mjw_qpos0','number',[]);
+const init = Module.cwrap('mjwf_init','number',['string']);
+const step_demo = Module.cwrap('mjwf_step_demo', null, ['number']);
+const nq = Module.cwrap('mjwf_nq','number',[]);
+const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
 
 if (init('/model.xml') !== 1) { throw new Error('init failed'); }
 if (nq() < 0) { throw new Error('nq invalid'); }

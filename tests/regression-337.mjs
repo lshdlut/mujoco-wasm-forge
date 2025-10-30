@@ -65,10 +65,10 @@ const modFactory = (await import(pathToFileURL(jsURL).href)).default;
 const Module = await modFactory({ locateFile: (p) => (p.endsWith('.wasm') ? wasmURL : p) });
 
 Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
-const init = Module.cwrap('mjw_init','number',['string']);
-const step_demo = Module.cwrap('mjw_step_demo', null, ['number']);
-const qpos0 = Module.cwrap('mjw_qpos0','number',[]);
-const qvel0 = Module.cwrap('mjw_qvel0','number',[]);
+const init = Module.cwrap('mjwf_init','number',['string']);
+const step_demo = Module.cwrap('mjwf_step_demo', null, ['number']);
+const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
+const qvel0 = Module.cwrap('mjwf_qvel0','number',[]);
 
 if (init('/model.xml') !== 1) throw new Error('WASM init failed');
 

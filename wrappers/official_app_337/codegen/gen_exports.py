@@ -35,42 +35,42 @@ SRC_PREAMBLE = """
 #endif
 #endif
 
-// mjw_valid/mjw_n? etc. are defined in mjw_handles.c
-int mjw_valid(int h);
+// mjwf_valid/mjwf_n? etc. are defined in mjw_handles.c
+int mjwf_valid(int h);
 
-typedef struct { mjModel* m; mjData* d; } _mjw_view_pair;
+typedef struct { mjModel* m; mjData* d; } _mjwf_view_pair;
 
 // We can't access g_pool from here; expose small inline accessors via declarations.
 // For simplicity in this generator, we re-declare pointer getters here and forward
-// to mjw_handles.c via mjw_valid and direct field access using a trick: define
+// to mjw_handles.c via mjwf_valid and direct field access using a trick: define
 // lightweight accessors in this TU using weak symbols to be resolved by linker.
 // Getters implemented in mjw_handles.c
-extern mjModel* _mjw_model_of(int h);
-extern mjData*  _mjw_data_of(int h);
+extern mjModel* _mjwf_model_of(int h);
+extern mjData*  _mjwf_data_of(int h);
 """.lstrip()
 
 def emit_view_decl(name, dtype):
     cty = 'double*' if dtype == 'f64' else 'int32_t*'
-    return f"EMSCRIPTEN_KEEPALIVE {cty} mjw_{name}_ptr(int h);\n"
+    return f"EMSCRIPTEN_KEEPALIVE {cty} mjwf_{name}_ptr(int h);\n"
 
 def emit_dim_decl(name):
-    return f"EMSCRIPTEN_KEEPALIVE int mjw_{name}(int h);\n"
+    return f"EMSCRIPTEN_KEEPALIVE int mjwf_{name}(int h);\n"
 
 def emit_view_impl(name, src, dtype):
     cty = 'double*' if dtype == 'f64' else 'int32_t*'
     return (
-        f"EMSCRIPTEN_KEEPALIVE {cty} mjw_{name}_ptr(int h) {{\n"
-        f"  if (!mjw_valid(h)) return NULL;\n"
-        f"  mjData* d = _mjw_data_of(h);\n"
+        f"EMSCRIPTEN_KEEPALIVE {cty} mjwf_{name}_ptr(int h) {{\n"
+        f"  if (!mjwf_valid(h)) return NULL;\n"
+        f"  mjData* d = _mjwf_data_of(h);\n"
         f"  return d ? ({cty})({src.replace('d->','d->')}) : NULL;\n"
         f"}}\n\n"
     )
 
 def emit_dim_impl(name, expr):
     return (
-        f"EMSCRIPTEN_KEEPALIVE int mjw_{name}(int h) {{\n"
-        f"  if (!mjw_valid(h)) return 0;\n"
-        f"  mjModel* m = _mjw_model_of(h);\n"
+        f"EMSCRIPTEN_KEEPALIVE int mjwf_{name}(int h) {{\n"
+        f"  if (!mjwf_valid(h)) return 0;\n"
+        f"  mjModel* m = _mjwf_model_of(h);\n"
         f"  return m ? (int)({expr}) : 0;\n"
         f"}}\n\n"
     )

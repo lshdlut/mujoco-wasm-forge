@@ -13,7 +13,7 @@ static mjModel* g_m = NULL;
 static mjData*  g_d = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-int mjw_init(const char* xmlpath) {
+int mjwf_init(const char* xmlpath) {
   if (g_d) { mj_deleteData(g_d); g_d = NULL; }
   if (g_m) { mj_deleteModel(g_m); g_m = NULL; }
   char error[1024] = {0};
@@ -24,7 +24,7 @@ int mjw_init(const char* xmlpath) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void mjw_step_demo(int steps) {
+void mjwf_step_demo(int steps) {
   if (!g_m || !g_d) return;
   for (int i = 0; i < steps; ++i) {
     mj_step(g_m, g_d);
@@ -32,24 +32,24 @@ void mjw_step_demo(int steps) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void mjw_term(void) {
+void mjwf_term(void) {
   if (g_d) { mj_deleteData(g_d); g_d = NULL; }
   if (g_m) { mj_deleteModel(g_m); g_m = NULL; }
 }
 
 EMSCRIPTEN_KEEPALIVE
-int mjw_nq(void) {
+int mjwf_nq(void) {
   return g_m ? g_m->nq : 0;
 }
 
 EMSCRIPTEN_KEEPALIVE
-double mjw_qpos0(void) {
+double mjwf_qpos0(void) {
   if (!g_d || !g_m || g_m->nq <= 0) return 0.0;
   return g_d->qpos[0];
 }
 
 EMSCRIPTEN_KEEPALIVE
-double mjw_qvel0(void) {
+double mjwf_qvel0(void) {
   if (!g_d || !g_m || g_m->nv <= 0) return 0.0;
   return g_d->qvel[0];
 }

@@ -32,9 +32,9 @@ const xml = `<?xml version="1.0"?>
 </mujoco>`;
 
 Module.FS.writeFile('/mesh_model.xml', new TextEncoder().encode(xml));
-const init = Module.cwrap('mjw_init','number',['string']);
-const step_demo = Module.cwrap('mjw_step_demo', null, ['number']);
-const qpos0 = Module.cwrap('mjw_qpos0','number',[]);
+const init = Module.cwrap('mjwf_init','number',['string']);
+const step_demo = Module.cwrap('mjwf_step_demo', null, ['number']);
+const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
 
 assert.equal(init('/mesh_model.xml'), 1, 'mesh model init failed');
 const before = qpos0();

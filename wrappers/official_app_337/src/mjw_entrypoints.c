@@ -18,15 +18,15 @@
 // Adjust when export surface changes in a breaking way
 #define MJW_LAYOUT_HASH 0x3370A1B3u
 
-EMSCRIPTEN_KEEPALIVE int mjw_abi_version(void) {
+EMSCRIPTEN_KEEPALIVE int mjwf_abi_version(void) {
   return MJW_ABI_VERSION;
 }
 
-EMSCRIPTEN_KEEPALIVE uint32_t mjw_layout_hash(void) {
+EMSCRIPTEN_KEEPALIVE uint32_t mjwf_layout_hash(void) {
   return MJW_LAYOUT_HASH;
 }
 
-EMSCRIPTEN_KEEPALIVE const char* mjw_version_string(void) {
+EMSCRIPTEN_KEEPALIVE const char* mjwf_version_string(void) {
   // MuJoCo exposes mj_versionString(). We return that when available.
   static char buf[128];
   const char* mv = mj_versionString();
