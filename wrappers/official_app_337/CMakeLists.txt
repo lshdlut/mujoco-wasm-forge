@@ -26,21 +26,21 @@ find_package(Python3 COMPONENTS Interpreter)
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   set(GEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
   set(SPEC_YAML ${CMAKE_CURRENT_SOURCE_DIR}/codegen/spec_337.yaml)
-  set(GEN_H ${CMAKE_CURRENT_SOURCE_DIR}/include/mjw_exports_generated.h)
-  set(GEN_C ${GEN_DIR}/mjw_exports_generated.c)
+  set(GEN_H ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_exports_generated.h)
+  set(GEN_C ${GEN_DIR}/mjwf_exports_generated.c)
 
   add_custom_command(
     OUTPUT ${GEN_H} ${GEN_C}
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_exports.py ${SPEC_YAML} ${GEN_H} ${GEN_C}
     DEPENDS ${SPEC_YAML} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_exports.py
     VERBATIM
-    COMMENT "Generating mjw exports from spec_337.yaml"
+    COMMENT "Generating mjwf exports from spec_337.yaml"
   )
 
   add_executable(mujoco_wasm337
-    src/mjw_handles.c
-    src/mjw_entrypoints.c
-    src/mjw_compat_minimal.c
+    src/mjwf_handles.c
+    src/mjwf_entrypoints.c
+    src/mjwf_compat_minimal.c
     ${GEN_C}
   )
 

@@ -35,16 +35,16 @@ SRC_PREAMBLE = """
 #endif
 #endif
 
-// mjwf_valid/mjwf_n? etc. are defined in mjw_handles.c
+// mjwf_valid/mjwf_n? etc. are defined in mjwf_handles.c
 int mjwf_valid(int h);
 
 typedef struct { mjModel* m; mjData* d; } _mjwf_view_pair;
 
 // We can't access g_pool from here; expose small inline accessors via declarations.
 // For simplicity in this generator, we re-declare pointer getters here and forward
-// to mjw_handles.c via mjwf_valid and direct field access using a trick: define
+// to mjwf_handles.c via mjwf_valid and direct field access using a trick: define
 // lightweight accessors in this TU using weak symbols to be resolved by linker.
-// Getters implemented in mjw_handles.c
+// Getters implemented in mjwf_handles.c
 extern mjModel* _mjwf_model_of(int h);
 extern mjData*  _mjwf_data_of(int h);
 """.lstrip()

@@ -1,4 +1,4 @@
-// Misc entrypoints: ABI, version info, layout hash
+// Misc entrypoints (mjwf): ABI, version info, layout hash
 
 #include <stdint.h>
 #include <stdio.h>
@@ -13,17 +13,17 @@
 #endif
 #endif
 
-#define MJW_ABI_VERSION 1
+#define MJWF_ABI_VERSION 1
 
 // Adjust when export surface changes in a breaking way
-#define MJW_LAYOUT_HASH 0x3370A1B3u
+#define MJWF_LAYOUT_HASH 0x3370A1B3u
 
 EMSCRIPTEN_KEEPALIVE int mjwf_abi_version(void) {
-  return MJW_ABI_VERSION;
+  return MJWF_ABI_VERSION;
 }
 
 EMSCRIPTEN_KEEPALIVE uint32_t mjwf_layout_hash(void) {
-  return MJW_LAYOUT_HASH;
+  return MJWF_LAYOUT_HASH;
 }
 
 EMSCRIPTEN_KEEPALIVE const char* mjwf_version_string(void) {

@@ -8,7 +8,7 @@
 #endif
 #endif
 
-// Forward declarations from handle-based surface and generated exports
+// Forward declarations from handle-based surface and generated exports (mjwf)
 extern int      mjwf_make_from_xml(const char* path);
 extern int      mjwf_step(int h, int n);
 extern int      mjwf_valid(int h);

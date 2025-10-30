@@ -15,16 +15,16 @@
 #endif
 #endif
 
-#define MJW_MAXH 64
+#define MJWF_MAXH 64
 
-typedef struct MjwHandle {
+typedef struct MjwfHandle {
   mjModel* m;
   mjData*  d;
   int      last_errno;
   char     last_errmsg[256];
-} MjwHandle;
+} MjwfHandle;
 
-static MjwHandle g_pool[MJW_MAXH];
+static MjwfHandle g_pool[MJWF_MAXH];
 static int       g_last_errno = 0;
 static char      g_last_errmsg[256] = {0};
 
@@ -41,7 +41,7 @@ static void mjwf_set_global_error(int code, const char* msg) {
 EMSCRIPTEN_KEEPALIVE int mjwf_errno_last_global(void) { return g_last_errno; }
 EMSCRIPTEN_KEEPALIVE const char* mjwf_errmsg_last_global(void) { return g_last_errmsg; }
 
-static void mjwf_set_error(MjwHandle* h, int code, const char* msg) {
+static void mjwf_set_error(MjwfHandle* h, int code, const char* msg) {
   if (!h) return;
   h->last_errno = code;
   if (msg) {
@@ -53,7 +53,7 @@ static void mjwf_set_error(MjwHandle* h, int code, const char* msg) {
 }
 
 static int mjwf_alloc_handle(void) {
-  for (int i = 1; i < MJW_MAXH; ++i) { // start from 1 for nicer ids
+  for (int i = 1; i < MJWF_MAXH; ++i) { // start from 1 for nicer ids
     if (g_pool[i].m == NULL && g_pool[i].d == NULL) {
       g_pool[i].last_errno = 0;
       g_pool[i].last_errmsg[0] = '\0';
@@ -64,7 +64,7 @@ static int mjwf_alloc_handle(void) {
 }
 
 static void mjwf_free_slot(int h) {
-  if (h <= 0 || h >= MJW_MAXH) return;
+  if (h <= 0 || h >= MJWF_MAXH) return;
   g_pool[h].m = NULL;
   g_pool[h].d = NULL;
   g_pool[h].last_errno = 0;
@@ -99,19 +99,19 @@ EMSCRIPTEN_KEEPALIVE int mjwf_make_from_xml(const char* path) {
 }
 
 EMSCRIPTEN_KEEPALIVE void mjwf_free(int h) {
-  if (h <= 0 || h >= MJW_MAXH) return;
+  if (h <= 0 || h >= MJWF_MAXH) return;
   if (g_pool[h].d) { mj_deleteData(g_pool[h].d); g_pool[h].d = NULL; }
   if (g_pool[h].m) { mj_deleteModel(g_pool[h].m); g_pool[h].m = NULL; }
   mjwf_free_slot(h);
 }
 
 EMSCRIPTEN_KEEPALIVE int mjwf_valid(int h) {
-  return (h > 0 && h < MJW_MAXH && g_pool[h].m && g_pool[h].d) ? 1 : 0;
+  return (h > 0 && h < MJWF_MAXH && g_pool[h].m && g_pool[h].d) ? 1 : 0;
 }
 
 EMSCRIPTEN_KEEPALIVE int mjwf_step(int h, int n) {
   if (!mjwf_valid(h) || n <= 0) return 0;
-  MjwHandle* H = &g_pool[h];
+  MjwfHandle* H = &g_pool[h];
   for (int i = 0; i < n; ++i) {
     mj_step(H->m, H->d);
   }
@@ -120,14 +120,14 @@ EMSCRIPTEN_KEEPALIVE int mjwf_step(int h, int n) {
 
 EMSCRIPTEN_KEEPALIVE int mjwf_forward(int h) {
   if (!mjwf_valid(h)) return 0;
-  MjwHandle* H = &g_pool[h];
+  MjwfHandle* H = &g_pool[h];
   mj_forward(H->m, H->d);
   return 1;
 }
 
 EMSCRIPTEN_KEEPALIVE int mjwf_reset(int h) {
   if (!mjwf_valid(h)) return 0;
-  MjwHandle* H = &g_pool[h];
+  MjwfHandle* H = &g_pool[h];
   mj_resetData(H->m, H->d);
   return 1;
 }
@@ -146,7 +146,7 @@ EMSCRIPTEN_KEEPALIVE const char* mjwf_errmsg_last(int h) {
 EMSCRIPTEN_KEEPALIVE double mjwf_timestep(int h) { return mjwf_valid(h) ? g_pool[h].m->opt.timestep : 0.0; }
 EMSCRIPTEN_KEEPALIVE double mjwf_time(int h) { return mjwf_valid(h) ? g_pool[h].d->time : 0.0; }
 
-// Dims and pointer getters are generated from spec into mjw_exports_generated.c.
+// Dims and pointer getters are generated from spec into mjwf_exports_generated.c.
 // This file provides handle lifecycle and helpers only.
 
 static void mjwf_copy_doubles(double* dst, const double* src, int n) {
