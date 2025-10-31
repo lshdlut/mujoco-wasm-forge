@@ -198,3 +198,58 @@ mjData* _mjwf_data_of(int h) {
   if (!mjwf_valid(h)) return NULL;
   return g_pool[h].d;
 }
+
+// --- Contacts (on-demand scratch views) ---
+// Expose compact views for contact positions (ncon*3) and frames (ncon*9).
+// Buffers are lazily sized to m->nconmax and reused across calls.
+EMSCRIPTEN_KEEPALIVE int mjwf_ncon(int h) {
+  if (!mjwf_valid(h)) return 0;
+  return g_pool[h].d ? (int)(g_pool[h].d->ncon) : 0;
+}
+
+EMSCRIPTEN_KEEPALIVE double* mjwf_contact_pos_ptr(int h) {
+  if (!mjwf_valid(h)) return NULL;
+  mjModel* m = g_pool[h].m; mjData* d = g_pool[h].d;
+  static double* buf = NULL; static int cap = 0; // capacity in doubles
+  const int need = (int)(m->nconmax) * 3;
+  if (cap < need) { if (buf) free(buf); buf = (double*)malloc(sizeof(double) * need); cap = need; }
+  const int n = (int)(d->ncon);
+  for (int i = 0; i < n; ++i) {
+    const mjContact* c = &d->contact[i];
+    const int off = i * 3;
+    buf[off+0] = c->pos[0];
+    buf[off+1] = c->pos[1];
+    buf[off+2] = c->pos[2];
+  }
+  // zero tail (optional)
+  for (int k = n*3; k < need; ++k) buf[k] = 0.0;
+  return buf;
+}
+
+EMSCRIPTEN_KEEPALIVE double* mjwf_contact_frame_ptr(int h) {
+  if (!mjwf_valid(h)) return NULL;
+  mjModel* m = g_pool[h].m; mjData* d = g_pool[h].d;
+  static double* buf = NULL; static int cap = 0; // capacity in doubles
+  const int need = (int)(m->nconmax) * 9;
+  if (cap < need) { if (buf) free(buf); buf = (double*)malloc(sizeof(double) * need); cap = need; }
+  const int n = (int)(d->ncon);
+  for (int i = 0; i < n; ++i) {
+    const mjContact* c = &d->contact[i];
+    const int off = i * 9;
+    // row-major 3x3
+    for (int r = 0; r < 3; ++r) for (int ccol = 0; ccol < 3; ++ccol) buf[off + r*3 + ccol] = c->frame[r*3 + ccol];
+  }
+  for (int k = n*9; k < need; ++k) buf[k] = 0.0;
+  return buf;
+}
+
+// --- Convenience name helpers ---
+EMSCRIPTEN_KEEPALIVE const char* mjwf_jnt_name_of(int h, int id) {
+  if (!mjwf_valid(h)) return NULL;
+  return mj_id2name(g_pool[h].m, mjOBJ_JOINT, id);
+}
+
+EMSCRIPTEN_KEEPALIVE const char* mjwf_actuator_name_of(int h, int id) {
+  if (!mjwf_valid(h)) return NULL;
+  return mj_id2name(g_pool[h].m, mjOBJ_ACTUATOR, id);
+}

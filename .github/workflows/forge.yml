@@ -72,6 +72,21 @@ jobs:
             git clone --depth 1 --branch v${{ matrix.mjver }} https://github.com/google-deepmind/mujoco external/mujoco
           }
 
+      - name: Generate ABI (${{ matrix.mjver }})
+        shell: pwsh
+        run: |
+          pwsh scripts/mujoco_abi/run.ps1 -Repo "external/mujoco" -Ref "HEAD" -OutDir "dist/${{ matrix.mjver }}/abi"
+
+      - name: ABI Gate (${{ matrix.mjver }})
+        shell: bash
+        run: |
+          node scripts/mujoco_abi/ci_gate.mjs dist/${{ matrix.mjver }}/abi --threshold 95
+
+      - name: Generate exports whitelist/d.ts from ABI
+        shell: bash
+        run: |
+          node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/${{ matrix.mjver }}/abi --header ${{ matrix.app }}/include/mjwf_exports.h --version ${{ matrix.mjver }}
+
       - name: Patch MuJoCo for Emscripten localtime_r
         shell: bash
         run: |
@@ -90,6 +105,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
+          EXPORTS_JSON="$PWD/build/exports_${{ matrix.mjver }}.json"
           if [ "${{ matrix.short }}" = "337" ]; then
             # Stage-1 configure to fetch deps; allow failure
             emcmake cmake -S ${{ matrix.app }} -B build/${{ matrix.short }} \
@@ -98,7 +114,8 @@ jobs:
               -DMUJOCO_BUILD_PLUGINS=OFF \
               -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
               -DCMAKE_SKIP_INSTALL_RULES=ON \
-              -DLIBM_LIBRARY:STRING=-lm || true
+              -DLIBM_LIBRARY:STRING=-lm \
+              -DMJWF_EXPORTS_JSON="${EXPORTS_JSON}" || true
             # qhull static patch (Emscripten)
             QH="build/${{ matrix.short }}/_deps/qhull-src/CMakeLists.txt"
             if [ -f "$QH" ]; then
@@ -111,7 +128,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF \
             -DCMAKE_SKIP_INSTALL_RULES=ON \
-            -DLIBM_LIBRARY:STRING=-lm
+            -DLIBM_LIBRARY:STRING=-lm \
+            -DMJWF_EXPORTS_JSON="${EXPORTS_JSON}"
 
       - name: Build (WASM)
         shell: bash
@@ -137,6 +155,11 @@ jobs:
           cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.js dist/${{ matrix.mjver }}/mujoco.js
           cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm dist/${{ matrix.mjver }}/mujoco.wasm
           if [ -f build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map ]; then cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map dist/${{ matrix.mjver }}/mujoco.wasm.map; fi
+
+      - name: Exports check (post-build)
+        shell: bash
+        run: |
+          node scripts/mujoco_abi/check_exports.mjs dist/${{ matrix.mjver }}/abi dist/${{ matrix.mjver }}/mujoco.wasm dist/${{ matrix.mjver }}/abi/wrapper_exports.json
 
       - name: "[GATE:DTS] d.ts drift (skipped)"
         shell: bash

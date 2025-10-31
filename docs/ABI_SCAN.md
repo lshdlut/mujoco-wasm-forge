@@ -40,3 +40,16 @@ Diff
   - `node scripts/mujoco_abi/diff.mjs dist/3.3.6/abi dist/3.3.7/abi`
 - Produces `diff_report.json` with summary markdown and gate checks.
 
+Wrapper export workflow
+- Wrapper header (`wrappers/official_app_337/include/mjwf_exports.h`) is the single source of truth for the exported surface.
+- After running the ABI scan, generate the wrapper whitelist + d.ts:
+  - `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7`
+  - Output: `build/exports_3.3.7.json`, `build/types_3.3.7.d.ts`, and `dist/3.3.7/abi/wrapper_exports.json`.
+- CMake consumes `export_*.json` via `-DMJWF_EXPORTS_JSON=...` and emits `-sEXPORTED_FUNCTIONS=[...]`; runtime helpers (malloc, memset, stack helpers) are appended automatically.
+- Post-build verification (hard gate):
+  - `node scripts/mujoco_abi/check_exports.mjs dist/3.3.7/abi dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
+  - Fails when required symbols are missing or unexpected exports leak past the whitelist.
+
+WSL mirroring hints
+- Prefer `pwsh local_tools/wsl/run.ps1 -Sync` to mirror the Windows workspace into `~/dev/mujoco-wasm-forge`; the script now excludes `.git` and purges stale `?root?dev?...` folders automatically.
+- Avoid mixing Windows-native `Copy-Item`/`cp` with absolute WSL paths (e.g. `/root/...`); use `wsl.exe bash -lc 'cp ...'` instead to prevent Windows from materialising question-mark directories.

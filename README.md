@@ -59,6 +59,23 @@ Unified workflow entrance (GitHub Actions):
   - If a gate is not yet implemented in code, the workflow logs it as `skipped` without changing behavior.
 - Artifacts: upload `dist/` (+ `version.json`, `sbom.spdx.json`)
 
+### ABI-driven export pipeline
+
+Forge now treats the wrapper header as the single source of truth for the WASM surface. Every CI/local build runs the following steps before compilation:
+
+1. **Scan upstream headers**  
+   `pwsh scripts/mujoco_abi/run.ps1 -Ref 3.3.7 -OutDir dist/3.3.7/abi`
+2. **Generate wrapper whitelist + d.ts**  
+   `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7`
+   - Produces `build/exports_3.3.7.json`, `build/types_3.3.7.d.ts`, and `dist/3.3.7/abi/wrapper_exports.json`.
+3. **Build with whitelist**  
+   CMake consumes `-DMJWF_EXPORTS_JSON=...` and emits `-sEXPORTED_FUNCTIONS=[...]` (runtime helpers auto-appended).
+4. **Post-build export check (hard gate)**  
+   `node scripts/mujoco_abi/check_exports.mjs dist/3.3.7/abi dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
+   - Fails when required symbols are missing or unexpected exports leak past the whitelist.
+
+Refer to `docs/ABI_SCAN.md` for details and additional options.
+
 ## Versioning and tags
 
 - Stable releases use `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r3`, `forge-3.3.7-r2`.
@@ -99,6 +116,7 @@ Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflow
 Notes:
 - Run all builds and tests inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`), or use `-UseTemp` to build in `/tmp`. Avoid `/mnt/c/...` and OneDrive paths to prevent slow I/O and sync overhead. No files are written to Windows `~`.
 - Default parallel jobs is 6; override with `-Jobs` if needed.
+- The sync helper now excludes `.git` and purges accidental `?root?dev?...` folders that can appear if WSL paths are copied from Windows. Prefer `-Sync` over manual `cp /root/...` on Windows.
 
 ## Using artifacts in other repos (e.g., mujoco-wasm-play)
 

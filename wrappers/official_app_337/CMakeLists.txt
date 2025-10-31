@@ -46,10 +46,38 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 
   add_dependencies(mujoco_wasm337 mujoco)
 
-  # Lean runtime: ES6, modularize, multi-env; keep FS and runtime helpers for JS side
-  set_target_properties(mujoco_wasm337 PROPERTIES
-    LINK_FLAGS "-s WASM=1 -s STACK_SIZE=5MB -s INITIAL_MEMORY=134217728 -s MAXIMUM_MEMORY=536870912 -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT=web,worker,node -s ASSERTIONS=1 -s EXPORT_ES6=1 -s MODULARIZE=1 -s FORCE_FILESYSTEM=1 -s EXPORTED_RUNTIME_METHODS=['FS','MEMFS','cwrap','ccall'] -s DISABLE_EXCEPTION_CATCHING=1 -s EXPORT_NAME=load_mujoco -Oz -flto"
-  )
+  set(MJWF_LINK_FLAGS "-s WASM=1 -s STACK_SIZE=5MB -s INITIAL_MEMORY=134217728 -s MAXIMUM_MEMORY=536870912 -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT=web,worker,node -s ASSERTIONS=1 -s EXPORT_ES6=1 -s MODULARIZE=1 -s FORCE_FILESYSTEM=1 -s EXPORTED_RUNTIME_METHODS=['FS','MEMFS','cwrap','ccall'] -s DISABLE_EXCEPTION_CATCHING=1 -s EXPORT_NAME=load_mujoco -Oz -flto")
+
+  if (DEFINED MJWF_EXPORTS_JSON AND EXISTS "${MJWF_EXPORTS_JSON}")
+    file(READ "${MJWF_EXPORTS_JSON}" MJWF_EXPORTS_JSON_TEXT)
+    string(JSON MJWF_EXPORTS_LEN LENGTH "${MJWF_EXPORTS_JSON_TEXT}" required)
+    if (MJWF_EXPORTS_LEN GREATER 0)
+      set(MJWF_EXPORTS_LIST)
+      math(EXPR MJWF_EXPORTS_LAST "${MJWF_EXPORTS_LEN}-1")
+      foreach(idx RANGE 0 ${MJWF_EXPORTS_LAST})
+        string(JSON MJWF_EXPORT_NAME GET "${MJWF_EXPORTS_JSON_TEXT}" required ${idx})
+        list(APPEND MJWF_EXPORTS_LIST "\"_${MJWF_EXPORT_NAME}\"")
+      endforeach()
+      string(JSON MJWF_RUNTIME_LEN LENGTH "${MJWF_EXPORTS_JSON_TEXT}" runtime_keep)
+      if (MJWF_RUNTIME_LEN GREATER 0)
+        math(EXPR MJWF_RUNTIME_LAST "${MJWF_RUNTIME_LEN}-1")
+        foreach(ridx RANGE 0 ${MJWF_RUNTIME_LAST})
+          string(JSON MJWF_RUNTIME_NAME GET "${MJWF_EXPORTS_JSON_TEXT}" runtime_keep ${ridx})
+          list(APPEND MJWF_EXPORTS_LIST "\"${MJWF_RUNTIME_NAME}\"")
+        endforeach()
+      endif()
+      list(REMOVE_DUPLICATES MJWF_EXPORTS_LIST)
+      string(JOIN "," MJWF_EXPORTS_JOINED ${MJWF_EXPORTS_LIST})
+      set(MJWF_LINK_FLAGS "${MJWF_LINK_FLAGS} -sEXPORTED_FUNCTIONS=[${MJWF_EXPORTS_JOINED}]")
+      message(STATUS "mjwf: using EXPORTED_FUNCTIONS from ${MJWF_EXPORTS_JSON} (count=${MJWF_EXPORTS_LEN})")
+    else()
+      message(WARNING "mjwf: exports list empty in ${MJWF_EXPORTS_JSON}")
+    endif()
+  else()
+    message(STATUS "mjwf: MJWF_EXPORTS_JSON not provided; using default link exports")
+  endif()
+
+  set_target_properties(mujoco_wasm337 PROPERTIES LINK_FLAGS "${MJWF_LINK_FLAGS}")
   target_link_libraries(mujoco_wasm337 PRIVATE mujoco)
 endif()
 

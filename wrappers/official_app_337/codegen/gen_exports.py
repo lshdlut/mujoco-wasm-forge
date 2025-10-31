@@ -49,20 +49,33 @@ extern mjModel* _mjwf_model_of(int h);
 extern mjData*  _mjwf_data_of(int h);
 """.lstrip()
 
+def _ctype_for(dtype: str) -> str:
+    if dtype == 'f64':
+        return 'double*'
+    if dtype == 'f32':
+        return 'float*'
+    if dtype == 'i32':
+        return 'int32_t*'
+    # default to int32 pointer to be conservative
+    return 'int32_t*'
+
 def emit_view_decl(name, dtype):
-    cty = 'double*' if dtype == 'f64' else 'int32_t*'
+    cty = _ctype_for(dtype)
     return f"EMSCRIPTEN_KEEPALIVE {cty} mjwf_{name}_ptr(int h);\n"
 
 def emit_dim_decl(name):
     return f"EMSCRIPTEN_KEEPALIVE int mjwf_{name}(int h);\n"
 
 def emit_view_impl(name, src, dtype):
-    cty = 'double*' if dtype == 'f64' else 'int32_t*'
+    cty = _ctype_for(dtype)
+    # pick guard based on src owner (m-> or d->)
+    owner = 'd' if str(src).strip().startswith('d->') else 'm'
     return (
         f"EMSCRIPTEN_KEEPALIVE {cty} mjwf_{name}_ptr(int h) {{\n"
         f"  if (!mjwf_valid(h)) return NULL;\n"
-        f"  mjData* d = _mjwf_data_of(h);\n"
-        f"  return d ? ({cty})({src.replace('d->','d->')}) : NULL;\n"
+        f"  mjModel* m = _mjwf_model_of(h);\n"
+        f"  mjData* d  = _mjwf_data_of(h);\n"
+        f"  return {owner} ? ({cty})({src}) : NULL;\n"
         f"}}\n\n"
     )
 

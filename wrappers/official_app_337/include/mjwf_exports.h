@@ -43,6 +43,12 @@ EMSCRIPTEN_KEEPALIVE int mjwf_nq(int h);
 EMSCRIPTEN_KEEPALIVE int mjwf_nv(int h);
 EMSCRIPTEN_KEEPALIVE int mjwf_nu(int h);
 EMSCRIPTEN_KEEPALIVE int mjwf_nsensordata(int h);
+// Extended dims (model)
+EMSCRIPTEN_KEEPALIVE int mjwf_ngeom(int h);
+EMSCRIPTEN_KEEPALIVE int mjwf_nmat(int h);
+EMSCRIPTEN_KEEPALIVE int mjwf_njnt(int h);
+// Contacts (data)
+EMSCRIPTEN_KEEPALIVE int mjwf_ncon(int h);
 
 // ----- Time -----
 EMSCRIPTEN_KEEPALIVE double mjwf_timestep(int h);
@@ -53,6 +59,24 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_qpos_ptr(int h);
 EMSCRIPTEN_KEEPALIVE double* mjwf_qvel_ptr(int h);
 EMSCRIPTEN_KEEPALIVE double* mjwf_ctrl_ptr(int h);
 EMSCRIPTEN_KEEPALIVE double* mjwf_sensordata_ptr(int h);
+// Geometry pose
+EMSCRIPTEN_KEEPALIVE double* mjwf_geom_xpos_ptr(int h);
+EMSCRIPTEN_KEEPALIVE double* mjwf_geom_xmat_ptr(int h);
+// Geometry attributes
+EMSCRIPTEN_KEEPALIVE double*   mjwf_geom_size_ptr(int h);
+EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_geom_type_ptr(int h);
+EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_geom_matid_ptr(int h);
+// Materials
+EMSCRIPTEN_KEEPALIVE float*    mjwf_mat_rgba_ptr(int h);
+// Joints
+EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_jnt_type_ptr(int h);
+EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_jnt_qposadr_ptr(int h);
+EMSCRIPTEN_KEEPALIVE double*   mjwf_jnt_range_ptr(int h);
+// Actuators
+EMSCRIPTEN_KEEPALIVE double*   mjwf_actuator_ctrlrange_ptr(int h);
+// Contacts
+EMSCRIPTEN_KEEPALIVE double*   mjwf_contact_pos_ptr(int h);
+EMSCRIPTEN_KEEPALIVE double*   mjwf_contact_frame_ptr(int h);
 
 // ----- Writers (rw views) -----
 EMSCRIPTEN_KEEPALIVE void mjwf_set_qpos(int h, const double* buf, int n);
@@ -63,6 +87,9 @@ EMSCRIPTEN_KEEPALIVE void mjwf_set_ctrl(int h, const double* buf, int n);
 // type uses mjOBJ_* enums from MuJoCo
 EMSCRIPTEN_KEEPALIVE const char* mjwf_name_at(int h, int type, int id);
 EMSCRIPTEN_KEEPALIVE int         mjwf_name2id(int h, int type, const char* name);
+// Convenience: specialized name helpers
+EMSCRIPTEN_KEEPALIVE const char* mjwf_jnt_name_of(int h, int id);
+EMSCRIPTEN_KEEPALIVE const char* mjwf_actuator_name_of(int h, int id);
 
 #ifdef __cplusplus
 }

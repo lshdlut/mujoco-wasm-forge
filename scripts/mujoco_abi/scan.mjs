@@ -374,16 +374,64 @@ function writeJson(outDir, name, obj) {
 function buildGate() {
   return {
     required: [
-      'mj_loadXML', 'mj_deleteModel', 'mj_makeData', 'mj_deleteData',
-      'mj_resetData', 'mj_step', 'mj_forward', 'mj_name2id', 'mj_id2name',
-      'mj_defaultVFS', 'mj_addFileVFS', 'mj_deleteVFS', 'mj_versionString'
+      'mjwf_abi_version',
+      'mjwf_layout_hash',
+      'mjwf_version_string',
+      'mjwf_make_from_xml',
+      'mjwf_free',
+      'mjwf_valid',
+      'mjwf_step',
+      'mjwf_forward',
+      'mjwf_reset',
+      'mjwf_time',
+      'mjwf_timestep',
+      'mjwf_errno_last',
+      'mjwf_errno_last_global',
+      'mjwf_errmsg_last',
+      'mjwf_errmsg_last_global',
+      'mjwf_nq',
+      'mjwf_nv',
+      'mjwf_nu',
+      'mjwf_nsensordata',
+      'mjwf_ngeom',
+      'mjwf_nmat',
+      'mjwf_njnt',
+      'mjwf_ncon',
+      'mjwf_qpos_ptr',
+      'mjwf_qvel_ptr',
+      'mjwf_ctrl_ptr',
+      'mjwf_sensordata_ptr',
+      'mjwf_geom_xpos_ptr',
+      'mjwf_geom_xmat_ptr',
+      'mjwf_geom_size_ptr',
+      'mjwf_geom_type_ptr',
+      'mjwf_geom_matid_ptr',
+      'mjwf_mat_rgba_ptr',
+      'mjwf_jnt_type_ptr',
+      'mjwf_jnt_qposadr_ptr',
+      'mjwf_jnt_range_ptr',
+      'mjwf_actuator_ctrlrange_ptr',
+      'mjwf_contact_pos_ptr',
+      'mjwf_contact_frame_ptr',
+      'mjwf_name_at',
+      'mjwf_name2id',
+      'mjwf_jnt_name_of',
+      'mjwf_actuator_name_of'
     ],
     optional: [
-      'mj_layoutHash', 'mj_inverse', 'mj_ray*', 'mjspec_*', 'solver_stats', 'mj_*Sub*'
+      'mjwf_set_qpos',
+      'mjwf_set_qvel',
+      'mjwf_set_ctrl',
+      'mjwf_qpos0',
+      'mjwf_qvel0',
+      'mjwf_step_demo',
+      'mjwf_init'
     ],
     excluded: [
       // Native visualization/UI/GL surface not exported to Web
-      'mjv_*', 'mjr_*', 'mjui_*', 'mjthread_*'
+      'mjv_*', 'mjr_*', 'mjui_*', 'mjthread_*',
+      // Legacy direct C API: not exported in forge wrappers
+      'mj_*', 'mju_*', 'mjs_*'
     ]
   };
 }
