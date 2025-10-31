@@ -31,3 +31,6 @@ tmp_*
 coverage/**
 scripts/*_local.*
 wrappers/**/mjwf_exports_generated.*
+
+wrappers/auto/
+
