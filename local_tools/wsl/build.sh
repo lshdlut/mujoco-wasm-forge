@@ -134,6 +134,12 @@ Quality gates:
 - [GATE:RUN] pass
 EOF
   fi
+  if [[ -f "dist/${mjver}/abi/wrapper_exports.json" ]]; then
+    node scripts/mujoco_abi/check_exports.mjs "dist/${mjver}/abi" "dist/${mjver}/mujoco.wasm" "dist/${mjver}/abi/wrapper_exports.json"
+    node scripts/mujoco_abi/nm_coverage.mjs "dist/${mjver}/mujoco.wasm" "dist/${mjver}/abi/wrapper_exports.json" --out "dist/${mjver}/abi/nm_coverage.json"
+  else
+    warn "dist/${mjver}/abi/wrapper_exports.json missing; skipping export coverage checks"
+  fi
   log "Artifacts in dist/${mjver}:"; ls -l "dist/${mjver}" || true
 }
 

@@ -155,6 +155,11 @@ jobs:
         run: |
           node scripts/mujoco_abi/check_exports.mjs dist/${{ matrix.mjver }}/abi dist/${{ matrix.mjver }}/mujoco.wasm dist/${{ matrix.mjver }}/abi/wrapper_exports.json
 
+      - name: NM coverage (post-build)
+        shell: bash
+        run: |
+          node scripts/mujoco_abi/nm_coverage.mjs dist/${{ matrix.mjver }}/mujoco.wasm dist/${{ matrix.mjver }}/abi/wrapper_exports.json --out dist/${{ matrix.mjver }}/abi/nm_coverage.json
+
       - name: "[GATE:DTS] d.ts drift (skipped)"
         shell: bash
         run: echo "[GATE:DTS] skipped (d.ts generation tooling not wired in this repo)"

@@ -61,18 +61,22 @@ Unified workflow entrance (GitHub Actions):
 
 ### ABI-driven export pipeline
 
-Forge now treats the wrapper header as the single source of truth for the WASM surface. Every CI/local build runs the following steps before compilation:
+Forge now treats auto-generated wrappers as the single source of truth for the WASM surface. Every CI/local build executes the following pipeline:
 
-1. **Scan upstream headers**  
+1. **Auto-generate wrappers**  
+   `node scripts/mujoco_abi/autogen_wrappers.mjs --include external/mujoco/include --header wrappers/auto/mjwf_auto_exports.h --source wrappers/auto/mjwf_auto_exports.c`  
+   (invoked automatically by CMake; no manual action required)
+2. **Generate ABI metadata**  
    `pwsh scripts/mujoco_abi/run.ps1 -Ref 3.3.7 -OutDir dist/3.3.7/abi`
-2. **Generate wrapper whitelist + d.ts**  
-   `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7`
-   - Produces `build/exports_3.3.7.json`, `build/types_3.3.7.d.ts`, and `dist/3.3.7/abi/wrapper_exports.json`.
-3. **Build with whitelist**  
-   CMake consumes `-DMJWF_EXPORTS_JSON=...` and emits `-sEXPORTED_FUNCTIONS=[...]` (runtime helpers auto-appended).
-4. **Post-build export check (hard gate)**  
+3. **Generate wrapper whitelist + d.ts**  
+   `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/auto/mjwf_auto_exports.h --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7`  
+   Produces `build/exports_3.3.7.json`, `build/exports_3.3.7.lst`, `build/types_3.3.7.d.ts`, and `dist/3.3.7/abi/wrapper_exports.json`.
+4. **Build with whitelist**  
+   CMake wires the generated files and passes `-sEXPORTED_FUNCTIONS=@build/exports_3.3.7.lst` (runtime helpers auto-appended).
+5. **Post-build export check (hard gate)**  
    `node scripts/mujoco_abi/check_exports.mjs dist/3.3.7/abi dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
-   - Fails when required symbols are missing or unexpected exports leak past the whitelist.
+6. **nm coverage check (hard gate)**  
+   `node scripts/mujoco_abi/nm_coverage.mjs dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
 
 Refer to `docs/ABI_SCAN.md` for details and additional options.
 

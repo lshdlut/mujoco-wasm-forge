@@ -1,82 +1,114 @@
-// Post-build export surface checker
-// Usage: node scripts/mujoco_abi/check_exports.mjs dist/<ver>/abi dist/<ver>/mujoco.wasm
-// Compares the expected export set (from ABI + exposure) with actual WASM exports.
-// Fails on required-missing or excluded-leaks. Optional-missing is a warning.
+#!/usr/bin/env node
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+// Validate WASM export surface against expected wrapper whitelist.
+// Usage: node scripts/mujoco_abi/check_exports.mjs <abiDir> <wasmPath> <expectedJson>
+
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join as pathJoin, resolve as pathResolve, dirname } from 'node:path';
 
-function load(p) { return JSON.parse(readFileSync(p, 'utf8')); }
 function ensureDir(p) { mkdirSync(p, { recursive: true }); }
 
-function toSet(arr) { const s = new Set(); for (const a of arr) s.add(a); return s; }
+function loadJson(p) { return JSON.parse(readFileSync(p, 'utf8')); }
+
+function normalizeExport(name) {
+  if (name.startsWith('_')) return name.slice(1);
+  return name;
+}
 
 function main() {
   const abiDir = pathResolve(process.argv[2] || '');
   const wasmPath = pathResolve(process.argv[3] || '');
-  const expectedPath = process.argv[4] ? pathResolve(process.argv[4]) : null;
-  if (!abiDir || !wasmPath) {
-    console.error('Usage: node scripts/mujoco_abi/check_exports.mjs <abiDir> <wasmPath> [expected.json]');
+  const expectedPath = pathResolve(process.argv[4] || '');
+  if (!abiDir || !wasmPath || !expectedPath) {
+    console.error('Usage: node scripts/mujoco_abi/check_exports.mjs <abiDir> <wasmPath> <expectedJson>');
     process.exit(2);
   }
 
-  // expected sets
-  const expRequired = new Set();
-  const expOptional = new Set();
-  const expExcluded = new Set();
-  const expIgnore = new Set();
-  if (expectedPath && existsSync(expectedPath)) {
-    const cfg = load(expectedPath);
-    for (const name of cfg.required || []) expRequired.add(name);
-    for (const name of cfg.optional || []) expOptional.add(name);
-    for (const name of cfg.excluded || []) expExcluded.add(name);
-    for (const name of cfg.runtime_keep || []) expIgnore.add(name);
-  } else {
-    const fjson = load(pathJoin(abiDir, 'functions.json'));
-    const functions = fjson.functions || [];
-    for (const f of functions) {
-      const name = f.name;
-      if (f.exposure === 'excluded') { expExcluded.add(name); continue; }
-      if (f.gate === 'required') expRequired.add(name);
-      else if (f.gate === 'optional') expOptional.add(name);
+  const expected = loadJson(expectedPath);
+  const required = new Set(expected.required || expected.exports || []);
+  const optional = new Set(expected.optional || []);
+  const runtimeKeep = new Set((expected.runtime_keep || []).map((n) => n.replace(/^_/, '')));
+
+  const wasmBytes = readFileSync(wasmPath);
+  const module = new WebAssembly.Module(wasmBytes);
+  const exports = WebAssembly.Module.exports(module).map((e) => e.name);
+
+  const actualWrappers = new Set();
+  const unexpected = [];
+
+  const allowedRuntime = new Set([
+    '__wasm_call_ctors',
+    '__wasm_apply_data_relocations',
+    '__wasm_init_memory_flag',
+    '__stack_pointer',
+    '__heap_base',
+    '__data_end',
+    '__global_base',
+    '__memory_base',
+    '__table_base',
+    '__indirect_function_table',
+    'memory',
+    'stackSave',
+    'stackRestore',
+    'stackAlloc',
+    'setThrew',
+    'setTempRet0',
+    'emscripten_stack_get_current',
+    'emscripten_stack_get_end',
+    'emscripten_stack_get_base',
+    'emscripten_stack_init',
+    'emscripten_stack_set_limits',
+  ]);
+
+  for (const name of exports) {
+    const plain = normalizeExport(name);
+    if (plain.startsWith('mjwf_')) {
+      actualWrappers.add(plain);
+      continue;
+    }
+    if (runtimeKeep.has(plain) || runtimeKeep.has(name)) continue;
+    if (allowedRuntime.has(name) || allowedRuntime.has(plain)) continue;
+    if (/^_?mj(v|r|ui)_/.test(name) || /^mj(v|r|ui)_/.test(plain)) {
+      unexpected.push(name);
+      continue;
+    }
+    if (plain.startsWith('mj') || plain.startsWith('mju_') || plain.startsWith('mjs_')) {
+      unexpected.push(name);
     }
   }
 
-  // WASM exports
-  const wasmBytes = readFileSync(wasmPath);
-  const mod = new WebAssembly.Module(wasmBytes);
-  const exp = WebAssembly.Module.exports(mod).map(e => e.name);
-  const expSet = toSet(exp);
-
-  // Helper to check both with and without leading underscore
-  const has = (nm) => expSet.has('_' + nm) || expSet.has(nm);
-
-  const missingRequired = Array.from(expRequired).filter(n => !has(n)).sort();
-  const missingOptional = Array.from(expOptional).filter(n => !has(n)).sort();
-  const leakedExcluded = Array.from(expExcluded).filter(n => has(n) && !expIgnore.has(n) && !expIgnore.has('_' + n)).sort();
+  const missingRequired = Array.from(required).filter((sym) => !actualWrappers.has(sym)).sort();
+  const missingOptional = Array.from(optional).filter((sym) => !actualWrappers.has(sym)).sort();
 
   const report = {
     wasm: wasmPath,
     expected: {
-      required: Array.from(expRequired).length,
-      optional: Array.from(expOptional).length,
-      excluded: Array.from(expExcluded).length,
+      required: required.size,
+      optional: optional.size,
+      runtime_keep: runtimeKeep.size,
     },
-    actual: { exportCount: exp.length },
+    actual: {
+      exportCount: exports.length,
+      wrappers: actualWrappers.size,
+    },
     missingRequired,
     missingOptional,
-    leakedExcluded,
-    ok: (missingRequired.length === 0) && (leakedExcluded.length === 0),
+    unexpected,
+    ok: missingRequired.length === 0 && unexpected.length === 0,
   };
 
   const outPath = pathJoin(abiDir, 'exports_check.json');
   ensureDir(dirname(outPath));
   writeFileSync(outPath, JSON.stringify(report, null, 2));
   console.log(`[exports-check] wrote ${outPath}`);
-  console.log(`[exports-check] status ok=${report.ok} missingRequired=${missingRequired.length} leakedExcluded=${leakedExcluded.length}`);
+  console.log(`[exports-check] status ok=${report.ok} missingRequired=${missingRequired.length} unexpected=${unexpected.length}`);
   if (missingOptional.length) {
     console.warn(`[exports-check] optional exports missing (${missingOptional.length}):`, missingOptional.slice(0, 20));
     if (missingOptional.length > 20) console.warn('...');
+  }
+  if (unexpected.length) {
+    console.error('[exports-check] unexpected exports:', unexpected.slice(0, 20));
+    if (unexpected.length > 20) console.error('...');
   }
   if (!report.ok) process.exit(1);
 }
