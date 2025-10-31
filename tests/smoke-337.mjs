@@ -5,12 +5,12 @@ import fs from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distDir = path.resolve(__dirname, '../dist');
-const wasmURL = path.join(distDir, 'mujoco-3.3.7.wasm');
-const jsURL = path.join(distDir, 'mujoco-3.3.7.js');
+const distDir = path.resolve(__dirname, '../dist/3.3.7');
+const wasmURL = path.join(distDir, 'mujoco.wasm');
+const jsURL = path.join(distDir, 'mujoco.js');
 
-assert.ok(fs.existsSync(jsURL), 'dist/mujoco-3.3.7.js missing');
-assert.ok(fs.existsSync(wasmURL), 'dist/mujoco-3.3.7.wasm missing');
+assert.ok(fs.existsSync(jsURL), 'dist/3.3.7/mujoco.js missing');
+assert.ok(fs.existsSync(wasmURL), 'dist/3.3.7/mujoco.wasm missing');
 
 const modFactory = (await import(pathToFileURL(jsURL).href)).default;
 const Module = await modFactory({

@@ -12,10 +12,10 @@ import { execFile } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const distDir = path.resolve(rootDir, 'dist');
+const distDir = path.resolve(rootDir, 'dist', '3.3.7');
 
-const wasmURL = path.join(distDir, 'mujoco-3.3.7.wasm');
-const jsURL = path.join(distDir, 'mujoco-3.3.7.js');
+const wasmURL = path.join(distDir, 'mujoco.wasm');
+const jsURL = path.join(distDir, 'mujoco.js');
 
 // Path to native harness from workflow build
 const nativeBin = process.env.MJ_NATIVE_BIN || path.resolve(rootDir, 'build', '337_native', '_wasm', 'mujoco_compare337');
@@ -58,8 +58,8 @@ assert.ok(Array.isArray(golden.qpos0) && golden.qpos0.length === steps, 'native 
 assert.ok(Array.isArray(golden.qvel0) && golden.qvel0.length === steps, 'native qvel0 length mismatch');
 
 // 2) Run WASM and collect series
-assert.ok(fs.existsSync(jsURL), 'dist JS missing');
-assert.ok(fs.existsSync(wasmURL), 'dist WASM missing');
+assert.ok(fs.existsSync(jsURL), 'dist/3.3.7 JS missing');
+assert.ok(fs.existsSync(wasmURL), 'dist/3.3.7 WASM missing');
 
 const modFactory = (await import(pathToFileURL(jsURL).href)).default;
 const Module = await modFactory({ locateFile: (p) => (p.endsWith('.wasm') ? wasmURL : p) });

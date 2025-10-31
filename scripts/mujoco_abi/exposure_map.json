@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "mjv_*": "excluded",
+    "mjr_*": "excluded",
+    "mjui_*": "excluded",
+    "mjthread_*": "excluded",
+    "mjs_*": "caution",
+    "mj_*Plugin*": "caution"
+  },
+  "enums": {
+    "mjtObj": "exposed",
+    "mjtGeom": "exposed",
+    "mjtDisableBit": "exposed",
+    "mjtEnableBit": "exposed",
+    "mjtPluginCapability": "caution"
+  }
+}
+

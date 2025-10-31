@@ -1,31 +1,40 @@
 # mujoco-wasm-forge
 
-## Notes
+English | Chinese
 
-- Front-end demo: on-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git
+可复现的 MuJoCo → WebAssembly 构建流水线。本仓库聚焦：从 MuJoCo 标签产出版本化的 WASM 工件，并配套最小的 smoke/regression 验证与机器可读元数据。
 
-English | 简体中文
+- 输入：MuJoCo 标签（如 3.2.5、3.3.7）
+- 输出：`dist/<version>/{mujoco.js,mujoco.wasm[,mujoco.wasm.map],version.json,sbom.spdx.json}`
+- 工具链：固定 Emscripten；最小导出；不包含渲染 UI
 
-本仓库提供可复现的 MuJoCo → WebAssembly 构建产线。目标是在固定工具链与接口的前提下，从上游 MuJoCo 标签（3.2.5 / 3.3.7）产出版本化的 WASM 工件，并附最小的运行验证与机器可读元数据。
+状态：可用。CI 构建单模块 WASM + glue JS，运行 Node smoke + 原生对比回归，并上传工件。
 
-- 输入：MuJoCo 标签（3.2.5、3.3.7）
-- 输出：`dist/mujoco-<version>.{js,wasm[,wasm.map]}`，`dist/version.json`，`dist/sbom.spdx.json`
-- 工具链：固定 Emscripten；最小导出；不包含前端渲染 UI
+仓库地址：https://github.com/lshdlut/mujoco-wasm-forge
+
+## 工件（Artifacts）
+
+CI（以及启用元数据的规范本地构建）会产出：
+
+- `dist/<mjVer>/mujoco.wasm` - WebAssembly 二进制
+- `dist/<mjVer>/mujoco.js` - ES 模块工厂（`createMuJoCo`）
+- `dist/<mjVer>/mujoco.wasm.map` - 可选 source map
+- `dist/<mjVer>/version.json` - 元数据（MuJoCo 版本、emscripten 版本、大小、sha256、git sha）
+- `dist/<mjVer>/sbom.spdx.json` - SPDX SBOM（轻量）
 
 ## 快速开始（Node ESM）
 
 ```
-import createMuJoCo from './mujoco-3.2.5.js';
+import createMuJoCo from './dist/3.2.5/mujoco.js';
 
 const Module = await createMuJoCo({
-  locateFile: (p) => (p.endsWith('.wasm') ? './mujoco-3.2.5.wasm' : p),
+  locateFile: (p) => (p.endsWith('.wasm') ? './dist/3.2.5/mujoco.wasm' : p),
 });
 
-// 最小摆模型 XML
+// 迷你摆模型 XML
 const xml = `<?xml version="1.0"?>\n<mujoco model="pendulum">\n  <option timestep="0.002" gravity="0 0 -9.81"/>\n  <worldbody>\n    <body name="link" pos="0 0 0.1">\n      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.01"/>\n      <geom type="capsule" fromto="0 0 0 0 0 0.2" size="0.02" density="1000"/>\n    </body>\n  </worldbody>\n</mujoco>`;
 
 Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
-// 句柄式接口统一前缀（mjwf_）
 const init = Module.cwrap('mjwf_init','number',['string']);
 const step = Module.cwrap('mjwf_step_demo', null, ['number']);
 const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
@@ -37,50 +46,37 @@ const after = qpos0();
 console.log({ before, after });
 ```
 
-## 工作流与复现性
+## CI 与可复现性
 
-- 单一入口：`.github/workflows/forge.yml` 使用矩阵覆盖 3.2.5 与 3.3.7
+- 统一入口：`.github/workflows/forge.yml`（矩阵覆盖 3.2.5/3.3.7）
 - 固定工具链：emsdk 3.1.55、Node 20
-- 两阶段配置（仅 3.3.7）：为在 Emscripten 下静态链接 qhull，先配置拉依赖，再对 qhull CMake 强制 STATIC/关闭 BUILD_SHARED_LIBS，最后二次配置
-- 三道闸门（语义）：
-  - [GATE:SYM] 从 JSON 校验导出符号完整性
-  - [GATE:DTS] 由规格生成 d.ts，并与仓库版本对比，无漂移
-  - [GATE:RUN] 运行时 SMOKE/回归/扩展 SMOKE（mesh）
-- 说明：若某闸门尚未在脚本中实现，工作流以 `skipped` 日志标注，不改变默认行为
-- 产物：上传 `dist/`（含 `version.json`、`sbom.spdx.json`）
+- 3.3.7 采用“两阶段配置”强制 qhull 静态化（SHARED->STATIC，BUILD_SHARED_LIBS=OFF）；3.2.5 不需要该补丁
+- 质量闸：`[GATE:SYM]` 符号校验、`[GATE:DTS]` d.ts 漂移、`[GATE:RUN]` 运行时 smoke/regression/mesh-smoke
+- 工件：上传 `dist/<mjVer>/`（含 `version.json`、`sbom.spdx.json`）
 
-## 本地构建
+## 本地构建（规范）
 
-前置：Emscripten SDK (3.1.55)、CMake、Node 20。
+推荐：WSL Ubuntu 22.04（或 Docker）完整复刻 CI 配方。
 
-```
-git clone https://github.com/google-deepmind/mujoco external/mujoco -b v3.2.5 --depth=1
-emcmake cmake -S wrappers/official_app_325 -B build/325 -DCMAKE_BUILD_TYPE=Release \
-  -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF
-cmake --build build/325 -j
-```
+- Windows 侧（仓库根执行）：
+  - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20`
 
-工作流默认把工件放在 `dist/`；本地跑时可从 `build/<ver>/_wasm/` 拷贝。
+- WSL 侧（等效）：
+  - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
+
+注意：3.3.7 需要两阶段配置以静态化 qhull；启用 `-Meta`/`META=1` 时会在 `dist/<mjVer>/` 生成与 CI 相同的元数据文件。
 
 ## 版本与标签
 
-- 稳定版采用 `forge-<mujocoVersion>-r<rev>`；当前推荐：`forge-3.2.5-r3`、`forge-3.3.7-r2`。
-- 预发布采用 `forge-<mujocoVersion>-rc.<n>`，标注为 Pre‑release。
-- 产物不可变；修订号递增（如 `-r2`）。
+- 稳定发布：`forge-<mujocoVersion>-r<rev>`，如 `forge-3.2.5-r3`、`forge-3.3.7-r2`
+- 预发布：`forge-<mujocoVersion>-rc.<n>`，并标记为 pre-release
+- 工件不可变；修订以 `-rN` 形式发布
 
-### 发布状态（当前）
-- 推荐（稳定）：
-  - `forge-3.2.5-r3`
-  - `forge-3.3.7-r2`
-- 已废弃（被统一入口替代）：
-  - `forge-3.2.5-r1`、`forge-3.2.5-r2`
-  - `forge-3.3.7-r1`、所有 `forge-3.3.7-rc.*`
+## 回归基线
 
-## 元数据 schema（对齐方向）
+- 基线：`native-3.2.5` ↔ `wasm-3.2.5`，`native-3.3.7` ↔ `wasm-3.3.7`
+- 确定性：固定步长、无随机、关闭 warmstart
 
-- 文件：`dist/version.json`
-- 字段（最小）：
-  - `mujocoVersion`、`emscripten`、`buildTime`、`gitSha`
-  - 当前工作流包含的 `features/size/hash` 区段
-  - 后续对齐方向：补充 `emsdk_root`、`emsdk_node`、`emsdk_python` 与 `flags`（不改变当前行为）
+## 说明
 
+- 前端演示（进行中）：https://github.com/lshdlut/mujoco-wasm-play.git

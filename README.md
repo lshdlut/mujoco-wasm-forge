@@ -1,44 +1,36 @@
 # mujoco-wasm-forge
 
-English | [简体中文](README.zh-CN.md)
+English | [Chinese](README.zh-CN.md)
 
-Reproducible build pipeline for compiling MuJoCo to WebAssembly. This repo focuses on producing versioned WASM artifacts from MuJoCo tags, together with minimal smoke/regression validation and machine‑readable metadata.
+Reproducible build pipeline for compiling MuJoCo to WebAssembly. This repo focuses on producing versioned WASM artifacts from MuJoCo tags, together with minimal smoke/regression validation and machine-readable metadata.
 
-This repository is a fork/continuation of MuJoCo WASM efforts by stillonearth, zalo, and hashb. We acknowledge and build upon their ideas and prior work in the MuJoCo → WebAssembly space.
+This repository is a fork/continuation of MuJoCo to WebAssembly efforts by stillonearth, zalo, and hashb. We acknowledge and build upon their ideas and prior work in the MuJoCo to WebAssembly space.
 
 - Input: MuJoCo tag (e.g., 3.2.5, 3.3.7)
-- Output: `dist/mujoco-{version}.{js,wasm[,wasm.map]}`, `dist/version.json`, `dist/sbom.spdx.json`
+- Output: `dist/<version>/{mujoco.js,mujoco.wasm[,mujoco.wasm.map],version.json,sbom.spdx.json}`
 - Toolchain: pinned Emscripten; minimal exports; no rendering UI here
 
-Status: usable. CI builds a single‑module WASM + glue JS, runs Node smoke + a native‑vs‑wasm regression, and uploads artifacts.
+Status: usable. CI builds a single-module WASM + glue JS, runs Node smoke + a native-vs-wasm regression, and uploads artifacts.
 
 Repository: https://github.com/lshdlut/mujoco-wasm-forge
 
-## Acknowledgements
-
-This work builds on prior MuJoCo → WebAssembly exploration:
-
-- stillonearth: https://github.com/stillonearth/MuJoCo-WASM
-- zalo: https://github.com/zalo/mujoco_wasm
-- hashb: https://github.com/hashb/mujoco_web
-
 ## Artifacts
 
-After a successful build (locally or in CI), you get:
+CI (and canonical local builds using WSL with metadata enabled) produce:
 
-- `dist/mujoco-<mjVer>.wasm` — WebAssembly binary
-- `dist/mujoco-<mjVer>.js` — ES module factory (`createMuJoCo`)
-- `dist/mujoco-<mjVer>.wasm.map` — source map (optional)
-- `dist/version.json` — metadata (MuJoCo tag, emscripten ver, sizes, sha256, git sha)
-- `dist/sbom.spdx.json` — SPDX SBOM (lightweight)
+- `dist/<mjVer>/mujoco.wasm` - WebAssembly binary
+- `dist/<mjVer>/mujoco.js` - ES module factory (`createMuJoCo`)
+- `dist/<mjVer>/mujoco.wasm.map` - source map (optional)
+- `dist/<mjVer>/version.json` - metadata (MuJoCo tag, emscripten version, sizes, sha256, git sha)
+- `dist/<mjVer>/sbom.spdx.json` - SPDX SBOM (lightweight)
 
 ## Quick start (Node ESM)
 
 ```
-import createMuJoCo from './mujoco-3.2.5.js';
+import createMuJoCo from './dist/3.2.5/mujoco.js';
 
 const Module = await createMuJoCo({
-  locateFile: (p) => (p.endsWith('.wasm') ? './mujoco-3.2.5.wasm' : p),
+  locateFile: (p) => (p.endsWith('.wasm') ? './dist/3.2.5/mujoco.wasm' : p),
 });
 
 // Minimal pendulum XML
@@ -62,15 +54,15 @@ Unified workflow entrance (GitHub Actions):
 
 - Single entry `.github/workflows/forge.yml` with a version matrix (3.2.5, 3.3.7)
 - Pinned emsdk (3.1.55) and Node (20)
-- Two‑stage configure for 3.3.7 to statically link qhull (SHARED→STATIC, BUILD_SHARED_LIBS=OFF); 3.2.5 does not require the qhull patch
-- Three gates (by intent): [GATE:SYM] Sym‑from‑JSON → [GATE:DTS] d.ts drift → [GATE:RUN] runtime smoke/regression/mesh‑smoke
+- Two-stage configure for 3.3.7 to statically link qhull (replace SHARED->STATIC and force BUILD_SHARED_LIBS=OFF); 3.2.5 does not require the qhull patch
+- Quality gates: [GATE:SYM] Sym-from-JSON, [GATE:DTS] d.ts drift, [GATE:RUN] runtime smoke/regression/mesh-smoke
   - If a gate is not yet implemented in code, the workflow logs it as `skipped` without changing behavior.
 - Artifacts: upload `dist/` (+ `version.json`, `sbom.spdx.json`)
 
 ## Versioning and tags
 
 - Stable releases use `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r3`, `forge-3.3.7-r2`.
-- Pre‑releases use `forge-<mujocoVersion>-rc.<n>` and are marked as pre‑release.
+- Pre-releases use `forge-<mujocoVersion>-rc.<n>` and are marked as pre-release.
 - Artifacts are immutable; fixes publish a new revision (e.g., `-r2`).
 
 ### Release status (current)
@@ -86,25 +78,32 @@ Unified workflow entrance (GitHub Actions):
 - Baselines: `native-3.2.5` <-> `wasm-3.2.5`, and `native-3.3.7` <-> `wasm-3.3.7`
 - Determinism: fixed timestep, no randomization, warmstart disabled
 
-## Building locally
+## Building locally (canonical)
 
-Prereqs: Emscripten SDK (3.1.55), CMake, Node 20.
+Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflows/forge.yml`.
 
-```
-git clone https://github.com/google-deepmind/mujoco external/mujoco -b v3.2.5 --depth=1
-emcmake cmake -S wrappers/official_app_325 -B build/325 -DCMAKE_BUILD_TYPE=Release \
-  -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF
-cmake --build build/325 -j
-```
+- Windows entrypoint (from repo root):
+  - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20`
+  - Flags:
+    - `-Clean` removes old caches for a clean reconfigure
+    - `-Meta` generates `version.json`, `sbom.spdx.json`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`
+    - `-PinNode20` attempts to run tests with Node 20 for CI parity
 
-Artifacts will be placed under `dist/` by the workflow; for local runs, copy from `build/<ver>/_wasm/`.
+- WSL entrypoint (equivalent):
+  - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
+
+Notes:
+- For MuJoCo 3.3.7, the build performs a two-stage configuration to enforce static qhull under Emscripten (SHARED->STATIC, BUILD_SHARED_LIBS=OFF) before the final configure.
+- Artifacts (including metadata) will be in `dist/` when `-Meta`/`META=1` is enabled.
 
 ## Notes
 
 - Front-end demo: on-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git
 
-
 ## Provenance
 
-Portions of this repository’s configurations, CI workflows, and documentation were authored or adapted with the assistance of generative AI, and were subsequently reviewed and validated by a human maintainer.
+Portions of this repository's configurations, CI workflows, and documentation were authored or adapted with the assistance of generative AI, and were subsequently reviewed and validated by a human maintainer.
+
+
+
 

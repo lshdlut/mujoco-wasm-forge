@@ -133,10 +133,10 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          mkdir -p dist
-          cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.js dist/mujoco-${{ matrix.mjver }}.js
-          cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm dist/mujoco-${{ matrix.mjver }}.wasm
-          if [ -f build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map ]; then cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map dist/mujoco-${{ matrix.mjver }}.wasm.map; fi
+          mkdir -p dist/${{ matrix.mjver }}
+          cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.js dist/${{ matrix.mjver }}/mujoco.js
+          cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm dist/${{ matrix.mjver }}/mujoco.wasm
+          if [ -f build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map ]; then cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map dist/${{ matrix.mjver }}/mujoco.wasm.map; fi
 
       - name: "[GATE:DTS] d.ts drift (skipped)"
         shell: bash
@@ -152,6 +152,11 @@ jobs:
           node ${{ matrix.reg }}
           if [ -n "${{ matrix.mesh }}" ] && [ -f "${{ matrix.mesh }}" ]; then node ${{ matrix.mesh }}; else echo "mesh-smoke: skipped"; fi
 
+      
+      - name: Size Check (ABI dims)
+        run: |
+          if [ -d "dist/${{ matrix.mjver }}/abi" ]; then node scripts/smoke/size-check.mjs dist/${{ matrix.mjver }}/abi/dim_map.json dist/mujoco-${{ matrix.mjver }}.js; else echo "ABI not present for size-check"; fi
+
       - name: Generate version.json
         shell: bash
         run: |
@@ -159,13 +164,13 @@ jobs:
           EMVER=${EMSDK_VERSION}
           MJVER=${{ matrix.mjver }}
           MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
-          JS=dist/mujoco-${MJVER}.js; WASM=dist/mujoco-${MJVER}.wasm
+          JS=dist/${MJVER}/mujoco.js; WASM=dist/${MJVER}/mujoco.wasm
           JSB=$(stat -c %s "$JS") || JSB=0
           WSB=$(stat -c %s "$WASM") || WSB=0
           JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
           WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
           NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          cat > dist/version.json <<JSON
+          cat > dist/${MJVER}/version.json <<JSON
           {
             "mujocoVersion": "${MJVER}",
             "emscripten": "${EMVER}",
@@ -204,7 +209,7 @@ jobs:
           MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
           NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           NS="https://github.com/lshdlut/mujoco-wasm-forge/sbom/${GITHUB_RUN_ID}"
-          cat > dist/sbom.spdx.json <<SBOM
+          cat > dist/${MJVER}/sbom.spdx.json <<SBOM
           {
             "spdxVersion": "SPDX-2.3",
             "dataLicense": "CC0-1.0",
@@ -225,16 +230,16 @@ jobs:
           set -euxo pipefail
           EMVER=${EMSDK_VERSION}
           MJVER=${{ matrix.mjver }}
-          JS=dist/mujoco-${MJVER}.js; WASM=dist/mujoco-${MJVER}.wasm
+          JS=dist/${MJVER}/mujoco.js; WASM=dist/${MJVER}/mujoco.wasm
           JSB=$(stat -c %s "$JS") || JSB=0
           WSB=$(stat -c %s "$WASM") || WSB=0
-          JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
-          WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
+          JSUM=$(sha256sum "$JS" | cut -d" " -f1)
+          WSUM=$(sha256sum "$WASM" | cut -d" " -f1)
           {
             echo "$JSUM  $(basename "$JS")"
             echo "$WSUM  $(basename "$WASM")"
-          } > dist/SHA256SUMS.txt
-          cat > dist/RELEASE_NOTES.md <<EOF
+          } > dist/${MJVER}/SHA256SUMS.txt
+          cat > dist/${MJVER}/RELEASE_NOTES.md <<EOF
 
           Build with Emscripten ${EMVER}. Artifacts:
           - mujoco-${MJVER}.js (${JSB} bytes)
@@ -246,14 +251,27 @@ jobs:
           - [GATE:RUN] pass
           EOF
 
+      - name: ABI Scan & Gate
+        shell: pwsh
+        run: |
+          pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref ${{ matrix.mjver }} -OutDir dist/${{ matrix.mjver }}/abi -Debug
+          node scripts/mujoco_abi/ci_gate.mjs dist/${{ matrix.mjver }}/abi --threshold 95
+
+      - name: ABI Diff (previous -> current)
+        run: |
+          if [ -d "dist/3.2.5/abi" ] && [ "${{ matrix.mjver }}" != "3.2.5" ]; then node scripts/mujoco_abi/diff.mjs dist/3.2.5/abi dist/${{ matrix.mjver }}/abi; else echo "no base ABI for diff"; fi
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: mujoco-${{ matrix.mjver }}
           path: |
-            dist/mujoco-${{ matrix.mjver }}.js
-            dist/mujoco-${{ matrix.mjver }}.wasm
-            dist/version.json
-            dist/sbom.spdx.json
-            dist/SHA256SUMS.txt
-            dist/RELEASE_NOTES.md
+            dist/${{ matrix.mjver }}/mujoco.js
+            dist/${{ matrix.mjver }}/mujoco.wasm
+            dist/${{ matrix.mjver }}/version.json
+            dist/${{ matrix.mjver }}/sbom.spdx.json
+            dist/${{ matrix.mjver }}/SHA256SUMS.txt
+            dist/${{ matrix.mjver }}/RELEASE_NOTES.md
+            dist/${{ matrix.mjver }}/abi
+
+

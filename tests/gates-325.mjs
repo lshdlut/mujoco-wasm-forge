@@ -8,10 +8,10 @@ import fs from 'node:fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const distDir = path.resolve(rootDir, 'dist');
+const distDir = path.resolve(rootDir, 'dist', '3.2.5');
 
-const wasmPath = path.join(distDir, 'mujoco-3.2.5.wasm');
-const jsPath = path.join(distDir, 'mujoco-3.2.5.js');
+const wasmPath = path.join(distDir, 'mujoco.wasm');
+const jsPath = path.join(distDir, 'mujoco.js');
 
 const enforce = process.env.QUALITY_ENFORCE === '1';
 const maxWasm = Number(process.env.WASM_MAX_BYTES || 16_000_000); // 16 MB default
@@ -43,4 +43,3 @@ if (breaches.length) {
 } else {
   console.log(`Quality gates OK: wasm=${wasmSize}B, js=${jsSize}B, init=${initMs}ms`);
 }
-

@@ -1,11 +1,11 @@
 # Artifacts & Metadata
 
-Artifacts
-- `dist/mujoco-<mjVer>.wasm` — WebAssembly binary
-- `dist/mujoco-<mjVer>.js` — ES module factory
-- `dist/mujoco-<mjVer>.wasm.map` — optional source map
-- `dist/version.json` — build metadata
-- `dist/sbom.spdx.json` — SPDX SBOM
+Artifacts (per-version directory)
+- `dist/<mjVer>/mujoco.wasm` - WebAssembly binary
+- `dist/<mjVer>/mujoco.js` - ES module factory
+- `dist/<mjVer>/mujoco.wasm.map` - optional source map
+- `dist/<mjVer>/version.json` - build metadata
+- `dist/<mjVer>/sbom.spdx.json` - SPDX SBOM
 
 version.json schema (current)
 - Fields: `mujocoVersion`, `emscripten`, `buildTime`, `gitSha`
@@ -13,5 +13,4 @@ version.json schema (current)
 - Blocks: `features`, `size`, `hash`
 
 Notes
-- Schema is unified across 3.2.5 and 3.3.7. Provenance fields are present in CI builds.
-
+- Schema is unified across 3.2.5 and 3.3.7. Provenance fields are present in CI builds and in canonical local builds when metadata is enabled.

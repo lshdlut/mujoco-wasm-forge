@@ -1,0 +1,53 @@
+name: ABI Scan & Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  abi:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tag: 3.2.5
+            base: 3.2.5
+          - tag: 3.3.7
+            base: 3.2.5
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clone MuJoCo upstream
+        run: |
+          git clone --filter=blob:none --tags https://github.com/google-deepmind/mujoco upstream_mujoco
+          git -C upstream_mujoco fetch --tags --quiet
+
+      - name: Generate ABI ${{ matrix.tag }}
+        shell: pwsh
+        run: |
+          pwsh scripts/mujoco_abi/run.ps1 -Repo upstream_mujoco -Ref ${{ matrix.tag }} -OutDir dist/${{ matrix.tag }}/abi -Debug
+
+      - name: Gate ${{ matrix.tag }}
+        run: |
+          node scripts/mujoco_abi/ci_gate.mjs dist/${{ matrix.tag }}/abi --threshold 95
+
+      - name: Diff ${{ matrix.base }} -> ${{ matrix.tag }}
+        run: |
+          if [ -d "dist/${{ matrix.base }}/abi" ]; then node scripts/mujoco_abi/diff.mjs dist/${{ matrix.base }}/abi dist/${{ matrix.tag }}/abi; else echo 'base ABI not present, skipping diff'; fi
+
+      - name: Upload ABI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: abi-${{ matrix.tag }}
+          path: |
+            dist/${{ matrix.tag }}/abi
+          if-no-files-found: error

@@ -1,0 +1,13 @@
+{
+  "rules": [
+    { "type": "regex", "match": "^mj_(step|forward|inverse)", "group": "simulation" },
+    { "type": "regex", "match": "^mj_(load|save)", "group": "io" },
+    { "type": "regex", "match": "^mj_.*VFS|VFS", "group": "vfs" },
+    { "type": "regex", "match": "^mj_(name2id|id2name)", "group": "io" },
+    { "type": "regex", "match": "^mj_ray", "group": "ray" },
+    { "type": "regex", "match": "^mju_user_(error|warning)|^mju_error|^mj_version", "group": "diagnostics" },
+    { "type": "regex", "match": "^mjs_", "group": "io" },
+    { "type": "regex", "match": "^mj_(make|delete|copy|reset|set|get)", "group": "support" }
+  ]
+}
+
