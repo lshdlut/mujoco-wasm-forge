@@ -59,12 +59,26 @@ console.log({ before, after });
 推荐：WSL Ubuntu 22.04（或 Docker）完整复刻 CI 配方。
 
 - Windows 侧（仓库根执行）：
-  - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20`
+  - 首次（镜像到 WSL 并构建）：
+    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6`
+  - 后续（已镜像）：
+    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
+  - 说明：`-WslWorkDir` 可指定 WSL 侧工作目录（默认 `~/dev/mujoco-wasm-forge`）
 
 - WSL 侧（等效）：
   - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
 
-注意：3.3.7 需要两阶段配置以静态化 qhull；启用 `-Meta`/`META=1` 时会在 `dist/<mjVer>/` 生成与 CI 相同的元数据文件。
+注意：
+- 所有构建与测试都应在 WSL 的 ext4（例如 `~/dev/mujoco-wasm-forge`），或使用 `-UseTemp` 在 `/tmp` 下进行，避免 `/mnt/c/...` 和 OneDrive 带来的 I/O 与同步开销。不会在 Windows 侧创建 `~` 或写入 OneDrive。
+- 默认并行度为 6，可用 `-Jobs` 覆盖。
+
+## 在其它仓库使用工件（如 mujoco-wasm-play）
+
+- 在本仓库 WSL 内构建完成后，工件位于 `dist/<mjVer>/`。
+- 在 WSL 内仅复制需要的工件到 play 仓库：
+  - `cp -r ./dist/3.3.7 /path/to/mujoco-wasm-play/dist/3.3.7`
+- 在 play 仓库的加载器中从 `dist/<mjVer>/mujoco.{js,wasm}` 加载；不要复制 `build/` 或 `external/`。
+- 3.3.7 需要两阶段配置以静态化 qhull；启用 `-Meta`/`META=1` 时会在 `dist/<mjVer>/` 生成与 CI 相同的元数据文件。
 
 ## 版本与标签
 

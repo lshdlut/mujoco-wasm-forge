@@ -1,6 +1,6 @@
 # mujoco-wasm-forge
 
-English | [Chinese](README.zh-CN.md)
+English | [简体中文](README.zh-CN.md)
 
 Reproducible build pipeline for compiling MuJoCo to WebAssembly. This repo focuses on producing versioned WASM artifacts from MuJoCo tags, together with minimal smoke/regression validation and machine-readable metadata.
 
@@ -83,18 +83,31 @@ Unified workflow entrance (GitHub Actions):
 Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflows/forge.yml`.
 
 - Windows entrypoint (from repo root):
-  - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20`
+  - First mirror repository into WSL ext4 and build:
+    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6`
+  - Subsequent builds (already mirrored):
+    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
   - Flags:
     - `-Clean` removes old caches for a clean reconfigure
     - `-Meta` generates `version.json`, `sbom.spdx.json`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`
     - `-PinNode20` attempts to run tests with Node 20 for CI parity
+     - `-WslWorkDir` sets WSL workspace (default `~/dev/mujoco-wasm-forge`)
 
 - WSL entrypoint (equivalent):
   - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
 
 Notes:
+- Run all builds and tests inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`), or use `-UseTemp` to build in `/tmp`. Avoid `/mnt/c/...` and OneDrive paths to prevent slow I/O and sync overhead. No files are written to Windows `~`.
+- Default parallel jobs is 6; override with `-Jobs` if needed.
+
+## Using artifacts in other repos (e.g., mujoco-wasm-play)
+
+- Build here in WSL as above; artifacts land under `dist/<mjVer>/`.
+- In WSL, copy only the needed artifacts to the play repo:
+  - `cp -r ./dist/3.3.7 /path/to/mujoco-wasm-play/dist/3.3.7`
+- In the play repo, load from `dist/<mjVer>/mujoco.{js,wasm}` in your loader; avoid copying `build/` or `external/`.
 - For MuJoCo 3.3.7, the build performs a two-stage configuration to enforce static qhull under Emscripten (SHARED->STATIC, BUILD_SHARED_LIBS=OFF) before the final configure.
-- Artifacts (including metadata) will be in `dist/` when `-Meta`/`META=1` is enabled.
+- Artifacts (including metadata) will be under `dist/<mjVer>/` when `-Meta`/`META=1` is enabled.
 
 ## Notes
 

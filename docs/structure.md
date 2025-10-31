@@ -2,6 +2,7 @@
 
 - Must-keep directories: `.github`, `wrappers`, `scripts`, `tests`, `docs`.
 - Must-ignore directories: `build/**`, `dist/**`, `external/**`, `local_tools/**` and common temp patterns (`tmp_*`, `*.tmp`, `coverage/**`).
+  - Note: run builds/tests inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`). Avoid `/mnt/c/...` and OneDrive paths.
 - Single source of truth:
   - Generator: `wrappers/**/codegen/gen_exports.py`
   - Specs: `wrappers/**/codegen/spec_*.yaml`
