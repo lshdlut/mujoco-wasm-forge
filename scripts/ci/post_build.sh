@@ -10,16 +10,16 @@ usage() {
 MJVER=""
 SHORT=""
 
-while [[ 0 -gt 0 ]]; do
-  case "" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --version)
-      [[ 0 -ge 2 ]] || usage
-      MJVER=""
+      [[ $# -ge 2 ]] || usage
+      MJVER="$2"
       shift 2
       ;;
     --short)
-      [[ 0 -ge 2 ]] || usage
-      SHORT=""
+      [[ $# -ge 2 ]] || usage
+      SHORT="$2"
       shift 2
       ;;
     *)
@@ -28,30 +28,37 @@ while [[ 0 -gt 0 ]]; do
   esac
 done
 
-[[ -n "" && -n "" ]] || usage
+[[ -n "$MJVER" && -n "$SHORT" ]] || usage
 
-ABI_DIR="dist//abi"
-DIST_JS="dist//mujoco.js"
-DIST_WASM="dist//mujoco.wasm"
-LIBMUJOCO="build//lib/libmujoco.a"
+ABI_DIR="dist/${MJVER}/abi"
+DIST_JS="dist/${MJVER}/mujoco.js"
+DIST_WASM="dist/${MJVER}/mujoco.wasm"
+LIBMUJOCO="build/${SHORT}/lib/libmujoco.a"
 
-if [[ ! -f "" || ! -f "" ]]; then
-  echo "[post-build] missing dist artifacts for " >&2
+if [[ ! -f "$DIST_JS" || ! -f "$DIST_WASM" ]]; then
+  echo "[post-build] missing dist artifacts for ${MJVER}" >&2
   exit 1
 fi
 
-node scripts/mujoco_abi/check_exports.mjs   --abi ""   --wasm ""   --expected "/wrapper_exports.json"
+node scripts/mujoco_abi/check_exports.mjs \
+  --abi "${ABI_DIR}" \
+  --wasm "${DIST_WASM}" \
+  --expected "${ABI_DIR}/wrapper_exports.json"
 
-if [[ -f "" ]]; then
-  node scripts/mujoco_abi/nm_coverage.mjs     ""     --out "/nm_coverage.json"
+if [[ -f "$LIBMUJOCO" ]]; then
+  node scripts/mujoco_abi/nm_coverage.mjs \
+    "${LIBMUJOCO}" \
+    --out "${ABI_DIR}/nm_coverage.json"
 else
-  echo "[post-build] warning:  not found, skipping nm coverage" >&2
+  echo "[post-build] warning: ${LIBMUJOCO} not found, skipping nm coverage" >&2
 fi
 
-if [[ -f "/dim_map.json" ]]; then
-  node scripts/smoke/size-check.mjs     "/dim_map.json"     ""
+if [[ -f "${ABI_DIR}/dim_map.json" ]]; then
+  node scripts/smoke/size-check.mjs \
+    "${ABI_DIR}/dim_map.json" \
+    "${DIST_JS}"
 else
-  echo "[post-build] warning: /dim_map.json missing, skipping size-check" >&2
+  echo "[post-build] warning: ${ABI_DIR}/dim_map.json missing, skipping size-check" >&2
 fi
 
-echo "[post-build] checks completed for "
+echo "[post-build] checks completed for ${MJVER}"
