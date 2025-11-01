@@ -54,11 +54,10 @@ else
 fi
 
 if [[ -f "${ABI_DIR}/dim_map.json" ]]; then
-  node scripts/smoke/size-check.mjs \
-    "${ABI_DIR}/dim_map.json" \
-    "${DIST_JS}"
+  node scripts/smoke/size-check.mjs "${ABI_DIR}/dim_map.json"
 else
   echo "[post-build] warning: ${ABI_DIR}/dim_map.json missing, skipping size-check" >&2
 fi
 
 echo "[post-build] checks completed for ${MJVER}"
+
