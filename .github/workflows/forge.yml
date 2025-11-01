@@ -150,15 +150,10 @@ jobs:
           cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm dist/${{ matrix.mjver }}/mujoco.wasm
           if [ -f build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map ]; then cp build/${{ matrix.short }}/_wasm/mujoco_wasm${{ matrix.short }}.wasm.map dist/${{ matrix.mjver }}/mujoco.wasm.map; fi
 
-      - name: Exports check (post-build)
+      - name: Post-build ABI checks
         shell: bash
         run: |
-          node scripts/mujoco_abi/check_exports.mjs --abi dist/${{ matrix.mjver }}/abi --wasm dist/${{ matrix.mjver }}/mujoco.wasm --expected dist/${{ matrix.mjver }}/abi/wrapper_exports.json
-
-      - name: NM coverage (post-build)
-        shell: bash
-        run: |
-          node scripts/mujoco_abi/nm_coverage.mjs build/${{ matrix.short }}/lib/libmujoco.a --out dist/${{ matrix.mjver }}/abi/nm_coverage.json
+          bash scripts/ci/post_build.sh --version ${{ matrix.mjver }} --short ${{ matrix.short }}
 
       - name: "[GATE:DTS] d.ts drift (skipped)"
         shell: bash
