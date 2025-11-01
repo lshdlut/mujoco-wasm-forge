@@ -146,6 +146,16 @@ Notes:
 
 - Front-end demo (work in progress): https://github.com/lshdlut/mujoco-wasm-play
 
+## Acknowledgements
+
+This project draws inspiration from earlier MuJoCo-to-WASM experiments that proved the concept and documented key pitfalls:
+
+- [stillonearth/MuJoCo-WASM](https://github.com/stillonearth/MuJoCo-WASM)
+- [zalo/mujoco_wasm](https://github.com/zalo/mujoco_wasm)
+- [hashb/mujoco_web](https://github.com/hashb/mujoco_web)
+
+While mujoco-wasm-forge has since evolved into an independent toolchain, we remain grateful for their pioneering work.
+
 ## Provenance
 
 Portions of this repository’s scripts and documentation were authored or refined with the help of generative AI, then reviewed by a human maintainer.

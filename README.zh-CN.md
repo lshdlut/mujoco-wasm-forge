@@ -101,7 +101,20 @@ mujoco-wasm-forge 提供一套可复现的构建流程，将 MuJoCo 官方发布
 - 预发布：`forge-<mujocoVersion>-rc.<n>`  
 - 产物不可变，修复需递增 `-rN` 再发布。
 
-## 备注与致谢
+## 注意事项
 
-- 前端演示（进行中）：https://github.com/lshdlut/mujoco-wasm-play  
-- 仓库部分脚本和文档在生成过程中使用了生成式 AI，最终版本由维护者审阅确认。
+- 前端示例（开发中）：https://github.com/lshdlut/mujoco-wasm-play
+
+## 致谢
+
+本项目灵感来源于更早的 MuJoCo → WASM 实验，它们验证了整体可行性并记录了关键注意事项：
+
+- [stillonearth/MuJoCo-WASM](https://github.com/stillonearth/MuJoCo-WASM)
+- [zalo/mujoco_wasm](https://github.com/zalo/mujoco_wasm)
+- [hashb/mujoco_web](https://github.com/hashb/mujoco_web)
+
+虽然如今已经演化为独立工具链，mujoco-wasm-forge 仍然感谢这些项目的开创性探索。
+
+## Provenance
+
+仓库部分脚本和文档由生成式 AI 协助撰写，随后由维护者审核确认。
