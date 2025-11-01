@@ -153,7 +153,7 @@ jobs:
       - name: Exports check (post-build)
         shell: bash
         run: |
-          node scripts/mujoco_abi/check_exports.mjs dist/${{ matrix.mjver }}/abi dist/${{ matrix.mjver }}/mujoco.wasm dist/${{ matrix.mjver }}/abi/wrapper_exports.json
+          node scripts/mujoco_abi/check_exports.mjs --abi dist/${{ matrix.mjver }}/abi --wasm dist/${{ matrix.mjver }}/mujoco.wasm --expected dist/${{ matrix.mjver }}/abi/wrapper_exports.json
 
       - name: NM coverage (post-build)
         shell: bash
