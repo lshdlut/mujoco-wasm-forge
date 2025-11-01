@@ -21,6 +21,17 @@ CI（以及启用元数据的规范本地构建）会产出：
 - `dist/<mjVer>/mujoco.wasm.map` - 可选 source map
 - `dist/<mjVer>/version.json` - 元数据（MuJoCo 版本、emscripten 版本、大小、sha256、git sha）
 - `dist/<mjVer>/sbom.spdx.json` - SPDX SBOM（轻量）
+## Export rules (must read)
+
+- Equality: **C = A ∩ B**  
+  A = 公共 C 头（mujoco.h / mjspec.h）声明  
+  B = 静态库实现（llvm-nm）
+- Hard gate: `(A ∩ B) − C = ∅`，导出不得包含 `mjv_/mjr_/mjui_/mjp_/mjc_` 或非 `_mjwf_*` 符号。
+- **Special exclusions**：
+  1) 仅允许 `mj_`、`mju_`、`mjs_`、`mjd_` 前缀，其他系列（如 `mjv_`、`mjr_`、`mjui_`、`mjp_`、`mjc_`）自动排除；
+  2) 变参函数仅在存在 `*_v` 变体时导出，缺少 `_v` 时记录为 `variadic_no_v`。
+- 详情见 `dist/<ver>/abi/exports_report.md`（如需 JSON 报告，设置 `EMIT_JSON=1`）。
+
 
 ## 快速开始（Node ESM）
 
