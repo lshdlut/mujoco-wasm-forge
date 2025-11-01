@@ -95,8 +95,8 @@ Module.stackRestore(stackTop);
   - 后续（已镜像）：
     - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
   - After each build (inside WSL) run the unified post-build checks:
-    - `bash scripts/ci/post_build.sh --version 3.2.5 --short 325`
-    - `bash scripts/ci/post_build.sh --version 3.3.7 --short 337`
+    - `./scripts/ci/post_build.sh --version 3.2.5 --short 325`
+    - `./scripts/ci/post_build.sh --version 3.3.7 --short 337`
   - 说明：`-WslWorkDir` 可指定 WSL 侧工作目录（默认 `~/dev/mujoco-wasm-forge`）
 
 - WSL 侧（等效）：

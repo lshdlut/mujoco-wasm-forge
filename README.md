@@ -140,8 +140,8 @@ Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflow
   - Subsequent builds (already mirrored):
     - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
   - After each build, run the consolidated post-build checks from a clean WSL shell:
-    - `bash scripts/ci/post_build.sh --version 3.2.5 --short 325`
-    - `bash scripts/ci/post_build.sh --version 3.3.7 --short 337`
+    - `./scripts/ci/post_build.sh --version 3.2.5 --short 325`
+    - `./scripts/ci/post_build.sh --version 3.3.7 --short 337`
   - Flags:
     - `-Clean` removes old caches for a clean reconfigure
     - `-Meta` generates `version.json`, `sbom.spdx.json`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`

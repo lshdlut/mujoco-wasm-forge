@@ -153,7 +153,7 @@ jobs:
       - name: Post-build ABI checks
         shell: bash
         run: |
-          bash scripts/ci/post_build.sh --version ${{ matrix.mjver }} --short ${{ matrix.short }}
+          ./scripts/ci/post_build.sh --version ${{ matrix.mjver }} --short ${{ matrix.short }}
 
       - name: "[GATE:DTS] d.ts drift (skipped)"
         shell: bash
@@ -170,10 +170,6 @@ jobs:
           if [ -n "${{ matrix.mesh }}" ] && [ -f "${{ matrix.mesh }}" ]; then node ${{ matrix.mesh }}; else echo "mesh-smoke: skipped"; fi
 
       
-      - name: Size Check (ABI dims)
-        run: |
-          if [ -d "dist/${{ matrix.mjver }}/abi" ]; then node scripts/smoke/size-check.mjs dist/${{ matrix.mjver }}/abi/dim_map.json dist/mujoco-${{ matrix.mjver }}.js; else echo "ABI not present for size-check"; fi
-
       - name: Generate version.json
         shell: bash
         run: |
