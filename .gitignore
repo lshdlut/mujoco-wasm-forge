@@ -32,5 +32,6 @@ coverage/**
 scripts/*_local.*
 wrappers/**/mjwf_exports_generated.*
 
-wrappers/auto/
+wrappers/auto/*
+!wrappers/auto/mjwf_stubs.c
 
