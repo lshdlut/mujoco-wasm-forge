@@ -20,9 +20,9 @@ Repository: https://github.com/lshdlut/mujoco-wasm-forge
   A=公开 C 头声明（mujoco.h / mjspec.h）  
   B=静态库实现（llvm-nm）
 - 硬闸：`(A ∩ B) − C = ∅`，导出不得含 `mjv_/mjr_/mjui_` 或非 `_mjwf_*`。
-- **特殊排除**：
-  1) 仅接受 `mj_`、`mju_`、`mjs_` 前缀；  
-  2) 变参函数仅在存在 `*_v` 变体时导出，无 `_v` 自动排除（记录为 `variadic_no_v`）。
+- **Special exclusions**:
+  1) Allowed prefixes: `mj_`, `mju_`, `mjs_`, `mjd_`; other families (e.g. `mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`) are excluded.
+  2) Variadic functions export only if a matching `*_v` variant exists; otherwise recorded as `variadic_no_v`.
 - 详见 `dist/<ver>/abi/exports_report.md`（如需 JSON 报告，设环境变量 `EMIT_JSON=1`）。
 
 ## Artifacts

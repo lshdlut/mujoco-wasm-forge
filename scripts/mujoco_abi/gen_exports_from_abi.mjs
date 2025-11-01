@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * Generate WASM export wrappers based on A∩B with automatic exclusions.
+ * Generate WASM export wrappers based on A intersect B with automatic exclusions.
  *
  *   A = public C API declarations (mujoco.h [+ mjspec.h])
  *   B = implemented symbols (llvm-nm -g --defined-only libmujoco.a)
- *   C = A ∩ B after applying prefix + variadic rules
+ *   C = A intersect B after applying prefix + variadic rules
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve as pathResolve, dirname, join as pathJoin } from 'node:path';
 
-const ALLOWED_PREFIXES = [/^mj_/, /^mju_/, /^mjs_/];
+const ALLOWED_PREFIXES = [/^mj_/, /^mju_/, /^mjs_/, /^mjd_/];
 const RUNTIME_KEEP = ['_malloc', '_free', '_realloc', 'stackSave', 'stackRestore', 'stackAlloc'];
 const REPORT_MAX_LIST = 50;
 
@@ -195,7 +195,8 @@ function sliceWithEllipsis(list, max = REPORT_MAX_LIST) {
   const slice = list.slice(0, max);
   const lines = slice.map((item) => `  - ${item}`);
   if (list.length > slice.length) {
-    lines.push(`  - ... (共 ${list.length} 项)`);
+    const remaining = list.length - slice.length;
+    lines.push(`  - ... (+${remaining} more)`);
   }
   return lines;
 }
@@ -208,10 +209,10 @@ function buildReport(opts) {
     countA,
     countB,
     finalNames,
-    finalFunctions,
     countMj,
     countMju,
     countMjs,
+    countMjd,
     specialExclusions,
     aMinusB,
     bMinusA,
@@ -219,45 +220,45 @@ function buildReport(opts) {
   } = opts;
 
   const lines = [];
-  lines.push(`# MuJoCo WASM 导出报告 (ver ${version})`);
-  lines.push(`生成时间：${generatedAt}`);
+  lines.push('# MuJoCo WASM Export Report (ver ' + version + ')');
+  lines.push('Generated at: ' + generatedAt);
   lines.push('');
-  lines.push('## 特殊排除规则');
-  lines.push('- 仅导出以 `mj_`、`mju_`、`mjs_` 开头的函数；其他前缀（如 `mjv_`、`mjr_`、`mjui_`）全部排除。');
-  lines.push('- 变参函数仅在存在 `*_v` 变体时导出；否则排除并记录为 `variadic_no_v`。');
-  lines.push('- 导出集合恒等于 `C = A ∩ B`；不引入手写 helper。');
+  lines.push('## Special Exclusion Rules');
+  lines.push('- Export prefixes allowed: `mj_`, `mju_`, `mjs_`, `mjd_`; other prefixes (e.g. `mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`) are removed.');
+  lines.push('- Variadic functions are exported only when a matching `*_v` variant exists; otherwise they are recorded as `variadic_no_v`.');
+  lines.push('- Export set is strictly `C = A intersect B`; no handcrafted helpers.');
   lines.push('');
-  lines.push('## A, B, C, 规则');
-  lines.push(`- **A（声明集）**：扫描 \`mujoco.h\`${hasMjspec ? ' 与 `mjspec.h`' : ''} 的公开 C API 函数。`);
-  lines.push('- **B（实现集）**：`llvm-nm -g --defined-only` 抽取 `libmujoco.a` 外部可见符号。');
-  lines.push('- **C（导出集）**：`A ∩ B`，经“特殊排除”归一化后生成 `_mjwf_*` 包装。');
-  lines.push('- **硬闸**：`(A ∩ B) − C = ∅`；导出不得含 `mjv_/mjr_/mjui_` 或非 `_mjwf_`。');
+  lines.push('## A, B, C Overview');
+  lines.push('- **A (declarations)**: public C API discovered from `mujoco.h`' + (hasMjspec ? ' and `mjspec.h`.' : '.'));
+  lines.push('- **B (implementations)**: external symbols reported by `llvm-nm -g --defined-only` on `libmujoco.a`.');
+  lines.push('- **C (exports)**: `A intersect B` after applying the exclusion rules, emitted as `_mjwf_*` wrappers.');
+  lines.push('- **Hard gate**: `(A intersect B) - C = 0`, and exports must not include `mjv_/mjr_/mjui_/mjp_/mjc_` nor non-`_mjwf_*` symbols.');
   lines.push('');
-  lines.push('## 统计');
-  lines.push(`- A: ${countA}`);
-  lines.push(`- B: ${countB}`);
-  lines.push(`- C: ${finalNames.length}`);
-  lines.push(`- 其中 mj: ${countMj} / mju: ${countMju} / mjs: ${countMjs}`);
+  lines.push('## Totals');
+  lines.push('- A: ' + countA);
+  lines.push('- B: ' + countB);
+  lines.push('- C: ' + finalNames.length);
+  lines.push('- Prefix breakdown: mj: ' + countMj + ' / mju: ' + countMju + ' / mjs: ' + countMjs + ' / mjd: ' + countMjd);
   lines.push('');
-  lines.push('## 特殊排除规则的排除项');
+  lines.push('## Excluded Items');
   if (specialExclusions.length === 0) {
-    lines.push('- 无');
+    lines.push('- none');
   } else {
     for (const item of specialExclusions) {
-      lines.push(`- ${item.name} — ${item.reason}`);
+      lines.push('- ' + item.name + ' -> ' + item.reason);
     }
   }
   lines.push('');
-  lines.push('## ABC 差集（供审计）');
-  lines.push(`- A − B（声明未实现）：${aMinusB.length}`);
+  lines.push('## Set Differences (for auditing)');
+  lines.push('- A - B (declared but not implemented): ' + aMinusB.length);
   if (aMinusB.length) {
     lines.push(...sliceWithEllipsis(aMinusB));
   }
-  lines.push(`- B − A（实现未公开）：${bMinusA.length}`);
+  lines.push('- B - A (implemented but not declared): ' + bMinusA.length);
   if (bMinusA.length) {
     lines.push(...sliceWithEllipsis(bMinusA));
   }
-  lines.push(`- (A ∩ B) − C（应导未导，硬闸应为 0）：${abMinusC.length}`);
+  lines.push('- (A intersect B) - C (should be zero): ' + abMinusC.length);
   if (abMinusC.length) {
     lines.push(...sliceWithEllipsis(abMinusC));
   }
@@ -303,9 +304,21 @@ function main() {
     .filter((name) => !excludedNameSet.has(name) && !finalNameSet.has(name))
     .sort();
 
-  const countMj = finalNames.filter((name) => name.startsWith('mj_')).length;
-  const countMju = finalNames.filter((name) => name.startsWith('mju_')).length;
-  const countMjs = finalNames.filter((name) => name.startsWith('mjs_')).length;
+  let countMj = 0;
+  let countMju = 0;
+  let countMjs = 0;
+  let countMjd = 0;
+  for (const name of finalNames) {
+    if (name.startsWith('mju_')) {
+      countMju += 1;
+    } else if (name.startsWith('mjs_')) {
+      countMjs += 1;
+    } else if (name.startsWith('mjd_')) {
+      countMjd += 1;
+    } else if (name.startsWith('mj_')) {
+      countMj += 1;
+    }
+  }
 
   const generatedAt = new Date().toISOString();
 
@@ -339,10 +352,10 @@ function main() {
     countA: headerInfo.names.size,
     countB: implNames.size,
     finalNames,
-    finalFunctions,
     countMj,
     countMju,
     countMjs,
+    countMjd,
     specialExclusions,
     aMinusB,
     bMinusA,
@@ -362,6 +375,7 @@ function main() {
         mj: countMj,
         mju: countMju,
         mjs: countMjs,
+        mjd: countMjd,
       },
       special_exclusions: specialExclusions,
       differences: {

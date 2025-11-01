@@ -104,7 +104,7 @@ function main() {
     }
     if (runtimeKeep.has(norm) || runtimeKeep.has(rawName)) continue;
     if (ALLOWED_RUNTIME.has(norm) || ALLOWED_RUNTIME.has(rawName)) continue;
-    if (/^_?mj(v|r|ui)_/.test(rawName)) {
+    if (/^_?mj(v|r|ui|p|c)_/.test(rawName)) {
       forbiddenPrefixExports.add(rawName);
       continue;
     }
