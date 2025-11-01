@@ -13,10 +13,12 @@ SHORT=""
 while [[ 0 -gt 0 ]]; do
   case "" in
     --version)
+      [[ 0 -ge 2 ]] || usage
       MJVER=""
       shift 2
       ;;
     --short)
+      [[ 0 -ge 2 ]] || usage
       SHORT=""
       shift 2
       ;;
