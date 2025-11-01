@@ -43,18 +43,21 @@ jobs:
             smoke: tests/smoke-325.mjs
             reg: tests/regression-325.mjs
             mesh: ""
+            repo_ref: ""
           - short: 337
             mjver: 3.3.7
             app: wrappers/official_app_337
             smoke: tests/smoke-337.mjs
             reg: tests/regression-337.mjs
             mesh: tests/mesh-smoke-337.mjs
+            repo_ref: ""
           - short: 338
             mjver: 3.3.8-alpha
             app: wrappers/official_app_338
             smoke: tests/smoke-338.mjs
             reg: tests/regression-338.mjs
             mesh: tests/mesh-smoke-338.mjs
+            repo_ref: 4086261714d7cfbc1745d4c6cb0aa2116df45312
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,10 +77,32 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p external
-          (git clone --depth 1 --branch ${{ matrix.mjver }} https://github.com/google-deepmind/mujoco external/mujoco) || {
-            rm -rf external/mujoco || true
-            git clone --depth 1 --branch v${{ matrix.mjver }} https://github.com/google-deepmind/mujoco external/mujoco
-          }
+          rm -rf external/mujoco || true
+          REPO_URL="https://github.com/google-deepmind/mujoco"
+          REF="${{ matrix.repo_ref }}"
+          if [ -n "$REF" ]; then
+            git clone --filter=blob:none "$REPO_URL" external/mujoco
+            git -C external/mujoco fetch origin "$REF" --depth 1
+            git -C external/mujoco checkout "$REF"
+          else
+            if git clone --depth 1 --branch ${{ matrix.mjver }} "$REPO_URL" external/mujoco; then
+              :
+            else
+              rm -rf external/mujoco || true
+              if git clone --depth 1 --branch v${{ matrix.mjver }} "$REPO_URL" external/mujoco; then
+                :
+              else
+                rm -rf external/mujoco || true
+                git clone "$REPO_URL" external/mujoco
+                if ! git -C external/mujoco checkout "${{ matrix.mjver }}" 2>/dev/null; then
+                  if ! git -C external/mujoco checkout "v${{ matrix.mjver }}" 2>/dev/null; then
+                    echo "Unable to checkout MuJoCo ref for ${{ matrix.mjver }}" >&2
+                    exit 1
+                  fi
+                fi
+              fi
+            fi
+          fi
 
       - name: Generate ABI (${{ matrix.mjver }})
         shell: pwsh
