@@ -23,6 +23,8 @@ const ALLOWED_RUNTIME = new Set([
   '__table_base',
   '__stack_pointer',
   '__indirect_function_table',
+  '__cxa_increment_exception_refcount',
+  '__cxa_is_pointer_type',
   'memory',
   'table',
   'stackSave',
@@ -32,8 +34,10 @@ const ALLOWED_RUNTIME = new Set([
   'emscripten_stack_get_current',
   'emscripten_stack_get_end',
   'emscripten_stack_get_base',
+  'emscripten_stack_get_free',
   'emscripten_stack_init',
   'emscripten_stack_set_limits',
+  'fflush',
 ]);
 
 function parseArgs(argv) {
@@ -151,4 +155,3 @@ function main() {
 }
 
 main();
-

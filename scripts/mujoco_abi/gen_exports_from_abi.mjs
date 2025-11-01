@@ -296,9 +296,12 @@ function main() {
   const finalNames = finalFunctions.map((fn) => fn.name);
   const finalNameSet = new Set(finalNames);
 
+  const excludedNameSet = new Set(specialExclusions.map((item) => item.name));
   const aMinusB = Array.from(headerInfo.names).filter((name) => !implNames.has(name)).sort();
   const bMinusA = Array.from(implNames).filter((name) => !headerInfo.names.has(name)).sort();
-  const abMinusC = intersection.filter((name) => !finalNameSet.has(name));
+  const abMinusC = intersection
+    .filter((name) => !excludedNameSet.has(name) && !finalNameSet.has(name))
+    .sort();
 
   const countMj = finalNames.filter((name) => name.startsWith('mj_')).length;
   const countMju = finalNames.filter((name) => name.startsWith('mju_')).length;
@@ -375,4 +378,3 @@ function main() {
 }
 
 main();
-

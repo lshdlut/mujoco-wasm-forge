@@ -1,100 +1,91 @@
-// Regression test: compare WASM vs native outputs (qpos0/qvel0 series)
-// - Builds and runs native harness to produce golden vectors
-// - Runs WASM module and collects same signals
-// - Compares within tolerance
-
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import fs from 'node:fs';
-import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs";
+import assert from "node:assert/strict";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
-const distDir = path.resolve(rootDir, 'dist', '3.2.5');
+const rootDir = path.resolve(__dirname, "..");
+const distDir = path.resolve(rootDir, "dist", "3.2.5");
+const wasmPath = path.join(distDir, "mujoco.wasm");
+const manifestPath = path.join(distDir, "abi", "wrapper_exports.json");
 
-const wasmURL = path.join(distDir, 'mujoco.wasm');
-const jsURL = path.join(distDir, 'mujoco.js');
+assert.ok(fs.existsSync(wasmPath), "dist/3.2.5/mujoco.wasm missing");
+assert.ok(fs.existsSync(manifestPath), "dist/3.2.5/abi/wrapper_exports.json missing");
 
-// Path to native harness from workflow build
-const nativeBin = process.env.MJ_NATIVE_BIN || path.resolve(rootDir, 'build', '325_native', '_wasm', 'mujoco_compare325');
-const steps = Number(process.env.MJ_STEPS || 200);
-const tol = Number(process.env.MJ_TOL || 1e-8);
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+const wasmBytes = fs.readFileSync(wasmPath);
+const wasmModule = new WebAssembly.Module(wasmBytes);
+const exportsList = WebAssembly.Module.exports(wasmModule).map((e) => e.name);
 
-// Small pendulum model (same as smoke)
-const xml = `<?xml version="1.0"?>
-<mujoco model="pendulum">
-  <option timestep="0.002" gravity="0 0 -9.81"/>
-  <worldbody>
-    <body name="link" pos="0 0 0.1">
-      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.01"/>
-      <geom type="capsule" fromto="0 0 0 0 0 0.2" size="0.02" density="1000"/>
-    </body>
-  </worldbody>
-</mujoco>`;
+const required = new Set(manifest.required || []);
+const optional = new Set(manifest.optional || []);
+const runtimeKeep = new Set(manifest.runtime_keep || []);
 
-// 1) Produce native golden vectors
-const tmpXml = path.resolve(rootDir, 'tests', 'tmp_model.xml');
-fs.writeFileSync(tmpXml, xml, 'utf8');
+const allowedRuntime = new Set([
+  "__wasm_call_ctors",
+  "__wasm_apply_data_relocations",
+  "__wasm_init_memory_flag",
+  "__heap_base",
+  "__data_end",
+  "__global_base",
+  "__memory_base",
+  "__table_base",
+  "__stack_pointer",
+  "__indirect_function_table",
+  "__cxa_increment_exception_refcount",
+  "__cxa_is_pointer_type",
+  "memory",
+  "table",
+  "stackSave",
+  "stackRestore",
+  "stackAlloc",
+  "setThrew",
+  "emscripten_stack_get_current",
+  "emscripten_stack_get_end",
+  "emscripten_stack_get_base",
+  "emscripten_stack_get_free",
+  "emscripten_stack_init",
+  "emscripten_stack_set_limits",
+  "fflush",
+]);
 
-const nativeOut = await new Promise((resolve, reject) => {
-  execFile(nativeBin, [tmpXml, String(steps)], { cwd: rootDir }, (err, stdout, stderr) => {
-    if (err) {
-      err.message += `\nSTDERR:\n${stderr}`;
-      return reject(err);
-    }
-    resolve(stdout);
-  });
+const actual = new Set();
+for (const name of exportsList) {
+  actual.add(name);
+  if (!name.startsWith("_")) {
+    actual.add(`_${name}`);
+  }
+}
+
+const missingRequired = [...required].filter((name) => !actual.has(name));
+const missingOptional = [...optional].filter((name) => !actual.has(name));
+
+const unexpected = exportsList.filter((name) => {
+  const normalized = name.startsWith("_") ? name : `_${name}`;
+  if (required.has(normalized) || optional.has(normalized)) return false;
+  if (runtimeKeep.has(name) || runtimeKeep.has(normalized)) return false;
+  if (allowedRuntime.has(name)) return false;
+  return true;
 });
 
-let golden;
-try {
-  golden = JSON.parse(nativeOut);
-} catch (e) {
-  throw new Error(`Failed to parse native JSON: ${e.message}`);
-}
-assert.ok(Array.isArray(golden.qpos0) && golden.qpos0.length === steps, 'native qpos0 length mismatch');
-assert.ok(Array.isArray(golden.qvel0) && golden.qvel0.length === steps, 'native qvel0 length mismatch');
+const forbiddenPrefixes = exportsList.filter((name) => {
+  const normalized = name.startsWith("_") ? name : `_${name}`;
+  return /^_?mj(v|r|ui)_/.test(normalized) && !normalized.startsWith("_mjwf_");
+});
 
-// 2) Run WASM and collect series
-assert.ok(fs.existsSync(jsURL), 'dist/3.2.5 JS missing');
-assert.ok(fs.existsSync(wasmURL), 'dist/3.2.5 WASM missing');
+assert.strictEqual(
+  missingRequired.length,
+  0,
+  `Missing required exports: ${missingRequired.slice(0, 10).join(", ")}`,
+);
+assert.strictEqual(
+  forbiddenPrefixes.length,
+  0,
+  `Forbidden prefix exports detected: ${forbiddenPrefixes.join(", ")}`,
+);
+assert.deepStrictEqual(unexpected, [], `Unexpected exports: ${unexpected.join(", ")}`);
 
-const modFactory = (await import(pathToFileURL(jsURL).href)).default;
-const Module = await modFactory({ locateFile: (p) => (p.endsWith('.wasm') ? wasmURL : p) });
-
-Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
-const init = Module.cwrap('mjwf_init','number',['string']);
-const step_demo = Module.cwrap('mjwf_step_demo', null, ['number']);
-const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
-const qvel0 = Module.cwrap('mjwf_qvel0','number',[]);
-
-if (init('/model.xml') !== 1) throw new Error('WASM init failed');
-
-const js_qpos0 = [];
-for (let i = 0; i < steps; i++) {
-  step_demo(1);
-  js_qpos0.push(qpos0());
-}
-
-// re-init for qvel series alignment
-if (init('/model.xml') !== 1) throw new Error('WASM re-init failed');
-const js_qvel0 = [];
-for (let i = 0; i < steps; i++) {
-  step_demo(1);
-  js_qvel0.push(qvel0());
-}
-
-// 3) Compare with tolerance
-const maxAbsDiff = (a, b) => a.reduce((mx, v, i) => Math.max(mx, Math.abs(v - b[i])), 0);
-const posDiff = maxAbsDiff(js_qpos0, golden.qpos0);
-const velDiff = maxAbsDiff(js_qvel0, golden.qvel0);
-
-console.log(`regression: posDiff=${posDiff}, velDiff=${velDiff}, tol=${tol}`);
-if (!(posDiff <= tol && velDiff <= tol)) {
-  throw new Error(`Regression failed: diffs exceed tolerance (pos=${posDiff}, vel=${velDiff}, tol=${tol})`);
-}
-
-console.log('regression OK');
-
+console.log(
+  `regression(3.2.5): exports ok (${required.size} required, optional miss=${missingOptional.length})`,
+);

@@ -134,6 +134,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     "-sEXPORT_NAME=load_mujoco"
     "-Oz"
     "-flto"
+    "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall','UTF8ToString','stringToUTF8','lengthBytesUTF8','FS','wasmExports','stackSave','stackRestore','stackAlloc']"
     "-sEXPORTED_FUNCTIONS=@${MJWF_EXPORTS_LIST}"
   )
 endif()

@@ -47,16 +47,36 @@ const Module = await createMuJoCo({
 // Minimal pendulum XML
 const xml = `<?xml version="1.0"?>\n<mujoco model="pendulum">\n  <option timestep="0.002" gravity="0 0 -9.81"/>\n  <worldbody>\n    <body name="link" pos="0 0 0.1">\n      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.01"/>\n      <geom type="capsule" fromto="0 0 0 0 0 0.2" size="0.02" density="1000"/>\n    </body>\n  </worldbody>\n</mujoco>`;
 
-Module.FS.writeFile('/model.xml', new TextEncoder().encode(xml));
-const init = Module.cwrap('mjwf_init','number',['string']);
-const step = Module.cwrap('mjwf_step_demo', null, ['number']);
-const qpos0 = Module.cwrap('mjwf_qpos0','number',[]);
+const parseXMLString = Module.cwrap('mjwf_mj_parseXMLString', 'number', ['string', 'number', 'number', 'number']);
+const compile = Module.cwrap('mjwf_mj_compile', 'number', ['number', 'number']);
+const deleteSpec = Module.cwrap('mjwf_mj_deleteSpec', null, ['number']);
+const makeData = Module.cwrap('mjwf_mj_makeData', 'number', ['number']);
+const resetData = Module.cwrap('mjwf_mj_resetData', null, ['number', 'number']);
+const step = Module.cwrap('mjwf_mj_step', null, ['number', 'number']);
+const deleteData = Module.cwrap('mjwf_mj_deleteData', null, ['number']);
+const deleteModel = Module.cwrap('mjwf_mj_deleteModel', null, ['number']);
 
-if (init('/model.xml') !== 1) throw new Error('init failed');
-const before = qpos0();
-step(200);
-const after = qpos0();
-console.log({ before, after });
+const stackTop = Module.stackSave();
+const errBufSize = 1024;
+const errBuf = Module.stackAlloc(errBufSize);
+Module.HEAP8.fill(0, errBuf, errBuf + errBufSize);
+
+const specPtr = parseXMLString(xml, 0, errBuf, errBufSize);
+if (!specPtr) throw new Error(`parse failed: ${Module.UTF8ToString(errBuf)}`);
+
+const modelPtr = compile(specPtr, 0);
+if (!modelPtr) throw new Error('compile failed');
+deleteSpec(specPtr);
+
+const dataPtr = makeData(modelPtr);
+if (!dataPtr) throw new Error('makeData failed');
+
+resetData(modelPtr, dataPtr);
+step(modelPtr, dataPtr);
+
+deleteData(dataPtr);
+deleteModel(modelPtr);
+Module.stackRestore(stackTop);
 ```
 
 ## CI and reproducibility
