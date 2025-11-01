@@ -45,9 +45,9 @@ Google DeepMind 已经软发布了 MuJoCo 的官方 WebAssembly 绑定（参见 
 
 唯一入口：`.github/workflows/forge.yml`。
 
-- 矩阵覆盖 3.2.5 / 3.3.7 两个版本
+- 矩阵覆盖 3.2.5 / 3.3.7 / 3.3.8-alpha
 - 工具链固定为 emsdk 4.0.10 + Node 20
-- 3.3.7 会执行两阶段配置并强制 qhull 静态链接（Emscripten 限制）
+- 3.3.7 及 3.3.8-alpha 会执行两阶段配置并强制 qhull 静态链接（Emscripten 限制）
 - 质量闸：`[GATE:SYM]`、`[GATE:DTS]`、`[GATE:RUN]`（尚未实现的闸会标记为 skipped）
 - `dist/<mjVer>/` 中的产物直接上传
 
@@ -74,10 +74,11 @@ Google DeepMind 已经软发布了 MuJoCo 的官方 WebAssembly 绑定（参见 
    增量构建可去掉 `-Sync`/`-UseTemp`。
 
 2. **生成 ABI 描述（post_build 前置步骤）：**
-   ```powershell
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
-   ```
+  ```powershell
+  pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
+  pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
+  pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.8-alpha -OutDir dist/3.3.8-alpha/abi
+  ```
 
 3. **在 WSL 内执行 post_build 检查：**
    ```bash

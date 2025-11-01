@@ -1,4 +1,4 @@
-// Handle pool and lifecycle for MuJoCo WASM 3.3.7
+// Handle pool and lifecycle for MuJoCo WASM 3.3.8-alpha
 // This isolates multi-instance management behind integer handles.
 
 #include <mujoco/mujoco.h>

@@ -40,7 +40,7 @@ require_basics() {
 }
 
 ensure_emsdk() {
-  local WANT="${REQUESTED_EMSDK_VERSION:-${EMSDK_VERSION:-3.1.55}}"
+  local WANT="${REQUESTED_EMSDK_VERSION:-${EMSDK_VERSION:-4.0.10}}"
   if command -v emcc >/dev/null 2>&1; then
     if emcc -v 2>&1 | grep -q "$WANT"; then
       log "emsdk $WANT active"
@@ -223,7 +223,7 @@ main() {
   elif [[ -n "${EMSDK_VERSION:-}" ]]; then
     REQUESTED_EMSDK_VERSION="${EMSDK_VERSION}"
   else
-    REQUESTED_EMSDK_VERSION="3.1.55"
+    REQUESTED_EMSDK_VERSION="4.0.10"
   fi
   export REQUESTED_EMSDK_VERSION
   export EMSDK_VERSION="${REQUESTED_EMSDK_VERSION}"

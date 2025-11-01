@@ -30,8 +30,8 @@ EMSCRIPTEN_KEEPALIVE const char* mjwf_version_string(void) {
   // MuJoCo exposes mj_versionString(). We return that when available.
   static char buf[128];
   const char* mv = mj_versionString();
-  // The forge target version is 3.3.7
-  snprintf(buf, sizeof(buf), "mujoco %s | forge 3.3.7", mv ? mv : "unknown");
+  // The forge target version is 3.3.8-alpha
+  snprintf(buf, sizeof(buf), "mujoco %s | forge 3.3.8-alpha", mv ? mv : "unknown");
   return buf;
 }
 

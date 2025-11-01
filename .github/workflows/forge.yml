@@ -15,6 +15,7 @@ on:
     tags:
       - forge-3.2.5-*
       - forge-3.3.7-*
+      - forge-3.3.8-alpha*
   pull_request:
     branches:
       - main
@@ -27,7 +28,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      EMSDK_VERSION: '3.1.55'
+      EMSDK_VERSION: '4.0.10'
       # Optional toggles (defaults preserved; uncomment to change behavior):
       # OPT_LEVEL: '-O2'
       # ENABLE_SIMD: '0'
@@ -48,6 +49,12 @@ jobs:
             smoke: tests/smoke-337.mjs
             reg: tests/regression-337.mjs
             mesh: tests/mesh-smoke-337.mjs
+          - short: 338
+            mjver: 3.3.8-alpha
+            app: wrappers/official_app_338
+            smoke: tests/smoke-338.mjs
+            reg: tests/regression-338.mjs
+            mesh: tests/mesh-smoke-338.mjs
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -100,7 +107,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          if [ "${{ matrix.short }}" = "337" ]; then
+          if [ "${{ matrix.short }}" = "337" ] || [ "${{ matrix.short }}" = "338" ]; then
             # Stage-1 configure to fetch deps; allow failure
             emcmake cmake -S ${{ matrix.app }} -B build/${{ matrix.short }} \
               -DCMAKE_BUILD_TYPE=Release \

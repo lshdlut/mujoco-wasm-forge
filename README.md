@@ -85,9 +85,9 @@ Module.stackRestore(stackTop);
 
 Single workflow: `.github/workflows/forge.yml`
 
-- Matrix covers MuJoCo 3.2.5 and 3.3.7
-- Toolchain pinned to emsdk 3.1.55 + Node 20
-- 3.3.7 performs a two-stage configure and forces qhull to static (Emscripten requirement)
+- Matrix covers MuJoCo 3.2.5, 3.3.7, and 3.3.8-alpha
+- Toolchain pinned to emsdk 4.0.10 + Node 20
+- 3.3.7 and 3.3.8-alpha perform a two-stage configure and force qhull to static (Emscripten requirement)
 - Quality gates: `[GATE:SYM]`, `[GATE:DTS]`, `[GATE:RUN]` (non-implemented gates are logged as skipped)
 - Artifacts uploaded directly from `dist/<mjVer>/`
 
@@ -117,6 +117,7 @@ Preferred environment: WSL Ubuntu 22.04 (or Docker) mirroring the GitHub Actions
    ```powershell
    pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
    pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.8-alpha -OutDir dist/3.3.8-alpha/abi
    ```
 
 3. **Run post-build checks inside WSL (after `build.sh`):**

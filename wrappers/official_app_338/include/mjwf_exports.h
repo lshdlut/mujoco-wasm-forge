@@ -1,4 +1,4 @@
-// Unified exports for MuJoCo WASM 3.3.7 (forge, mjwf)
+// Unified exports for MuJoCo WASM 3.3.8-alpha (forge, mjwf)
 // Keep declarations minimal and stable; all functions are C ABI compatible.
 
 #pragma once
