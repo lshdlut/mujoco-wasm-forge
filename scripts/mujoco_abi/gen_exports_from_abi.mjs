@@ -12,7 +12,18 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve as pathResolve, dirname, join as pathJoin } from 'node:path';
 
 const ALLOWED_PREFIXES = [/^mj_/, /^mju_/, /^mjs_/, /^mjd_/];
-const RUNTIME_KEEP = ['_malloc', '_free', '_realloc', 'stackSave', 'stackRestore', 'stackAlloc'];
+const RUNTIME_KEEP = [
+  '_malloc',
+  '_free',
+  '_realloc',
+  'stackSave',
+  'stackRestore',
+  'stackAlloc',
+  '_emscripten_stack_alloc',
+  '_emscripten_stack_restore',
+  '_emscripten_timeout',
+  'strerror',
+];
 const REPORT_MAX_LIST = 50;
 
 function ensureDirFor(filePath) {

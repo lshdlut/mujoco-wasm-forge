@@ -5,10 +5,14 @@ English | 中文说明
 mujoco-wasm-forge 提供一套可复现的构建流程，将 MuJoCo 官方发布版本转换为 WebAssembly 产物。  
 流水线会扫描上游头文件、推导包装导出、分别编译 WASM 与对比用原生二进制、执行冒烟/回归检测，并生成带元数据的版本化产物。GitHub Actions 与本地流程保持一致。
 
-- **输入**：MuJoCo 标签（目前覆盖 3.2.5 与 3.3.7）  
+- **说明**：MuJoCo 标签当前涵盖 3.2.5、3.3.7 及 3.3.8-alpha。
 - **输出**：`dist/<version>/{mujoco.js, mujoco.wasm[, mujoco.wasm.map], version.json, sbom.spdx.json}`  
-- **工具链**：emsdk 3.1.55、Node 20（与 CI 相同）  
+- **工具链**：emsdk 4.0.10、Node 20（与 CI 相同）  
 - **范围**：仅包含仿真核心，视觉/UI 系符号会被排除
+
+### 官方 WASM 预览
+
+Google DeepMind 已经软发布了 MuJoCo 的官方 WebAssembly 绑定（参见 [issue #2585 评论](https://github.com/google-deepmind/mujoco/issues/2585#issuecomment-3473495118) 和 [commit 40862617](https://github.com/google-deepmind/mujoco/commit/4086261714d7cfbc1745d4c6cb0aa2116df45312)）。该构建依赖 Embind 并提供 MuJoCo 3.3.8。我们正在评估差异（API 覆盖、运行时体积、工具链），后续会同步调查结果；当前仓库继续提供自动化的 `_mjwf_*` 流水线与多版本构建。
 
 仓库镜像：https://github.com/lshdlut/mujoco-wasm-forge
 
@@ -42,7 +46,7 @@ mujoco-wasm-forge 提供一套可复现的构建流程，将 MuJoCo 官方发布
 唯一入口：`.github/workflows/forge.yml`。
 
 - 矩阵覆盖 3.2.5 / 3.3.7 两个版本
-- 工具链固定为 emsdk 3.1.55 + Node 20
+- 工具链固定为 emsdk 4.0.10 + Node 20
 - 3.3.7 会执行两阶段配置并强制 qhull 静态链接（Emscripten 限制）
 - 质量闸：`[GATE:SYM]`、`[GATE:DTS]`、`[GATE:RUN]`（尚未实现的闸会标记为 skipped）
 - `dist/<mjVer>/` 中的产物直接上传
@@ -118,3 +122,5 @@ mujoco-wasm-forge 提供一套可复现的构建流程，将 MuJoCo 官方发布
 ## Provenance
 
 仓库部分脚本和文档由生成式 AI 协助撰写，随后由维护者审核确认。
+
+

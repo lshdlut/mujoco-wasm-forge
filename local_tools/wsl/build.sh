@@ -40,10 +40,22 @@ require_basics() {
 }
 
 ensure_emsdk() {
-  local WANT=3.1.55
-  if command -v emcc >/dev/null 2>&1; then if emcc -v 2>&1 | grep -q "$WANT"; then log "emsdk $WANT active"; return 0; fi; fi
-  if [[ ! -d "$HOME/emsdk" ]]; then log "Cloning emsdk"; git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"; fi
-  pushd "$HOME/emsdk" >/dev/null; ./emsdk install "$WANT"; ./emsdk activate "$WANT"; source "$HOME/emsdk/emsdk_env.sh"; popd >/dev/null
+  local WANT="${REQUESTED_EMSDK_VERSION:-${EMSDK_VERSION:-3.1.55}}"
+  if command -v emcc >/dev/null 2>&1; then
+    if emcc -v 2>&1 | grep -q "$WANT"; then
+      log "emsdk $WANT active"
+      return 0
+    fi
+  fi
+  if [[ ! -d "$HOME/emsdk" ]]; then
+    log "Cloning emsdk"
+    git clone https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+  fi
+  pushd "$HOME/emsdk" >/dev/null
+  ./emsdk install "$WANT"
+  ./emsdk activate "$WANT"
+  source "$HOME/emsdk/emsdk_env.sh"
+  popd >/dev/null
 }
 
 activate_emsdk_env() { [[ -f "$HOME/emsdk/emsdk_env.sh" ]] && source "$HOME/emsdk/emsdk_env.sh"; }
@@ -56,20 +68,53 @@ maybe_pin_node20() {
 }
 
 build_one() {
-  local short="$1" mjver="$2" app="$3"
+  local short="$1" mjver="$2" app="$3" ref="${4:-}"
   log "=== Build ${mjver} (short=${short}) ==="
   local build="build/${short}" native="build/${short}_native"
   mkdir -p external
   if [[ "${CLEAN:-}" == "1" ]]; then rm -rf "$build" "$native" external/mujoco || true; else [[ -f "$build/CMakeCache.txt" ]] && rm -rf "$build"; [[ -f "$native/CMakeCache.txt" ]] && rm -rf "$native"; fi
   [[ -d external/mujoco ]] && rm -rf external/mujoco || true
-  if ! git clone --depth 1 --branch "${mjver}" https://github.com/google-deepmind/mujoco external/mujoco; then
-    rm -rf external/mujoco || true
-    if ! git clone --depth 1 --branch "v${mjver}" https://github.com/google-deepmind/mujoco external/mujoco; then
-      rm -rf external/mujoco || true; git clone https://github.com/google-deepmind/mujoco external/mujoco; pushd external/mujoco >/dev/null; git fetch --tags; git checkout -qf "refs/tags/v${mjver}" || git checkout -qf "refs/tags/${mjver}"; popd >/dev/null
+
+  local clone_ok=0
+  local repo_url="https://github.com/google-deepmind/mujoco"
+  local -a candidate_refs=()
+  [[ -n "$ref" ]] && candidate_refs+=("$ref")
+  candidate_refs+=("$mjver" "v${mjver}")
+
+  for candidate in "${candidate_refs[@]}"; do
+    [[ -n "$candidate" ]] || continue
+    if git clone --depth 1 --branch "$candidate" "$repo_url" external/mujoco >/dev/null 2>&1; then
+      clone_ok=1
+      break
     fi
+    rm -rf external/mujoco || true
+  done
+
+  if [[ $clone_ok -eq 0 ]]; then
+    git clone "$repo_url" external/mujoco >/dev/null 2>&1 || { err "Failed to clone MuJoCo repo"; exit 1; }
+    pushd external/mujoco >/dev/null
+    git fetch --tags >/dev/null 2>&1 || true
+    for candidate in "${candidate_refs[@]}"; do
+      [[ -n "$candidate" ]] || continue
+      if git checkout -qf "$candidate" >/dev/null 2>&1; then
+        clone_ok=1
+        break
+      fi
+      if git checkout -qf "refs/tags/$candidate" >/dev/null 2>&1; then
+        clone_ok=1
+        break
+      fi
+    done
+    popd >/dev/null
   fi
+
+  if [[ $clone_ok -eq 0 ]]; then
+    err "Unable to checkout MuJoCo reference for ${mjver} (refs tried: ${candidate_refs[*]})"
+    exit 1
+  fi
+
   local f="external/mujoco/src/engine/engine_util_errmem.c"; if [[ -f "$f" ]]; then sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/' "$f"; sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/' "$f"; fi
-  if [[ "$short" == "337" ]]; then
+  if [[ "$short" == "337" || "$short" == "338" ]]; then
     emcmake cmake -S "$app" -B "$build" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_ENABLE_QHULL=OFF -DMUJOCO_BUILD_PLUGINS=OFF -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON -DLIBM_LIBRARY:STRING=-lm -DMJVER="${mjver}" || true
     local QH="${build}/_deps/qhull-src/CMakeLists.txt"; if [[ -f "$QH" ]]; then sed -i 's/\bSHARED\b/STATIC/g' "$QH" || true; awk 'BEGIN{print "set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)"} {print}' "$QH" > "$QH.tmp" && mv "$QH.tmp" "$QH"; fi
   fi
@@ -98,11 +143,20 @@ build_one() {
     log "Skipping Node smoke/regression tests (RUN_TESTS=${RUN_TESTS:-0})"
   fi
   if [[ "${META:-0}" == "1" ]]; then
-    local EMVER=${EMSDK_VERSION} MJVER=${mjver} MJ_SHA=$(git -C external/mujoco rev-parse HEAD) JS="dist/${MJVER}/mujoco.js" WASM="dist/${MJVER}/mujoco.wasm"
-    local JSB=$(stat -c %s "$JS" 2>/dev/null || echo 0) WSB=$(stat -c %s "$WASM" 2>/dev/null || echo 0) JSUM=$(sha256sum "$JS" | cut -d' ' -f1) WSUM=$(sha256sum "$WASM" | cut -d' ' -f1) NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    cat > "dist/${MJVER}/version.json" <<JSON
+    local EMVER=${REQUESTED_EMSDK_VERSION}
+    local OUT_VER=${mjver}
+    local MJ_SHA
+    MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
+    local JS="dist/${OUT_VER}/mujoco.js"
+    local WASM="dist/${OUT_VER}/mujoco.wasm"
+    local JSB=$(stat -c %s "$JS" 2>/dev/null || echo 0)
+    local WSB=$(stat -c %s "$WASM" 2>/dev/null || echo 0)
+    local JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
+    local WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
+    local NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    cat > "dist/${OUT_VER}/version.json" <<JSON
 {
-  "mujocoVersion": "${MJVER}",
+  "mujocoVersion": "${OUT_VER}",
   "emscripten": "${EMVER}",
   "buildTime": "${NOW}",
   "gitSha": "${MJ_SHA}",
@@ -115,22 +169,23 @@ build_one() {
   "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
 }
 JSON
-    local NS="https://local/wsl/sbom/$(date +%s)"; cat > "dist/${MJVER}/sbom.spdx.json" <<SBOM
+    local NS="https://local/wsl/sbom/$(date +%s)"
+    cat > "dist/${OUT_VER}/sbom.spdx.json" <<SBOM
 {
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "mujoco-wasm-forge-${MJVER}",
+  "name": "mujoco-wasm-forge-${OUT_VER}",
   "documentNamespace": "${NS}",
   "creationInfo": {"created": "${NOW}", "creators": ["Tool: forge workflow (local)"]},
   "packages": [
-    {"name": "mujoco", "SPDXID": "SPDXRef-Pkg-MuJoCo", "versionInfo": "${MJVER}", "downloadLocation": "https://github.com/google-deepmind/mujoco", "sourceInfo": "git@${MJ_SHA}"},
+    {"name": "mujoco", "SPDXID": "SPDXRef-Pkg-MuJoCo", "versionInfo": "${OUT_VER}", "downloadLocation": "https://github.com/google-deepmind/mujoco", "sourceInfo": "git@${MJ_SHA}"},
     {"name": "emscripten", "SPDXID": "SPDXRef-Pkg-Emscripten", "versionInfo": "${EMVER}", "downloadLocation": "https://github.com/emscripten-core/emsdk"}
   ]
 }
 SBOM
-    printf "%s  %s\n%s  %s\n" "$JSUM" "$(basename "$JS")" "$WSUM" "$(basename "$WASM")" > "dist/${MJVER}/SHA256SUMS.txt"
-    cat > "dist/${MJVER}/RELEASE_NOTES.md" <<EOF
+    printf "%s  %s\n%s  %s\n" "$JSUM" "$(basename "$JS")" "$WSUM" "$(basename "$WASM")" > "dist/${OUT_VER}/SHA256SUMS.txt"
+    cat > "dist/${OUT_VER}/RELEASE_NOTES.md" <<EOF
 
 Build with Emscripten ${EMVER}. Artifacts:
 - mujoco.js (${JSB} bytes)
@@ -159,18 +214,42 @@ EOF
 }
 
 main() {
-  require_basics; activate_emsdk_env || true; ensure_emsdk
+  local initial_env_emsdk="${EMSDK_VERSION:-}"
+  require_basics; activate_emsdk_env || true
+  if [[ -n "${REQUESTED_EMSDK_VERSION:-}" ]]; then
+    :
+  elif [[ -n "$initial_env_emsdk" ]]; then
+    REQUESTED_EMSDK_VERSION="$initial_env_emsdk"
+  elif [[ -n "${EMSDK_VERSION:-}" ]]; then
+    REQUESTED_EMSDK_VERSION="${EMSDK_VERSION}"
+  else
+    REQUESTED_EMSDK_VERSION="3.1.55"
+  fi
+  export REQUESTED_EMSDK_VERSION
+  export EMSDK_VERSION="${REQUESTED_EMSDK_VERSION}"
+  ensure_emsdk
   need_cmd emcmake; need_cmd cmake
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   # build.sh lives under local_tools/wsl; repo root is two levels up
   repo_root="$(cd "${script_dir}/../.." && pwd)"
   cd "$repo_root"; log "Repo root: $repo_root"
-  export EMSDK_VERSION=3.1.55
   : "${MJVER:=}"
   : "${MJVER_325:=}"
   : "${MJVER_337:=}"
+  : "${MJVER_338:=}"
+  : "${MJREF:=}"
+  : "${MJREF_325:=}"
+  : "${MJREF_337:=}"
+  : "${MJREF_338:=}"
   IFS=',' read -r -a targets <<< "${TARGETS:-325,337}"
-  for t in "${targets[@]}"; do case "$t" in 325) build_one 325 "${MJVER_325:-3.2.5}" "wrappers/official_app_325";; 337) build_one 337 "${MJVER_337:-${MJVER:-3.3.7}}" "wrappers/official_app_337";; *) warn "Unknown target '$t'";; esac; done
+  for t in "${targets[@]}"; do
+    case "$t" in
+      325) build_one 325 "${MJVER_325:-3.2.5}" "wrappers/official_app_325" "${MJREF_325:-${MJREF:-}}";;
+      337) build_one 337 "${MJVER_337:-${MJVER:-3.3.7}}" "wrappers/official_app_337" "${MJREF_337:-${MJREF:-}}";;
+      338) build_one 338 "${MJVER_338:-${MJVER:-3.3.8}}" "wrappers/official_app_338" "${MJREF_338:-${MJREF:-}}";;
+      *) warn "Unknown target '$t'";;
+    esac
+  done
   log "Done."
 }
 

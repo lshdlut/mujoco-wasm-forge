@@ -1,0 +1,95 @@
+views:
+  # Core state
+  - name: qpos
+    src: d->qpos
+    dtype: f64
+    len: m->nq
+    rw: rw
+  - name: qvel
+    src: d->qvel
+    dtype: f64
+    len: m->nv
+    rw: rw
+  - name: ctrl
+    src: d->ctrl
+    dtype: f64
+    len: m->nu
+    rw: rw
+  - name: sensordata
+    src: d->sensordata
+    dtype: f64
+    len: m->nsensordata
+    rw: ro
+
+  # Geometry (pose)
+  - name: geom_xpos
+    src: d->geom_xpos
+    dtype: f64
+    len: m->ngeom*3
+    rw: ro
+  - name: geom_xmat
+    src: d->geom_xmat
+    dtype: f64
+    len: m->ngeom*9
+    rw: ro
+
+  # Geometry (model attributes)
+  - name: geom_size
+    src: m->geom_size
+    dtype: f64
+    len: m->ngeom*3
+    rw: ro
+  - name: geom_type
+    src: m->geom_type
+    dtype: i32
+    len: m->ngeom
+    rw: ro
+  - name: geom_matid
+    src: m->geom_matid
+    dtype: i32
+    len: m->ngeom
+    rw: ro
+
+  # Materials
+  - name: mat_rgba
+    src: m->mat_rgba
+    dtype: f32
+    len: m->nmat*4
+    rw: ro
+
+  # Joints
+  - name: jnt_type
+    src: m->jnt_type
+    dtype: i32
+    len: m->njnt
+    rw: ro
+  - name: jnt_qposadr
+    src: m->jnt_qposadr
+    dtype: i32
+    len: m->njnt
+    rw: ro
+  - name: jnt_range
+    src: m->jnt_range
+    dtype: f64
+    len: m->njnt*2
+    rw: ro
+
+  # Actuators
+  - name: actuator_ctrlrange
+    src: m->actuator_ctrlrange
+    dtype: f64
+    len: m->nu*2
+    rw: ro
+
+dims:
+  - nq: m->nq
+  - nv: m->nv
+  - nu: m->nu
+  - nsensordata: m->nsensordata
+  - ngeom: m->ngeom
+  - nmat: m->nmat
+  - njnt: m->njnt
+
+names:
+  enabled: true
+

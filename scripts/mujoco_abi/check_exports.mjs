@@ -38,6 +38,10 @@ const ALLOWED_RUNTIME = new Set([
   'emscripten_stack_init',
   'emscripten_stack_set_limits',
   'fflush',
+  '_emscripten_stack_alloc',
+  '_emscripten_stack_restore',
+  '_emscripten_timeout',
+  '_strerror',
 ]);
 
 function parseArgs(argv) {
