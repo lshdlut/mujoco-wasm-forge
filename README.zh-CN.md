@@ -94,13 +94,16 @@ Module.stackRestore(stackTop);
     - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6`
   - 后续（已镜像）：
     - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
+  - After each build (inside WSL) run the unified post-build checks:
+    - `bash scripts/ci/post_build.sh --version 3.2.5 --short 325`
+    - `bash scripts/ci/post_build.sh --version 3.3.7 --short 337`
   - 说明：`-WslWorkDir` 可指定 WSL 侧工作目录（默认 `~/dev/mujoco-wasm-forge`）
 
 - WSL 侧（等效）：
   - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
 
 注意：
-- 所有构建与测试都应在 WSL 的 ext4（例如 `~/dev/mujoco-wasm-forge`），或使用 `-UseTemp` 在 `/tmp` 下进行，避免 `/mnt/c/...` 和 OneDrive 带来的 I/O 与同步开销。不会在 Windows 侧创建 `~` 或写入 OneDrive。
+- Prefer running inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`) or use `-UseTemp` to work in `/tmp`; avoid `/mnt/c/...` and OneDrive paths to stay close to CI performance and behavior.
 - 默认并行度为 6，可用 `-Jobs` 覆盖。
 
 ## 在其它仓库使用工件（如 mujoco-wasm-play）
@@ -124,4 +127,4 @@ Module.stackRestore(stackTop);
 
 ## 说明
 
-- 前端演示（进行中）：https://github.com/lshdlut/mujoco-wasm-play.git
+- 前端演示（进行中）：https://github.com/lshdlut/mujoco-wasm-play.git Ϊ��ȫ���� CI �ر���Ϊ��ȷ���������`-UseTemp` �����������ռ䣬Ȼ���� scripts/ci/post_build.sh ���Բ��ԡ�

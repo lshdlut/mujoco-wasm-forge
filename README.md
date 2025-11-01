@@ -139,6 +139,9 @@ Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflow
     - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6`
   - Subsequent builds (already mirrored):
     - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
+  - After each build, run the consolidated post-build checks from a clean WSL shell:
+    - `bash scripts/ci/post_build.sh --version 3.2.5 --short 325`
+    - `bash scripts/ci/post_build.sh --version 3.3.7 --short 337`
   - Flags:
     - `-Clean` removes old caches for a clean reconfigure
     - `-Meta` generates `version.json`, `sbom.spdx.json`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`
@@ -150,6 +153,7 @@ Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflow
 
 Notes:
 - Run all builds and tests inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`), or use `-UseTemp` to build in `/tmp`. Avoid `/mnt/c/...` and OneDrive paths to prevent slow I/O and sync overhead. No files are written to Windows `~`.
+- For maximum parity with CI, prefer starting from a fresh workspace (e.g., `-UseTemp` or a clean clone) before invoking the scripts above; the post-build checks rely on the same command sequence used by GitHub Actions, so running them in a clean environment catches drift early.
 - Default parallel jobs is 6; override with `-Jobs` if needed.
 - The sync helper now excludes `.git` and purges accidental `?root?dev?...` folders that can appear if WSL paths are copied from Windows. Prefer `-Sync` over manual `cp /root/...` on Windows.
 
