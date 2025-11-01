@@ -1,116 +1,154 @@
 #!/usr/bin/env node
 
-// Validate WASM export surface against expected wrapper whitelist.
-// Usage: node scripts/mujoco_abi/check_exports.mjs <abiDir> <wasmPath> <expectedJson>
+/**
+ * Check that the final WASM exports match the generated whitelist.
+ *
+ * Required flags:
+ *   --abi <dir>
+ *   --expected <dist/.../abi/wrapper_exports.json>
+ *   --wasm <dist/.../mujoco.wasm>
+ */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { join as pathJoin, resolve as pathResolve, dirname } from 'node:path';
+import { resolve as pathResolve, join as pathJoin, dirname } from 'node:path';
 
-function ensureDir(p) { mkdirSync(p, { recursive: true }); }
+const ALLOWED_RUNTIME = new Set([
+  '__wasm_call_ctors',
+  '__wasm_apply_data_relocations',
+  '__wasm_init_memory_flag',
+  '__heap_base',
+  '__data_end',
+  '__global_base',
+  '__memory_base',
+  '__table_base',
+  '__stack_pointer',
+  '__indirect_function_table',
+  'memory',
+  'table',
+  'stackSave',
+  'stackRestore',
+  'stackAlloc',
+  'setThrew',
+  'emscripten_stack_get_current',
+  'emscripten_stack_get_end',
+  'emscripten_stack_get_base',
+  'emscripten_stack_init',
+  'emscripten_stack_set_limits',
+]);
 
-function loadJson(p) { return JSON.parse(readFileSync(p, 'utf8')); }
+function parseArgs(argv) {
+  const opts = {
+    abiDir: null,
+    expectedJson: null,
+    wasmPath: null,
+  };
+  for (let i = 2; i < argv.length; ++i) {
+    const arg = argv[i];
+    if (arg === '--abi') opts.abiDir = pathResolve(argv[++i]);
+    else if (arg === '--expected') opts.expectedJson = pathResolve(argv[++i]);
+    else if (arg === '--wasm') opts.wasmPath = pathResolve(argv[++i]);
+    else {
+      console.error(`Unknown argument: ${arg}`);
+      process.exit(2);
+    }
+  }
+  const missing = [];
+  if (!opts.abiDir) missing.push('--abi');
+  if (!opts.expectedJson) missing.push('--expected');
+  if (!opts.wasmPath) missing.push('--wasm');
+  if (missing.length) {
+    console.error(`Missing required option(s): ${missing.join(', ')}`);
+    process.exit(2);
+  }
+  return opts;
+}
 
-function normalizeExport(name) {
-  if (name.startsWith('_')) return name.slice(1);
-  return name;
+function loadJson(path) {
+  return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+function wasmExports(path) {
+  const bytes = readFileSync(path);
+  const module = new WebAssembly.Module(bytes);
+  return WebAssembly.Module.exports(module).map((e) => e.name);
+}
+
+function normalize(name) {
+  return name.startsWith('_') ? name : `_${name}`;
+}
+
+function ensureDir(dir) {
+  mkdirSync(dir, { recursive: true });
 }
 
 function main() {
-  const abiDir = pathResolve(process.argv[2] || '');
-  const wasmPath = pathResolve(process.argv[3] || '');
-  const expectedPath = pathResolve(process.argv[4] || '');
-  if (!abiDir || !wasmPath || !expectedPath) {
-    console.error('Usage: node scripts/mujoco_abi/check_exports.mjs <abiDir> <wasmPath> <expectedJson>');
-    process.exit(2);
-  }
+  const opts = parseArgs(process.argv);
+  const manifest = loadJson(opts.expectedJson);
+  const requiredSet = new Set((manifest.required || []).map((n) => normalize(n)));
+  const runtimeKeep = new Set((manifest.runtime_keep || []).map((n) => normalize(n)));
 
-  const expected = loadJson(expectedPath);
-  const required = new Set(expected.required || expected.exports || []);
-  const optional = new Set(expected.optional || []);
-  const runtimeKeep = new Set((expected.runtime_keep || []).map((n) => n.replace(/^_/, '')));
-
-  const wasmBytes = readFileSync(wasmPath);
-  const module = new WebAssembly.Module(wasmBytes);
-  const exports = WebAssembly.Module.exports(module).map((e) => e.name);
-
+  const exportsRaw = wasmExports(opts.wasmPath);
   const actualWrappers = new Set();
-  const unexpected = [];
+  const unexpectedNonMjwf = new Set();
+  const forbiddenPrefixExports = new Set();
 
-  const allowedRuntime = new Set([
-    '__wasm_call_ctors',
-    '__wasm_apply_data_relocations',
-    '__wasm_init_memory_flag',
-    '__stack_pointer',
-    '__heap_base',
-    '__data_end',
-    '__global_base',
-    '__memory_base',
-    '__table_base',
-    '__indirect_function_table',
-    'memory',
-    'stackSave',
-    'stackRestore',
-    'stackAlloc',
-    'setThrew',
-    'setTempRet0',
-    'emscripten_stack_get_current',
-    'emscripten_stack_get_end',
-    'emscripten_stack_get_base',
-    'emscripten_stack_init',
-    'emscripten_stack_set_limits',
-  ]);
-
-  for (const name of exports) {
-    const plain = normalizeExport(name);
-    if (plain.startsWith('mjwf_')) {
-      actualWrappers.add(plain);
+  for (const rawName of exportsRaw) {
+    const norm = normalize(rawName);
+    if (norm.startsWith('_mjwf_')) {
+      actualWrappers.add(norm);
       continue;
     }
-    if (runtimeKeep.has(plain) || runtimeKeep.has(name)) continue;
-    if (allowedRuntime.has(name) || allowedRuntime.has(plain)) continue;
-    if (/^_?mj(v|r|ui)_/.test(name) || /^mj(v|r|ui)_/.test(plain)) {
-      unexpected.push(name);
+    if (runtimeKeep.has(norm) || runtimeKeep.has(rawName)) continue;
+    if (ALLOWED_RUNTIME.has(norm) || ALLOWED_RUNTIME.has(rawName)) continue;
+    if (/^_?mj(v|r|ui)_/.test(rawName)) {
+      forbiddenPrefixExports.add(rawName);
       continue;
     }
-    if (plain.startsWith('mj') || plain.startsWith('mju_') || plain.startsWith('mjs_')) {
-      unexpected.push(name);
-    }
+    unexpectedNonMjwf.add(rawName);
   }
 
-  const missingRequired = Array.from(required).filter((sym) => !actualWrappers.has(sym)).sort();
-  const missingOptional = Array.from(optional).filter((sym) => !actualWrappers.has(sym)).sort();
+  const missingRequired = Array.from(requiredSet).filter((name) => !actualWrappers.has(name)).sort();
+  const unexpectedList = Array.from(unexpectedNonMjwf).sort();
+  const forbiddenList = Array.from(forbiddenPrefixExports).sort();
 
   const report = {
-    wasm: wasmPath,
-    expected: {
-      required: required.size,
-      optional: optional.size,
-      runtime_keep: runtimeKeep.size,
-    },
-    actual: {
-      exportCount: exports.length,
-      wrappers: actualWrappers.size,
+    wasm: opts.wasmPath,
+    expected: opts.expectedJson,
+    counts: {
+      required: requiredSet.size,
+      actualMjwf: actualWrappers.size,
+      missingRequired: missingRequired.length,
+      unexpectedNonMjwf: unexpectedList.length,
+      forbiddenPrefix: forbiddenList.length,
     },
     missingRequired,
-    missingOptional,
-    unexpected,
-    ok: missingRequired.length === 0 && unexpected.length === 0,
+    unexpectedNonMjwf: unexpectedList,
+    forbiddenPrefixExports: forbiddenList,
+    ok: missingRequired.length === 0 && unexpectedList.length === 0 && forbiddenList.length === 0,
   };
 
-  const outPath = pathJoin(abiDir, 'exports_check.json');
-  ensureDir(dirname(outPath));
+  ensureDir(opts.abiDir);
+  const outPath = pathJoin(opts.abiDir, 'exports_check.json');
   writeFileSync(outPath, JSON.stringify(report, null, 2));
   console.log(`[exports-check] wrote ${outPath}`);
-  console.log(`[exports-check] status ok=${report.ok} missingRequired=${missingRequired.length} unexpected=${unexpected.length}`);
-  if (missingOptional.length) {
-    console.warn(`[exports-check] optional exports missing (${missingOptional.length}):`, missingOptional.slice(0, 20));
-    if (missingOptional.length > 20) console.warn('...');
+  console.log(`[exports-check] status ok=${report.ok}`);
+
+  if (!report.ok) {
+    if (missingRequired.length) {
+      console.error('[exports-check] missing:', missingRequired.slice(0, 20));
+      if (missingRequired.length > 20) console.error('...');
+    }
+    if (unexpectedList.length) {
+      console.error('[exports-check] unexpected non-mjwf exports:', unexpectedList.slice(0, 20));
+      if (unexpectedList.length > 20) console.error('...');
+    }
+    if (forbiddenList.length) {
+      console.error('[exports-check] forbidden prefix exports:', forbiddenList.slice(0, 20));
+      if (forbiddenList.length > 20) console.error('...');
+    }
+    process.exit(1);
   }
-  if (unexpected.length) {
-    console.error('[exports-check] unexpected exports:', unexpected.slice(0, 20));
-    if (unexpected.length > 20) console.error('...');
-  }
-  if (!report.ok) process.exit(1);
 }
 
 main();
+

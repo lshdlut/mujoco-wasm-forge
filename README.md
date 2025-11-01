@@ -14,6 +14,17 @@ Status: usable. CI builds a single-module WASM + glue JS, runs Node smoke + a na
 
 Repository: https://github.com/lshdlut/mujoco-wasm-forge
 
+## 导出规则与排除（必须阅读）
+
+- 导出等式：**C = A ∩ B**  
+  A=公开 C 头声明（mujoco.h / mjspec.h）  
+  B=静态库实现（llvm-nm）
+- 硬闸：`(A ∩ B) − C = ∅`，导出不得含 `mjv_/mjr_/mjui_` 或非 `_mjwf_*`。
+- **特殊排除**：
+  1) 仅接受 `mj_`、`mju_`、`mjs_` 前缀；  
+  2) 变参函数仅在存在 `*_v` 变体时导出，无 `_v` 自动排除（记录为 `variadic_no_v`）。
+- 详见 `dist/<ver>/abi/exports_report.md`（如需 JSON 报告，设环境变量 `EMIT_JSON=1`）。
+
 ## Artifacts
 
 CI (and canonical local builds using WSL with metadata enabled) produce:
@@ -63,20 +74,20 @@ Unified workflow entrance (GitHub Actions):
 
 Forge now treats auto-generated wrappers as the single source of truth for the WASM surface. Every CI/local build executes the following pipeline:
 
-1. **Auto-generate wrappers**  
-   `node scripts/mujoco_abi/autogen_wrappers.mjs --include external/mujoco/include --header wrappers/auto/mjwf_auto_exports.h --source wrappers/auto/mjwf_auto_exports.c`  
-   (invoked automatically by CMake; no manual action required)
-2. **Generate ABI metadata**  
-   `pwsh scripts/mujoco_abi/run.ps1 -Ref 3.3.7 -OutDir dist/3.3.7/abi`
-3. **Generate wrapper whitelist + d.ts**  
-   `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/auto/mjwf_auto_exports.h --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7`  
-   Produces `build/exports_3.3.7.json`, `build/exports_3.3.7.lst`, `build/types_3.3.7.d.ts`, and `dist/3.3.7/abi/wrapper_exports.json`.
-4. **Build with whitelist**  
-   CMake wires the generated files and passes `-sEXPORTED_FUNCTIONS=@build/exports_3.3.7.lst` (runtime helpers auto-appended).
-5. **Post-build export check (hard gate)**  
-   `node scripts/mujoco_abi/check_exports.mjs dist/3.3.7/abi dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
-6. **nm coverage check (hard gate)**  
-   `node scripts/mujoco_abi/nm_coverage.mjs dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
+1. **扫描声明集 (A)**  
+   `node scripts/mujoco_abi/autogen_wrappers.mjs --include external/mujoco/include --out build/<short>/mjapi_<ver>.json`  
+   （由 CMake 自动触发，用于记录公开 C API）
+2. **枚举实现集 (B)**  
+   `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out build/<short>/nm_<ver>.json`
+3. **生成 C = A ∩ B 导出面**  
+   `node scripts/mujoco_abi/gen_exports_from_abi.mjs --names-json build/<short>/mjapi_<ver>.json --impl-json build/<short>/nm_<ver>.json --header wrappers/auto/mjwf_auto_exports.h --source wrappers/auto/mjwf_auto_exports.c --version <ver> --out build/<short> --abi dist/<ver>/abi`  
+   产出 `exports_<ver>.{json,lst,d.ts}`, `wrapper_exports.json` 以及 `exports_report.md`（`EMIT_JSON=1` 时附带 JSON 报告）。
+4. **使用白名单编译**  
+   CMake 注入自动生成的文件，并传递 `-sEXPORTED_FUNCTIONS=@build/<short>/exports_<ver>.lst`。
+5. **导出面硬闸**  
+   `node scripts/mujoco_abi/check_exports.mjs --abi dist/<ver>/abi --expected dist/<ver>/abi/wrapper_exports.json --wasm dist/<ver>/mujoco.wasm`
+6. **可选审计快照**  
+   `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_coverage.json`
 
 Refer to `docs/ABI_SCAN.md` for details and additional options.
 

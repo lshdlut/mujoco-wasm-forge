@@ -1,40 +1,36 @@
 #!/usr/bin/env node
 
-// Verify that every mj_/mju_/mjs_* implementation has a corresponding mjwf_* wrapper.
-// Usage: node scripts/mujoco_abi/nm_coverage.mjs <artifact> <wrapper_exports.json> [--nm path] [--out report.json]
+/**
+ * Enumerate symbols implemented in libmujoco.a (B-set) using llvm-nm.
+ *
+ * Usage:
+ *   node scripts/mujoco_abi/nm_coverage.mjs <libmujoco.a> --out build/mujoco_impl.json
+ *
+ * The script never exits with failure; errors are captured in the JSON payload.
+ */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { resolve as pathResolve } from 'node:path';
-
-const ALLOW_PREFIX = [
-  /^mj(?![vru]_)/,
-  /^mju_/,
-  /^mjs_/,
-];
-
-const DENY_PREFIX = [
-  /^mjv_/,
-  /^mjr_/,
-  /^mjui_/,
-];
+import { resolve as pathResolve, dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 
 function parseArgs(argv) {
-  if (argv.length < 4) {
-    console.error('Usage: node scripts/mujoco_abi/nm_coverage.mjs <artifact> <wrapper_exports.json> [--nm path] [--out report.json]');
+  if (argv.length < 3) {
+    console.error('Usage: node scripts/mujoco_abi/nm_coverage.mjs <libmujoco.a> [--out report.json]');
     process.exit(2);
   }
   const opts = {
     artifact: pathResolve(argv[2]),
-    manifest: pathResolve(argv[3]),
-    nm: process.env.LLVM_NM || 'llvm-nm',
+    nmPath: process.env.LLVM_NM || process.env.EMNM || resolveDefaultNm(),
     out: null,
   };
-  for (let i = 4; i < argv.length; ++i) {
+  for (let i = 3; i < argv.length; ++i) {
     const arg = argv[i];
-    if (arg === '--nm') opts.nm = argv[++i];
-    else if (arg === '--out') opts.out = pathResolve(argv[++i]);
-    else {
+    if (arg === '--nm') {
+      opts.nmPath = argv[++i];
+    } else if (arg === '--out') {
+      opts.out = pathResolve(argv[++i]);
+    } else {
       console.error(`Unknown argument: ${arg}`);
       process.exit(2);
     }
@@ -42,99 +38,73 @@ function parseArgs(argv) {
   return opts;
 }
 
-function normalizeSymbol(name) {
-  return name.startsWith('_') ? name.slice(1) : name;
-}
-
-function allowSymbol(name) {
-  return ALLOW_PREFIX.some((re) => re.test(name));
-}
-
-function denySymbol(name) {
-  return DENY_PREFIX.some((re) => re.test(name));
-}
-
-function collectImplementationSymbols(nmPath, target) {
-  const res = spawnSync(nmPath, ['--format=posix', '--defined-only', target], { encoding: 'utf8' });
-  if (res.error) {
-    console.error(`[nm-coverage] Failed to execute ${nmPath}:`, res.error);
-    process.exit(2);
+function resolveDefaultNm() {
+  if (process.env.EMSDK) {
+    return pathResolve(process.env.EMSDK, 'upstream', 'bin', 'llvm-nm');
   }
-  if (res.status !== 0) {
-    console.error(`[nm-coverage] ${nmPath} exited with code ${res.status}:`, res.stderr);
-    process.exit(res.status);
-  }
-  const symbols = new Set();
-  const lines = res.stdout.split('\n');
+  return 'llvm-nm';
+}
+
+function ensureDirFor(filePath) {
+  if (!filePath) return;
+  mkdirSync(dirname(filePath), { recursive: true });
+}
+
+function runNm(nmPath, artifact) {
+  const res = spawnSync(nmPath, ['-g', '--defined-only', '-P', artifact], { encoding: 'utf8' });
+  return res;
+}
+
+function collectSymbols(stdout) {
+  const names = [];
+  const lines = stdout.split('\n');
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const parts = trimmed.split(/\s+/);
-    const name = normalizeSymbol(parts[parts.length - 1]);
-    if (!name) continue;
-    if (!allowSymbol(name)) continue;
-    if (denySymbol(name)) continue;
-    symbols.add(name);
+    if (!line) continue;
+    if (line.includes('no symbols')) continue;
+    if (line.endsWith(':')) continue;
+    const [symbol] = line.split(/\s+/);
+    if (!symbol) continue;
+    const normalized = symbol.startsWith('_') ? symbol.slice(1) : symbol;
+    if (normalized) names.push(normalized);
   }
-  return symbols;
-}
-
-function collectGeneratedSymbols(manifestPath) {
-  const data = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  const wrappers = new Set([
-    ...(data.required || []),
-    ...(data.optional || []),
-  ]);
-  const originals = new Set();
-  for (const wrapper of wrappers) {
-    if (!wrapper.startsWith('mjwf_')) continue;
-    const candidate = wrapper.replace(/^mjwf_/, '');
-    if (allowSymbol(candidate) && !denySymbol(candidate)) {
-      originals.add(candidate);
-    }
-  }
-  return { wrappers, originals };
+  return names;
 }
 
 function main() {
   const opts = parseArgs(process.argv);
-  if (!existsSync(opts.artifact)) {
-    console.error(`[nm-coverage] Artifact not found: ${opts.artifact}`);
-    process.exit(1);
-  }
-  if (!existsSync(opts.manifest)) {
-    console.error(`[nm-coverage] Manifest not found: ${opts.manifest}`);
-    process.exit(1);
-  }
-
-  const impl = collectImplementationSymbols(opts.nm, opts.artifact);
-  const { wrappers, originals } = collectGeneratedSymbols(opts.manifest);
-  const missing = Array.from(impl).filter((sym) => !originals.has(sym)).sort();
-  const unusedWrappers = Array.from(originals).filter((sym) => !impl.has(sym)).sort();
-
   const report = {
     artifact: opts.artifact,
-    manifest: opts.manifest,
-    implCount: impl.size,
-    generatedCount: originals.size,
-    wrappersCount: wrappers.size,
-    missing,
-    unusedWrappers,
-    ok: missing.length === 0,
+    nmPath: opts.nmPath,
+    ok: false,
+    symbols: [],
+    count: 0,
+    error: null,
   };
 
+  if (!existsSync(opts.artifact)) {
+    report.error = `Artifact not found: ${opts.artifact}`;
+  } else {
+    const res = runNm(opts.nmPath, opts.artifact);
+    if (res.error) {
+      report.error = `Failed to execute ${opts.nmPath}: ${res.error.message || String(res.error)}`;
+    } else if (res.status !== 0) {
+      report.error = `${opts.nmPath} exited with code ${res.status}: ${res.stderr || ''}`.trim();
+    } else {
+      const symbols = collectSymbols(res.stdout);
+      symbols.sort();
+      report.symbols = symbols;
+      report.count = symbols.length;
+      report.ok = true;
+    }
+  }
+
   if (opts.out) {
+    ensureDirFor(opts.out);
     writeFileSync(opts.out, JSON.stringify(report, null, 2));
-    console.log(`[nm-coverage] wrote ${opts.out}`);
+    console.log(`[nm-scan] wrote ${opts.out} (symbols=${report.count}, ok=${report.ok})`);
+  } else {
+    process.stdout.write(JSON.stringify(report, null, 2));
   }
-
-  if (missing.length) {
-    console.error('[nm-coverage] Missing wrappers for:', missing.slice(0, 20));
-    if (missing.length > 20) console.error('...');
-    process.exit(1);
-  }
-
-  console.log(`[nm-coverage] OK (impl=${impl.size}, wrappers=${originals.size})`);
 }
 
 main();

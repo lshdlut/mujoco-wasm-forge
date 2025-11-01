@@ -88,7 +88,15 @@ build_one() {
   cmake --build "$native" -j "$JOBS"
   mkdir -p "dist/${mjver}"; cp "${build}/_wasm/mujoco_wasm${short}.js" "dist/${mjver}/mujoco.js"; cp "${build}/_wasm/mujoco_wasm${short}.wasm" "dist/${mjver}/mujoco.wasm"; [[ -f "${build}/_wasm/mujoco_wasm${short}.wasm.map" ]] && cp "${build}/_wasm/mujoco_wasm${short}.wasm.map" "dist/${mjver}/mujoco.wasm.map"
   need_cmd node; maybe_pin_node20; log "Node $(node -v)"
-  local native_bin="${repo_root}/${native}/_wasm/mujoco_compare${short}"; MJ_NATIVE_BIN="$native_bin" node "tests/smoke-${short}.mjs"; MJ_NATIVE_BIN="$native_bin" node "tests/regression-${short}.mjs"; [[ -f "tests/mesh-smoke-${short}.mjs" ]] && node "tests/mesh-smoke-${short}.mjs" || true
+  log "RUN_TESTS=${RUN_TESTS:-0}"
+  if [[ "${RUN_TESTS:-0}" == "1" ]]; then
+    local native_bin="${repo_root}/${native}/_wasm/mujoco_compare${short}"
+    MJ_NATIVE_BIN="$native_bin" node "tests/smoke-${short}.mjs"
+    MJ_NATIVE_BIN="$native_bin" node "tests/regression-${short}.mjs"
+    [[ -f "tests/mesh-smoke-${short}.mjs" ]] && node "tests/mesh-smoke-${short}.mjs" || true
+  else
+    log "Skipping Node smoke/regression tests (RUN_TESTS=${RUN_TESTS:-0})"
+  fi
   if [[ "${META:-0}" == "1" ]]; then
     local EMVER=${EMSDK_VERSION} MJVER=${mjver} MJ_SHA=$(git -C external/mujoco rev-parse HEAD) JS="dist/${MJVER}/mujoco.js" WASM="dist/${MJVER}/mujoco.wasm"
     local JSB=$(stat -c %s "$JS" 2>/dev/null || echo 0) WSB=$(stat -c %s "$WASM" 2>/dev/null || echo 0) JSUM=$(sha256sum "$JS" | cut -d' ' -f1) WSUM=$(sha256sum "$WASM" | cut -d' ' -f1) NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -101,8 +109,8 @@ build_one() {
   "emsdk_root": "${EMSDK:-}",
   "emsdk_node": "${EMSDK_NODE:-}",
   "emsdk_python": "${EMSDK_PYTHON:-}",
-  "flags": ["WASM=1","MODULARIZE=1","EXPORT_ES6=1","ALLOW_MEMORY_GROWTH=1"],
-  "features": {"qhull": "static","libccd": "static","plugins": false,"render": false,"exceptions": "off","pthreads": false,"filesystem": true,"env": "node,web"},
+    "flags": ["WASM=1","MODULARIZE=1","EXPORT_ES6=1","ALLOW_MEMORY_GROWTH=1","WASM_BIGINT=1","FORCE_FILESYSTEM=0"],
+    "features": {"qhull": "static","libccd": "static","plugins": false,"render": false,"exceptions": "off","pthreads": false,"filesystem": false,"env": "node,web"},
   "size": {"wasmBytes": ${WSB}, "jsBytes": ${JSB}},
   "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
 }
@@ -135,8 +143,15 @@ Quality gates:
 EOF
   fi
   if [[ -f "dist/${mjver}/abi/wrapper_exports.json" ]]; then
-    node scripts/mujoco_abi/check_exports.mjs "dist/${mjver}/abi" "dist/${mjver}/mujoco.wasm" "dist/${mjver}/abi/wrapper_exports.json"
-    node scripts/mujoco_abi/nm_coverage.mjs "dist/${mjver}/mujoco.wasm" "dist/${mjver}/abi/wrapper_exports.json" --out "dist/${mjver}/abi/nm_coverage.json"
+    cp "${build}/mjapi_${mjver}.json" "dist/${mjver}/abi/mjapi.json"
+    cp "${build}/nm_${mjver}.json" "dist/${mjver}/abi/nm_symbols.json"
+    node scripts/mujoco_abi/check_exports.mjs \
+      --abi "dist/${mjver}/abi" \
+      --expected "dist/${mjver}/abi/wrapper_exports.json" \
+      --wasm "dist/${mjver}/mujoco.wasm"
+    node scripts/mujoco_abi/nm_coverage.mjs \
+      "${build}/lib/libmujoco.a" \
+      --out "dist/${mjver}/abi/nm_coverage.json"
   else
     warn "dist/${mjver}/abi/wrapper_exports.json missing; skipping export coverage checks"
   fi

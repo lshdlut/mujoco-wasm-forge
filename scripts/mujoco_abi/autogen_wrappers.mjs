@@ -1,109 +1,83 @@
 #!/usr/bin/env node
 
 /**
- * Auto-generate wrapper functions for MuJoCo public C API.
+ * Scan MuJoCo public headers and enumerate every MJAPI function name.
  *
- * Scans MuJoCo headers under --include (defaults to external/mujoco/include),
- * selects functions that match the allow-list prefixes (mj_*, mju_*, mjs_),
- * excluding visualization/render/ui families (mjv_*, mjr_*, mjui_*), and writes
- * wrapper declarations/definitions that forward to the original symbols while
- * exposing new mjwf_* names suitable for Emscripten exports.
- *
- * Outputs:
- *  - Header file (default wrappers/auto/mjwf_auto_exports.h)
- *  - Source file (default wrappers/auto/mjwf_auto_exports.c)
- *  - JSON manifest listing generated wrapper names (optional --json)
+ * Input: include directory that contains mujoco/mujoco.h (and optionally mujoco/mjspec.h).
+ * Output: JSON payload listing discovered function names (A-set for export pipeline).
  *
  * Usage:
  *   node scripts/mujoco_abi/autogen_wrappers.mjs \
- *     --include external/mujoco/include \
- *     --header wrappers/auto/mjwf_auto_exports.h \
- *     --source wrappers/auto/mjwf_auto_exports.c \
- *     --json wrappers/auto/mjwf_auto_exports.json
+ *        --include external/mujoco/include \
+ *        --out build/mjapi_functions.json
  */
 
-import { readFileSync, writeFileSync, readdirSync, mkdirSync } from 'node:fs';
-import { join as pathJoin, resolve as pathResolve, dirname, extname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { resolve as pathResolve, join as pathJoin, dirname } from 'node:path';
 
-const ALLOW_PREFIX = [
-  /^mj(?![vru]_)/, // mj_* but not mjv_, mjr_, mjui_
-  /^mju_/,
-  /^mjs_/,
-];
-const DENY_PREFIX = [
-  /^mjv_/,
-  /^mjr_/,
-  /^mjui_/,
-];
+const TARGET_HEADERS = ['mujoco/mujoco.h', 'mujoco/mjspec.h'];
 
 function parseArgs(argv) {
   const opts = {
-    include: 'external/mujoco/include',
-    header: 'wrappers/auto/mjwf_auto_exports.h',
-    source: 'wrappers/auto/mjwf_auto_exports.c',
-    json: null,
+    includeDir: 'external/mujoco/include',
+    outPath: null,
   };
   for (let i = 2; i < argv.length; ++i) {
     const arg = argv[i];
-    if (arg === '--include') opts.include = argv[++i];
-    else if (arg === '--header') opts.header = argv[++i];
-    else if (arg === '--source') opts.source = argv[++i];
-    else if (arg === '--json') opts.json = argv[++i];
-    else {
+    if (arg === '--include') {
+      opts.includeDir = argv[++i];
+    } else if (arg === '--out') {
+      opts.outPath = argv[++i];
+    } else {
       console.error(`Unknown argument: ${arg}`);
       process.exit(2);
     }
   }
+  if (!opts.outPath) {
+    console.error('Missing --out <path> for output JSON.');
+    process.exit(2);
+  }
   return {
-    include: pathResolve(opts.include),
-    header: pathResolve(opts.header),
-    source: pathResolve(opts.source),
-    json: opts.json ? pathResolve(opts.json) : null,
+    includeDir: pathResolve(opts.includeDir),
+    outPath: pathResolve(opts.outPath),
   };
 }
 
-function readHeaderFiles(dir) {
-  const files = [];
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
-    const full = pathJoin(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...readHeaderFiles(full));
-    } else if (entry.isFile() && extname(entry.name) === '.h') {
-      files.push(full);
-    }
-  }
-  return files;
+function ensureDirFor(filePath) {
+  mkdirSync(dirname(filePath), { recursive: true });
 }
 
-function stripBlockComments(text) {
-  return text.replace(/\/\*[\s\S]*?\*\//g, ' ');
-}
-
-function normalizeWhitespace(txt) {
-  return txt.replace(/\r\n/g, '\n').replace(/\s+/g, ' ').trim();
-}
-
-function shouldInclude(name) {
-  if (!name) return false;
-  if (DENY_PREFIX.some((re) => re.test(name))) return false;
-  return ALLOW_PREFIX.some((re) => re.test(name));
+function stripComments(source) {
+  const withoutBlock = source.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  return withoutBlock
+    .split('\n')
+    .map((line) => {
+      const idx = line.indexOf('//');
+      return idx >= 0 ? line.slice(0, idx) : line;
+    })
+    .join('\n');
 }
 
 function splitStatements(text) {
-  const statements = [];
+  const stmts = [];
   let buf = '';
+  let depth = 0;
   for (let i = 0; i < text.length; ++i) {
     const ch = text[i];
     buf += ch;
-    if (ch === ';') {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth = Math.max(depth - 1, 0);
+    if (ch === ';' && depth === 0) {
       const trimmed = buf.trim();
-      if (trimmed) statements.push(trimmed);
+      if (trimmed) stmts.push(trimmed);
       buf = '';
     }
   }
-  return statements;
+  return stmts;
+}
+
+function normalizeWhitespace(value) {
+  return value.replace(/\s+/g, ' ').trim();
 }
 
 function extractParameters(paramStr) {
@@ -125,33 +99,42 @@ function extractParameters(paramStr) {
   return params;
 }
 
-function extractParamName(param) {
-  if (!param) return '';
-  const variadic = param.trim() === '...' || param.includes('...');
-  if (variadic) return '/*__variadic__*/';
-  const fnPtrMatch = param.match(/\(\s*\*([A-Za-z_][A-Za-z0-9_]*)\s*\)/);
-  if (fnPtrMatch) return fnPtrMatch[1];
-  const arrayMatch = param.match(/([A-Za-z_][A-Za-z0-9_]*)(\s*(\[[^\]]*\]\s*)+)$/);
-  if (arrayMatch) return arrayMatch[1];
-  const simpleMatch = param.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
-  if (simpleMatch) return simpleMatch[1];
-  return '';
+function extractParamName(param, index) {
+  if (!param) return `p${index}`;
+  const variadic = param.includes('...');
+  if (variadic) return `p${index}`;
+  const aliasMatch = param.match(/\(\s*\*([A-Za-z_][A-Za-z0-9_]*)\s*\)/);
+  if (aliasMatch) return aliasMatch[1];
+  const nameMatch = param.match(/([A-Za-z_][A-Za-z0-9_]*)(\s*(\[[^\]]*\])*)\s*$/);
+  if (nameMatch) return nameMatch[1];
+  return `p${index}`;
+}
+
+function ensureParamDecl(param, name) {
+  if (!param || param === 'void') return 'void';
+  if (param.includes('...')) return param;
+  const nameRegex = new RegExp(`\\b${name}\\b`);
+  if (nameRegex.test(param)) return param;
+  return `${param.replace(/\s+$/, '')} ${name}`;
 }
 
 function parseFunction(statement) {
   if (!statement.includes('MJAPI')) return null;
   if (!statement.includes('(')) return null;
-  if (statement.includes('=') && statement.includes('{')) return null; // skip definitions
   const normalized = normalizeWhitespace(statement);
   const idx = normalized.indexOf('MJAPI');
   if (idx < 0) return null;
-  let body = normalized.slice(idx + 5).trim();
-  if (!body.includes('(')) return null;
-  const parenIndex = body.indexOf('(');
-  const prefix = body.slice(0, parenIndex).trim();
+  const body = normalized.slice(idx + 'MJAPI'.length).trim();
+  const parenIdx = body.indexOf('(');
+  if (parenIdx < 0) return null;
+  const prefix = body.slice(0, parenIdx).trim();
   if (!prefix) return null;
+  const nameMatch = prefix.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
+  if (!nameMatch) return null;
+  const name = nameMatch[1];
+  const returnType = prefix.slice(0, prefix.length - name.length).trim() || 'void';
   let depth = 1;
-  let i = parenIndex + 1;
+  let i = parenIdx + 1;
   for (; i < body.length; ++i) {
     const ch = body[i];
     if (ch === '(') depth++;
@@ -159,170 +142,72 @@ function parseFunction(statement) {
     if (depth === 0) break;
   }
   if (depth !== 0) return null;
-  const paramsRaw = body.slice(parenIndex + 1, i).trim();
-  const suffix = body.slice(i + 1).trim();
-  const nameMatch = prefix.match(/([A-Za-z_][A-Za-z0-9_]*)$/);
-  if (!nameMatch) return null;
-  const name = nameMatch[1];
-  if (!shouldInclude(name)) return null;
-  const returnType = prefix.slice(0, prefix.length - name.length).trim() || 'void';
-  const params = paramsRaw === '' ? [] : extractParameters(paramsRaw);
-  const paramNames = params.map((p) => extractParamName(p));
-  const isVariadic = params.some((p) => p.includes('...'));
+  const paramsRaw = body.slice(parenIdx + 1, i).trim();
+  const rawParams = paramsRaw === '' ? [] : extractParameters(paramsRaw);
+  const hasVoid = rawParams.length === 1 && rawParams[0].trim() === 'void';
+  const params = hasVoid ? [] : rawParams;
+  const paramNames = params.map((p, idx) => extractParamName(p, idx));
+  const paramDecls = params.map((p, idx) => ensureParamDecl(p, paramNames[idx]));
+  const variadicIndex = params.findIndex((p) => p.includes('...'));
+  const isVariadic = variadicIndex !== -1;
+  const baseParamNames = paramNames.filter((_, idx) => idx !== variadicIndex);
   return {
     name,
     returnType,
     params,
+    paramDecls,
     paramNames,
     isVariadic,
-    raw: normalized,
-    suffix,
+    variadicIndex,
+    baseParamNames,
   };
 }
 
 function collectFunctions(includeDir) {
-  const files = readHeaderFiles(includeDir);
-  const map = new Map();
-  for (const file of files) {
-    const text = stripBlockComments(readFileSync(file, 'utf8'));
-    const statements = splitStatements(text);
-    let hit = 0;
+  const functions = new Map();
+  const scanned = [];
+  for (const rel of TARGET_HEADERS) {
+    const headerPath = pathJoin(includeDir, rel);
+    if (!existsSync(headerPath)) continue;
+    scanned.push(headerPath);
+    const content = stripComments(readFileSync(headerPath, 'utf8'));
+    const statements = splitStatements(content);
     for (const stmt of statements) {
       const fn = parseFunction(stmt);
       if (!fn) continue;
-      if (!map.has(fn.name)) {
-        map.set(fn.name, { ...fn, source: file });
-        hit++;
+      if (!functions.has(fn.name)) {
+        functions.set(fn.name, fn);
       }
     }
-    if (hit > 0) {
-      console.log(`[autogen] ${file} -> ${hit} functions`);
-    }
   }
-  return map;
-}
-
-function ensureDirFor(filePath) {
-  const dir = dirname(filePath);
-  mkdirSync(dir, { recursive: true });
-}
-
-function renderHeader(functions) {
-  const lines = [];
-  lines.push('// AUTO-GENERATED by autogen_wrappers.mjs. DO NOT EDIT.');
-  lines.push('#pragma once');
-  lines.push('');
-  lines.push('#include <mujoco/mujoco.h>');
-  lines.push('');
-  lines.push('#ifdef __cplusplus');
-  lines.push('extern "C" {');
-  lines.push('#endif');
-  lines.push('');
-  lines.push('#if defined(__EMSCRIPTEN__)');
-  lines.push('#  include <emscripten/emscripten.h>');
-  lines.push('#  define MJWF_API EMSCRIPTEN_KEEPALIVE __attribute__((used, visibility("default")) )');
-  lines.push('#else');
-  lines.push('#  define MJWF_API __attribute__((used, visibility("default")) )');
-  lines.push('#endif');
-  lines.push('');
-  for (const fn of functions) {
-    lines.push(`MJWF_API ${fn.returnType} mjwf_${fn.name}(${fn.params.join(', ') || 'void'});`);
+  if (!scanned.length) {
+    console.error(`No target headers found under ${includeDir}`);
+    process.exit(1);
   }
-  lines.push('');
-  lines.push('#undef MJWF_API');
-  lines.push('');
-  lines.push('#ifdef __cplusplus');
-  lines.push('}  // extern "C"');
-  lines.push('#endif');
-  lines.push('');
-  return lines.join('\n');
-}
-
-function renderSource(functions) {
-  const lines = [];
-  lines.push('// AUTO-GENERATED by autogen_wrappers.mjs. DO NOT EDIT.');
-  lines.push('#include "mjwf_auto_exports.h"');
-  lines.push('#include <stdarg.h>');
-  lines.push('');
-  lines.push('#if defined(__EMSCRIPTEN__)');
-  lines.push('#  include <emscripten/emscripten.h>');
-  lines.push('#  define MJWF_API_IMPL EMSCRIPTEN_KEEPALIVE __attribute__((used, visibility("default")))');
-  lines.push('#else');
-  lines.push('#  define MJWF_API_IMPL __attribute__((used, visibility("default")))');
-  lines.push('#endif');
-  lines.push('');
-  lines.push('#define MJWF_ALIAS(ret, name, params, target) \\\n  MJWF_API_IMPL ret name params __attribute__((alias(target)));');
-  lines.push('');
-
-  const seen = new Set();
-  for (const fn of functions) {
-    if (seen.has(fn.name)) continue;
-    seen.add(fn.name);
-    const paramsList = fn.params.join(', ') || 'void';
-    if (fn.isVariadic) {
-      lines.push(`MJWF_ALIAS(${fn.returnType}, mjwf_${fn.name}, (${paramsList}), "${fn.name}")`);
-      continue;
-    }
-    const argNames = fn.paramNames.filter((n) => n && !n.startsWith('/*')).join(', ');
-    const hasArgs = fn.params.length > 0 && argNames.length > 0;
-    const callArgs = hasArgs ? argNames : '';
-    const returnKeyword = fn.returnType === 'void' ? '' : 'return ';
-    lines.push(`MJWF_API_IMPL ${fn.returnType} mjwf_${fn.name}(${paramsList}) {`);
-    if (fn.params.length > 0 && (!argNames || argNames.split(',').length !== fn.params.length)) {
-      // fallback: pass through using positional macros; mark unused
-      fn.params.forEach((param, idx) => {
-        const pname = fn.paramNames[idx];
-        if (pname) {
-          lines.push(`  (void)${pname};`);
-        }
-      });
-      lines.push(`  ${returnKeyword}${fn.name}(${callArgs});`);
-    } else {
-      lines.push(`  ${returnKeyword}${fn.name}(${callArgs});`);
-    }
-    lines.push('}');
-    lines.push('');
-  }
-
-  lines.push('#undef MJWF_API_IMPL');
-  lines.push('#undef MJWF_ALIAS');
-  lines.push('');
-  return lines.join('\n');
+  return { functions, scanned };
 }
 
 function main() {
   const opts = parseArgs(process.argv);
-  const functionsMap = collectFunctions(opts.include);
-  const functions = Array.from(functionsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  if (!functions.length) {
-    console.error('No functions discovered; aborting.');
-    process.exit(1);
-  }
-
-  ensureDirFor(opts.header);
-  ensureDirFor(opts.source);
-  writeFileSync(opts.header, renderHeader(functions));
-  writeFileSync(opts.source, renderSource(functions));
-  console.log(`[autogen] wrote ${opts.header}`);
-  console.log(`[autogen] wrote ${opts.source}`);
-
-  if (opts.json) {
-    ensureDirFor(opts.json);
-    const payload = {
-      generatedAt: new Date().toISOString(),
-      include: opts.include,
-      count: functions.length,
-      functions: functions.map((f) => ({
-        name: f.name,
-        returnType: f.returnType,
-        params: f.params,
-        source: f.source,
-        variadic: f.isVariadic,
-      })),
-    };
-    writeFileSync(opts.json, JSON.stringify(payload, null, 2));
-    console.log(`[autogen] wrote ${opts.json}`);
-  }
+  const { functions, scanned } = collectFunctions(opts.includeDir);
+  const sortedNames = Array.from(functions.keys()).sort();
+  const nameSet = new Set(sortedNames);
+  const functionList = sortedNames.map((name) => {
+    const fn = functions.get(name);
+    fn.has_v_alternative = fn.isVariadic ? nameSet.has(`${fn.name}_v`) : false;
+    return fn;
+  });
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    includeDir: opts.includeDir,
+    headers: scanned,
+    count: sortedNames.length,
+    names: sortedNames,
+    functions: functionList,
+  };
+  ensureDirFor(opts.outPath);
+  writeFileSync(opts.outPath, JSON.stringify(payload, null, 2));
+  console.log(`[scan-mjapi] headers=${scanned.length} names=${sortedNames.length} -> ${opts.outPath}`);
 }
 
 main();

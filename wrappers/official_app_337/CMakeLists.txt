@@ -16,12 +16,11 @@ option(MUJOCO_BUILD_SIMULATE "" OFF)
 option(MUJOCO_BUILD_TESTS "" OFF)
 option(MUJOCO_BUILD_SAMPLES "" OFF)
 
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # Expect MuJoCo sources cloned to ../../external/mujoco
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-find_package(Python3 COMPONENTS Interpreter)
 find_program(NODE_EXECUTABLE node)
 if (NOT NODE_EXECUTABLE)
   message(FATAL_ERROR "node executable not found; required for wrapper generation")
@@ -31,77 +30,115 @@ get_filename_component(MJWF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 set(MJWF_AUTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../auto")
 set(MJWF_AUTO_HEADER "${MJWF_AUTO_DIR}/mjwf_auto_exports.h")
 set(MJWF_AUTO_SOURCE "${MJWF_AUTO_DIR}/mjwf_auto_exports.c")
-set(MJWF_AUTO_MANIFEST "${MJWF_AUTO_DIR}/mjwf_auto_exports.json")
-
-if (NOT TARGET mjwf_auto_wrappers)
-  add_custom_command(
-    OUTPUT ${MJWF_AUTO_HEADER} ${MJWF_AUTO_SOURCE} ${MJWF_AUTO_MANIFEST}
-    COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/autogen_wrappers.mjs
-            --include ${MJWF_ROOT}/external/mujoco/include
-            --header ${MJWF_AUTO_HEADER}
-            --source ${MJWF_AUTO_SOURCE}
-            --json ${MJWF_AUTO_MANIFEST}
-    DEPENDS ${MJWF_ROOT}/scripts/mujoco_abi/autogen_wrappers.mjs
-    COMMENT "Generating auto mjwf_* wrappers"
-    VERBATIM
-  )
-  add_custom_target(mjwf_auto_wrappers DEPENDS ${MJWF_AUTO_HEADER} ${MJWF_AUTO_SOURCE})
-endif()
-
+set(MJWF_HEADERS_JSON "${CMAKE_CURRENT_BINARY_DIR}/mjapi_${MJVER}.json")
+set(MJWF_IMPL_JSON "${CMAKE_CURRENT_BINARY_DIR}/nm_${MJVER}.json")
 set(MJWF_ABI_DIR "${MJWF_ROOT}/dist/${MJVER}/abi")
 set(MJWF_EXPORTS_JSON "${CMAKE_BINARY_DIR}/exports_${MJVER}.json")
 set(MJWF_EXPORTS_LIST "${CMAKE_BINARY_DIR}/exports_${MJVER}.lst")
+set(MJWF_TYPES_DTS "${CMAKE_CURRENT_BINARY_DIR}/types_${MJVER}.d.ts")
+set(MJWF_IMPL_ARTIFACT "${CMAKE_CURRENT_BINARY_DIR}/lib/libmujoco.a")
 
 add_custom_command(
-  OUTPUT ${MJWF_EXPORTS_JSON} ${MJWF_EXPORTS_LIST}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${MJWF_ABI_DIR}
-  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
-          ${MJWF_ABI_DIR}
-          --header ${MJWF_AUTO_HEADER}
-          --header ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_exports.h
-          --version ${MJVER}
-          --out ${CMAKE_BINARY_DIR}
-  DEPENDS
-          ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
-          ${MJWF_AUTO_HEADER}
-          ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_exports.h
+  OUTPUT ${MJWF_HEADERS_JSON}
+  BYPRODUCTS ${MJWF_HEADERS_JSON}
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${MJWF_AUTO_DIR}
+  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/autogen_wrappers.mjs
+          --include ${MJWF_ROOT}/external/mujoco/include
+          --out ${MJWF_HEADERS_JSON}
+  DEPENDS mujoco ${MJWF_ROOT}/scripts/mujoco_abi/autogen_wrappers.mjs
+  COMMENT "Scanning MuJoCo headers (${MJVER})"
+  VERBATIM
 )
-add_custom_target(mjwf_exports_${MJVER} DEPENDS ${MJWF_EXPORTS_JSON} ${MJWF_EXPORTS_LIST})
-add_dependencies(mjwf_exports_${MJVER} mjwf_auto_wrappers)
+add_custom_target(mjwf_scan_${MJVER} DEPENDS ${MJWF_HEADERS_JSON})
+
+add_custom_command(
+  OUTPUT ${MJWF_IMPL_JSON}
+  BYPRODUCTS ${MJWF_IMPL_JSON}
+  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/nm_coverage.mjs
+          ${MJWF_IMPL_ARTIFACT}
+          --out ${MJWF_IMPL_JSON}
+  DEPENDS mujoco ${MJWF_ROOT}/scripts/mujoco_abi/nm_coverage.mjs
+  COMMENT "Collecting implemented MuJoCo symbols (${MJVER})"
+  VERBATIM
+)
+add_custom_target(mjwf_impl_${MJVER} DEPENDS ${MJWF_IMPL_JSON})
+add_custom_command(
+  OUTPUT
+    ${MJWF_AUTO_HEADER}
+    ${MJWF_AUTO_SOURCE}
+    ${MJWF_EXPORTS_JSON}
+    ${MJWF_EXPORTS_LIST}
+    ${MJWF_TYPES_DTS}
+    ${MJWF_ABI_DIR}/wrapper_exports.json
+    ${MJWF_ABI_DIR}/exports_report.md
+  BYPRODUCTS
+    ${MJWF_AUTO_HEADER}
+    ${MJWF_AUTO_SOURCE}
+    ${MJWF_EXPORTS_JSON}
+    ${MJWF_EXPORTS_LIST}
+    ${MJWF_TYPES_DTS}
+    ${MJWF_ABI_DIR}/wrapper_exports.json
+    ${MJWF_ABI_DIR}/exports_report.md
+  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
+          --names-json ${MJWF_HEADERS_JSON}
+          --impl-json ${MJWF_IMPL_JSON}
+          --header ${MJWF_AUTO_HEADER}
+          --source ${MJWF_AUTO_SOURCE}
+          --version ${MJVER}
+          --out ${CMAKE_CURRENT_BINARY_DIR}
+          --abi ${MJWF_ABI_DIR}
+  DEPENDS
+          ${MJWF_HEADERS_JSON}
+          ${MJWF_IMPL_JSON}
+          ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
+  COMMENT "Generating wrapper aliases and export manifests (${MJVER})"
+  VERBATIM
+)
+add_custom_target(mjwf_exports_${MJVER}
+  DEPENDS
+    ${MJWF_AUTO_HEADER}
+    ${MJWF_AUTO_SOURCE}
+    ${MJWF_EXPORTS_JSON}
+    ${MJWF_EXPORTS_LIST}
+    ${MJWF_TYPES_DTS}
+    ${MJWF_ABI_DIR}/wrapper_exports.json
+    ${MJWF_ABI_DIR}/exports_report.md
+)
+add_dependencies(mjwf_exports_${MJVER} mjwf_scan_${MJVER} mjwf_impl_${MJVER})
+set_source_files_properties(${MJWF_AUTO_HEADER} ${MJWF_AUTO_SOURCE} PROPERTIES GENERATED TRUE)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-  set(GEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-  set(SPEC_YAML ${CMAKE_CURRENT_SOURCE_DIR}/codegen/spec_337.yaml)
-  set(GEN_H ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_exports_generated.h)
-  set(GEN_C ${GEN_DIR}/mjwf_exports_generated.c)
-
-  add_custom_command(
-    OUTPUT ${GEN_H} ${GEN_C}
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_exports.py ${SPEC_YAML} ${GEN_H} ${GEN_C}
-    DEPENDS ${SPEC_YAML} ${CMAKE_CURRENT_SOURCE_DIR}/codegen/gen_exports.py
-    VERBATIM
-    COMMENT "Generating mjwf exports from spec_337.yaml"
-  )
-
   add_executable(mujoco_wasm337
-    src/mjwf_handles.c
-    src/mjwf_entrypoints.c
-    src/mjwf_compat_minimal.c
-    ${GEN_C}
     ${MJWF_AUTO_SOURCE}
+    ${MJWF_AUTO_DIR}/mjwf_stubs.c
   )
 
   add_dependencies(mujoco_wasm337 mujoco)
   add_dependencies(mujoco_wasm337 mjwf_exports_${MJVER})
-  include_directories(${MJWF_AUTO_DIR})
-
-  set(MJWF_LINK_FLAGS "-s WASM=1 -s STACK_SIZE=5MB -s INITIAL_MEMORY=134217728 -s MAXIMUM_MEMORY=536870912 -s ALLOW_MEMORY_GROWTH=1 -s ENVIRONMENT=web,worker,node -s ASSERTIONS=1 -s EXPORT_ES6=1 -s MODULARIZE=1 -s FORCE_FILESYSTEM=1 -s EXPORTED_RUNTIME_METHODS=['FS','MEMFS','cwrap','ccall'] -s DISABLE_EXCEPTION_CATCHING=1 -s EXPORT_NAME=load_mujoco -Oz -flto -sEXPORTED_FUNCTIONS=@${MJWF_EXPORTS_LIST}")
-
-  set_target_properties(mujoco_wasm337 PROPERTIES LINK_FLAGS "${MJWF_LINK_FLAGS}")
-  target_compile_options(mujoco_wasm337 PRIVATE "-fvisibility=hidden")
+  target_include_directories(mujoco_wasm337 PRIVATE ${MJWF_AUTO_DIR})
   target_link_libraries(mujoco_wasm337 PRIVATE mujoco)
+  target_compile_options(mujoco_wasm337 PRIVATE "-fvisibility=hidden")
+  target_link_options(mujoco_wasm337 PRIVATE
+    "-sWASM=1"
+    "-sSTACK_SIZE=5242880"
+    "-sINITIAL_MEMORY=134217728"
+    "-sMAXIMUM_MEMORY=536870912"
+    "-sALLOW_MEMORY_GROWTH=1"
+    "-sENVIRONMENT=web,worker,node"
+    "-sASSERTIONS=1"
+    "-sEXPORT_ES6=1"
+    "-sMODULARIZE=1"
+    "-sFORCE_FILESYSTEM=0"
+    "-sWASM_BIGINT=1"
+    "-sDISABLE_EXCEPTION_CATCHING=1"
+    "-sEXPORT_NAME=load_mujoco"
+    "-Oz"
+    "-flto"
+    "-sEXPORTED_FUNCTIONS=@${MJWF_EXPORTS_LIST}"
+  )
 endif()
 
 # Native comparison harness (for regression vs. official native)
 add_executable(mujoco_compare337 "native_compare.cpp")
 target_link_libraries(mujoco_compare337 PRIVATE mujoco)
+
