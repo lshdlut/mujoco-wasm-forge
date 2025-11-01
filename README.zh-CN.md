@@ -1,130 +1,107 @@
 # mujoco-wasm-forge
 
-English | Chinese
+English | 中文说明
 
-可复现的 MuJoCo → WebAssembly 构建流水线。本仓库聚焦：从 MuJoCo 标签产出版本化的 WASM 工件，并配套最小的 smoke/regression 验证与机器可读元数据。
+mujoco-wasm-forge 提供一套可复现的构建流程，将 MuJoCo 官方发布版本转换为 WebAssembly 产物。  
+流水线会扫描上游头文件、推导包装导出、分别编译 WASM 与对比用原生二进制、执行冒烟/回归检测，并生成带元数据的版本化产物。GitHub Actions 与本地流程保持一致。
 
-- 输入：MuJoCo 标签（如 3.2.5、3.3.7）
-- 输出：`dist/<version>/{mujoco.js,mujoco.wasm[,mujoco.wasm.map],version.json,sbom.spdx.json}`
-- 工具链：固定 Emscripten；最小导出；不包含渲染 UI
+- **输入**：MuJoCo 标签（目前覆盖 3.2.5 与 3.3.7）  
+- **输出**：`dist/<version>/{mujoco.js, mujoco.wasm[, mujoco.wasm.map], version.json, sbom.spdx.json}`  
+- **工具链**：emsdk 3.1.55、Node 20（与 CI 相同）  
+- **范围**：仅包含仿真核心，视觉/UI 系符号会被排除
 
-状态：可用。CI 构建单模块 WASM + glue JS，运行 Node smoke + 原生对比回归，并上传工件。
+仓库镜像：https://github.com/lshdlut/mujoco-wasm-forge
 
-仓库地址：https://github.com/lshdlut/mujoco-wasm-forge
+## 导出规则（ABI 摘要）
 
-## 工件（Artifacts）
+- 等式：**C = A ∩ B**  
+  - A → `mujoco.h`（以及存在时的 `mjspec.h`）中的公共 C API 声明  
+  - B → `libmujoco.a` 中通过 `llvm-nm` 枚举出的实际实现符号
+- 硬闸：`(A ∩ B) − C = 0`；仅允许 `mj_`、`mju_`、`mjs_`、`mjd_` 前缀进入导出集合
+- 特殊排除  
+  1. 排除视觉/UI/插件族 (`mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`)  
+  2. 变参函数必须存在对应的 `*_v` 实现；否则记录为 `variadic_no_v`
+- 完整报表位于 `dist/<ver>/abi/exports_report.md`（需要 JSON 时，可设置 `EMIT_JSON=1`）
 
-CI（以及启用元数据的规范本地构建）会产出：
+## 产物一览
 
-- `dist/<mjVer>/mujoco.wasm` - WebAssembly 二进制
-- `dist/<mjVer>/mujoco.js` - ES 模块工厂（`createMuJoCo`）
-- `dist/<mjVer>/mujoco.wasm.map` - 可选 source map
-- `dist/<mjVer>/version.json` - 元数据（MuJoCo 版本、emscripten 版本、大小、sha256、git sha）
-- `dist/<mjVer>/sbom.spdx.json` - SPDX SBOM（轻量）
-## Export rules (must read)
+本地与 CI 都会生成：
 
-- Equality: **C = A ∩ B**  
-  A = 公共 C 头（mujoco.h / mjspec.h）声明  
-  B = 静态库实现（llvm-nm）
-- Hard gate: `(A ∩ B) − C = ∅`，导出不得包含 `mjv_/mjr_/mjui_/mjp_/mjc_` 或非 `_mjwf_*` 符号。
-- **Special exclusions**：
-  1) 仅允许 `mj_`、`mju_`、`mjs_`、`mjd_` 前缀，其他系列（如 `mjv_`、`mjr_`、`mjui_`、`mjp_`、`mjc_`）自动排除；
-  2) 变参函数仅在存在 `*_v` 变体时导出，缺少 `_v` 时记录为 `variadic_no_v`。
-- 详情见 `dist/<ver>/abi/exports_report.md`（如需 JSON 报告，设置 `EMIT_JSON=1`）。
+- `dist/<mjVer>/mujoco.wasm` — WebAssembly 二进制
+- `dist/<mjVer>/mujoco.js` — ES 模块工厂 (`createMuJoCo`)
+- `dist/<mjVer>/mujoco.wasm.map` — 可选 source map
+- `dist/<mjVer>/version.json` — 元信息（MuJoCo 标签、emsdk、大小、sha256、git sha 等）
+- `dist/<mjVer>/sbom.spdx.json` — 轻量级 SPDX SBOM
 
+## 快速上手（Node ESM）
 
-## 快速开始（Node ESM）
-
-```
-import createMuJoCo from './dist/3.2.5/mujoco.js';
-
-const Module = await createMuJoCo({
-  locateFile: (p) => (p.endsWith('.wasm') ? './dist/3.2.5/mujoco.wasm' : p),
-});
-
-// 迷你摆模型 XML
-const xml = `<?xml version="1.0"?>\n<mujoco model="pendulum">\n  <option timestep="0.002" gravity="0 0 -9.81"/>\n  <worldbody>\n    <body name="link" pos="0 0 0.1">\n      <joint name="hinge" type="hinge" axis="0 1 0" damping="0.01"/>\n      <geom type="capsule" fromto="0 0 0 0 0 0.2" size="0.02" density="1000"/>\n    </body>\n  </worldbody>\n</mujoco>`;
-
-const parseXMLString = Module.cwrap('mjwf_mj_parseXMLString','number',['string','number','number','number']);
-const compile = Module.cwrap('mjwf_mj_compile','number',['number','number']);
-const deleteSpec = Module.cwrap('mjwf_mj_deleteSpec', null, ['number']);
-const makeData = Module.cwrap('mjwf_mj_makeData','number',['number']);
-const resetData = Module.cwrap('mjwf_mj_resetData', null, ['number','number']);
-const step = Module.cwrap('mjwf_mj_step', null, ['number','number']);
-const deleteData = Module.cwrap('mjwf_mj_deleteData', null, ['number']);
-const deleteModel = Module.cwrap('mjwf_mj_deleteModel', null, ['number']);
-
-const stackTop = Module.stackSave();
-const errBufSize = 1024;
-const errBuf = Module.stackAlloc(errBufSize);
-Module.HEAP8.fill(0, errBuf, errBuf + errBufSize);
-
-const specPtr = parseXMLString(xml, 0, errBuf, errBufSize);
-if (!specPtr) throw new Error(`parseXMLString ʧ��: ${Module.UTF8ToString(errBuf)}`);
-
-const modelPtr = compile(specPtr, 0);
-if (!modelPtr) throw new Error('compile ʧ��');
-deleteSpec(specPtr);
-
-const dataPtr = makeData(modelPtr);
-if (!dataPtr) throw new Error('makeData ʧ��');
-
-resetData(modelPtr, dataPtr);
-step(modelPtr, dataPtr);
-
-deleteData(dataPtr);
-deleteModel(modelPtr);
-Module.stackRestore(stackTop);
-```
+同英文版示例，可直接导入 `dist/<version>/mujoco.js` 并通过 `Module.cwrap` 调用包装函数。
 
 ## CI 与可复现性
 
-- 统一入口：`.github/workflows/forge.yml`（矩阵覆盖 3.2.5/3.3.7）
-- 固定工具链：emsdk 3.1.55、Node 20
-- 3.3.7 采用“两阶段配置”强制 qhull 静态化（SHARED->STATIC，BUILD_SHARED_LIBS=OFF）；3.2.5 不需要该补丁
-- 质量闸：`[GATE:SYM]` 符号校验、`[GATE:DTS]` d.ts 漂移、`[GATE:RUN]` 运行时 smoke/regression/mesh-smoke
-- 工件：上传 `dist/<mjVer>/`（含 `version.json`、`sbom.spdx.json`）
+唯一入口：`.github/workflows/forge.yml`。
 
-## 本地构建（规范）
+- 矩阵覆盖 3.2.5 / 3.3.7 两个版本
+- 工具链固定为 emsdk 3.1.55 + Node 20
+- 3.3.7 会执行两阶段配置并强制 qhull 静态链接（Emscripten 限制）
+- 质量闸：`[GATE:SYM]`、`[GATE:DTS]`、`[GATE:RUN]`（尚未实现的闸会标记为 skipped）
+- `dist/<mjVer>/` 中的产物直接上传
 
-推荐：WSL Ubuntu 22.04（或 Docker）完整复刻 CI 配方。
+### ABI 驱动流水线（每次构建）
 
-- Windows 侧（仓库根执行）：
-  - 首次（镜像到 WSL 并构建）：
-    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6`
-  - 后续（已镜像）：
-    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
-  - After each build (inside WSL) run the unified post-build checks:
-    - `./scripts/ci/post_build.sh --version 3.2.5 --short 325`
-    - `./scripts/ci/post_build.sh --version 3.3.7 --short 337`
-  - 说明：`-WslWorkDir` 可指定 WSL 侧工作目录（默认 `~/dev/mujoco-wasm-forge`）
+1. `node scripts/mujoco_abi/autogen_wrappers.mjs` → 扫描 C API（A 集合）  
+2. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a` → 枚举实现符号（B 集合）  
+3. `node scripts/mujoco_abi/gen_exports_from_abi.mjs` → 生成包装、导出白名单、TypeScript 声明与报表  
+4. CMake 读取 `exports_<ver>.lst`，在编译阶段指定 `-sEXPORTED_FUNCTIONS=@...`  
+5. `node scripts/mujoco_abi/check_exports.mjs ...` → 校验 `(A ∩ B) − C = 0` 且无黑名单前缀泄漏  
+6. `node scripts/mujoco_abi/nm_coverage.mjs ... --out dist/<ver>/abi/nm_coverage.json` → 记录实现覆盖率
 
-- WSL 侧（等效）：
-  - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
+详情参阅 `docs/ABI_SCAN.md`。
 
-注意：
-- Prefer running inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`) or use `-UseTemp` to work in `/tmp`; avoid `/mnt/c/...` and OneDrive paths to stay close to CI performance and behavior.
-- 默认并行度为 6，可用 `-Jobs` 覆盖。
+## 本地构建流程（推荐）
 
-## 在其它仓库使用工件（如 mujoco-wasm-play）
+建议使用 WSL Ubuntu 22.04（或 Docker），执行顺序与 CI 保持一致。
 
-- 在本仓库 WSL 内构建完成后，工件位于 `dist/<mjVer>/`。
-- 在 WSL 内仅复制需要的工件到 play 仓库：
-  - `cp -r ./dist/3.3.7 /path/to/mujoco-wasm-play/dist/3.3.7`
-- 在 play 仓库的加载器中从 `dist/<mjVer>/mujoco.{js,wasm}` 加载；不要复制 `build/` 或 `external/`。
-- 3.3.7 需要两阶段配置以静态化 qhull；启用 `-Meta`/`META=1` 时会在 `dist/<mjVer>/` 生成与 CI 相同的元数据文件。
+1. **镜像并构建（Windows 主机）：**
+   ```powershell
+   pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
+     -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6
+   ```
+   增量构建可去掉 `-Sync`/`-UseTemp`。
 
-## 版本与标签
+2. **生成 ABI 描述（post_build 前置步骤）：**
+   ```powershell
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
+   ```
 
-- 稳定发布：`forge-<mujocoVersion>-r<rev>`，如 `forge-3.2.5-r3`、`forge-3.3.7-r2`
-- 预发布：`forge-<mujocoVersion>-rc.<n>`，并标记为 pre-release
-- 工件不可变；修订以 `-rN` 形式发布
+3. **在 WSL 内执行 post_build 检查：**
+   ```bash
+   source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
+   ./scripts/ci/post_build.sh --version 3.2.5 --short 325
+   ./scripts/ci/post_build.sh --version 3.3.7 --short 337
+   ```
 
-## 回归基线
+注意事项：
 
-- 基线：`native-3.2.5` ↔ `wasm-3.2.5`，`native-3.3.7` ↔ `wasm-3.3.7`
-- 确定性：固定步长、无随机、关闭 warmstart
+- 请在 WSL ext4（如 `~/dev/mujoco-wasm-forge`）或 `/tmp` (`-UseTemp`) 下构建，避免 `/mnt/c/...` 与 OneDrive 带来的 I/O 问题。
+- 为保证与 CI 完全一致，推荐从干净目录开始（`-UseTemp` 或重新克隆）。
+- 默认并行度为 6，可通过 `-Jobs` 覆盖。
+- `-Sync` 会自动排除 `.git` 等目录，并清理 `?root?...` 异常路径，优先使用该方式同步。
 
-## 说明
+## 在其他项目中使用产物
 
-- 前端演示（进行中）：https://github.com/lshdlut/mujoco-wasm-play.git Ϊ��ȫ���� CI �ر���Ϊ��ȷ���������`-UseTemp` �����������ռ䣬Ȼ���� scripts/ci/post_build.sh ���Բ��ԡ�
+- 构建完成后，仅复制 `dist/<mjVer>/` 即可；不要拷贝 `build/` 或 `external/`。  
+- 直接加载 `dist/<mjVer>/mujoco.{js,wasm}`；3.3.7 已包含强制静态 qhull 的结果。  
+- 开启 `-Meta` / `META=1` 时，会额外生成元数据和 SBOM。
+
+## 版本与发布
+
+- 稳定标签：`forge-<mujocoVersion>-r<rev>`（例如 `forge-3.3.7-r2`）  
+- 预发布：`forge-<mujocoVersion>-rc.<n>`  
+- 产物不可变，修复需递增 `-rN` 再发布。
+
+## 备注与致谢
+
+- 前端演示（进行中）：https://github.com/lshdlut/mujoco-wasm-play  
+- 仓库部分脚本和文档在生成过程中使用了生成式 AI，最终版本由维护者审阅确认。

@@ -1,43 +1,41 @@
 # mujoco-wasm-forge
 
-English | [简体中文](README.zh-CN.md)
+English | [中文说明](README.zh-CN.md)
 
-Reproducible build pipeline for compiling MuJoCo to WebAssembly. This repo focuses on producing versioned WASM artifacts from MuJoCo tags, together with minimal smoke/regression validation and machine-readable metadata.
+mujoco-wasm-forge is a reproducible build harness that turns MuJoCo releases into WebAssembly bundles.  
+It scans the upstream headers, derives the wrapper export set, compiles both WASM and native comparison binaries, runs smoke/regression checks, and publishes versioned artifacts with metadata. The GitHub Actions workflow mirrors this exact sequence.
 
-This repository is a fork/continuation of MuJoCo to WebAssembly efforts by stillonearth, zalo, and hashb. We acknowledge and build upon their ideas and prior work in the MuJoCo to WebAssembly space.
+- **Input**: MuJoCo tag (currently 3.2.5 and 3.3.7)  
+- **Output**: `dist/<version>/{mujoco.js, mujoco.wasm[, mujoco.wasm.map], version.json, sbom.spdx.json}`  
+- **Toolchain**: emsdk 3.1.55 and Node 20 (parity with CI)  
+- **Scope**: simulation core only (visualization/UI families are intentionally excluded)
 
-- Input: MuJoCo tag (e.g., 3.2.5, 3.3.7)
-- Output: `dist/<version>/{mujoco.js,mujoco.wasm[,mujoco.wasm.map],version.json,sbom.spdx.json}`
-- Toolchain: pinned Emscripten; minimal exports; no rendering UI here
+Repository mirror: https://github.com/lshdlut/mujoco-wasm-forge
 
-Status: usable. CI builds a single-module WASM + glue JS, runs Node smoke + a native-vs-wasm regression, and uploads artifacts.
+## Export rules (ABI summary)
 
-Repository: https://github.com/lshdlut/mujoco-wasm-forge
-
-## 导出规则与排除（必须阅读）
-
-- 导出等式：**C = A ∩ B**  
-  A=公开 C 头声明（mujoco.h / mjspec.h）  
-  B=静态库实现（llvm-nm）
-- 硬闸：`(A ∩ B) − C = ∅`，导出不得含 `mjv_/mjr_/mjui_` 或非 `_mjwf_*`。
-- **Special exclusions**:
-  1) Allowed prefixes: `mj_`, `mju_`, `mjs_`, `mjd_`; other families (e.g. `mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`) are excluded.
-  2) Variadic functions export only if a matching `*_v` variant exists; otherwise recorded as `variadic_no_v`.
-- 详见 `dist/<ver>/abi/exports_report.md`（如需 JSON 报告，设环境变量 `EMIT_JSON=1`）。
+- Equality: **C = A ∩ B**  
+  - A → public C declarations in `mujoco.h` (and `mjspec.h` when present)  
+  - B → symbols implemented in `libmujoco.a` (enumerated via `llvm-nm`)
+- Hard gate: `(A ∩ B) − C = 0`; exported names must begin with `mj_`, `mju_`, `mjs_`, or `mjd_`
+- Special exclusions  
+  1. Reject visualization/UI families (`mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`)  
+  2. Variadic functions require a matching `*_v` implementation; otherwise they are tagged as `variadic_no_v`
+- Full reports live under `dist/<ver>/abi/exports_report.md` (pass `EMIT_JSON=1` to generate JSON)
 
 ## Artifacts
 
-CI (and canonical local builds using WSL with metadata enabled) produce:
+Both CI and canonical local builds produce:
 
-- `dist/<mjVer>/mujoco.wasm` - WebAssembly binary
-- `dist/<mjVer>/mujoco.js` - ES module factory (`createMuJoCo`)
-- `dist/<mjVer>/mujoco.wasm.map` - source map (optional)
-- `dist/<mjVer>/version.json` - metadata (MuJoCo tag, emscripten version, sizes, sha256, git sha)
-- `dist/<mjVer>/sbom.spdx.json` - SPDX SBOM (lightweight)
+- `dist/<mjVer>/mujoco.wasm` — WebAssembly binary
+- `dist/<mjVer>/mujoco.js` — ES module factory (`createMuJoCo`)
+- `dist/<mjVer>/mujoco.wasm.map` — optional source map
+- `dist/<mjVer>/version.json` — metadata (MuJoCo tag, emsdk, sizes, sha256, git sha)
+- `dist/<mjVer>/sbom.spdx.json` — SPDX SBOM (lightweight)
 
 ## Quick start (Node ESM)
 
-```
+```ts
 import createMuJoCo from './dist/3.2.5/mujoco.js';
 
 const Module = await createMuJoCo({
@@ -81,99 +79,73 @@ Module.stackRestore(stackTop);
 
 ## CI and reproducibility
 
-Unified workflow entrance (GitHub Actions):
+Single workflow: `.github/workflows/forge.yml`
 
-- Single entry `.github/workflows/forge.yml` with a version matrix (3.2.5, 3.3.7)
-- Pinned emsdk (3.1.55) and Node (20)
-- Two-stage configure for 3.3.7 to statically link qhull (replace SHARED->STATIC and force BUILD_SHARED_LIBS=OFF); 3.2.5 does not require the qhull patch
-- Quality gates: [GATE:SYM] Sym-from-JSON, [GATE:DTS] d.ts drift, [GATE:RUN] runtime smoke/regression/mesh-smoke
-  - If a gate is not yet implemented in code, the workflow logs it as `skipped` without changing behavior.
-- Artifacts: upload `dist/` (+ `version.json`, `sbom.spdx.json`)
+- Matrix covers MuJoCo 3.2.5 and 3.3.7
+- Toolchain pinned to emsdk 3.1.55 + Node 20
+- 3.3.7 performs a two-stage configure and forces qhull to static (Emscripten requirement)
+- Quality gates: `[GATE:SYM]`, `[GATE:DTS]`, `[GATE:RUN]` (non-implemented gates are logged as skipped)
+- Artifacts uploaded directly from `dist/<mjVer>/`
 
-### ABI-driven export pipeline
+### ABI-driven pipeline (per build)
 
-Forge now treats auto-generated wrappers as the single source of truth for the WASM surface. Every CI/local build executes the following pipeline:
+1. `node scripts/mujoco_abi/autogen_wrappers.mjs` → produce MJAPI declarations (A-set)  
+2. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a` → collect implementation symbols (B-set)  
+3. `node scripts/mujoco_abi/gen_exports_from_abi.mjs` → emit wrappers, exports list, TypeScript stubs, reports  
+4. CMake consumes the generated list (`-sEXPORTED_FUNCTIONS=@exports_<ver>.lst`)  
+5. `node scripts/mujoco_abi/check_exports.mjs ...` → ensure `(A ∩ B) − C = 0` and no forbidden families leak  
+6. `node scripts/mujoco_abi/nm_coverage.mjs ... --out dist/<ver>/abi/nm_coverage.json` → record implementation coverage
 
-1. **扫描声明集 (A)**  
-   `node scripts/mujoco_abi/autogen_wrappers.mjs --include external/mujoco/include --out build/<short>/mjapi_<ver>.json`  
-   （由 CMake 自动触发，用于记录公开 C API）
-2. **枚举实现集 (B)**  
-   `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out build/<short>/nm_<ver>.json`
-3. **生成 C = A ∩ B 导出面**  
-   `node scripts/mujoco_abi/gen_exports_from_abi.mjs --names-json build/<short>/mjapi_<ver>.json --impl-json build/<short>/nm_<ver>.json --header wrappers/auto/mjwf_auto_exports.h --source wrappers/auto/mjwf_auto_exports.c --version <ver> --out build/<short> --abi dist/<ver>/abi`  
-   产出 `exports_<ver>.{json,lst,d.ts}`, `wrapper_exports.json` 以及 `exports_report.md`（`EMIT_JSON=1` 时附带 JSON 报告）。
-4. **使用白名单编译**  
-   CMake 注入自动生成的文件，并传递 `-sEXPORTED_FUNCTIONS=@build/<short>/exports_<ver>.lst`。
-5. **导出面硬闸**  
-   `node scripts/mujoco_abi/check_exports.mjs --abi dist/<ver>/abi --expected dist/<ver>/abi/wrapper_exports.json --wasm dist/<ver>/mujoco.wasm`
-6. **可选审计快照**  
-   `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_coverage.json`
+See `docs/ABI_SCAN.md` for detailed rationale.
 
-Refer to `docs/ABI_SCAN.md` for details and additional options.
+## Building locally (canonical flow)
 
-## Versioning and tags
+Preferred environment: WSL Ubuntu 22.04 (or Docker) mirroring the GitHub Actions workflow.
 
-- Stable releases use `forge-<mujocoVersion>-r<rev>`; example: `forge-3.2.5-r3`, `forge-3.3.7-r2`.
-- Pre-releases use `forge-<mujocoVersion>-rc.<n>` and are marked as pre-release.
-- Artifacts are immutable; fixes publish a new revision (e.g., `-r2`).
+1. **Mirror & build (Windows host):**
+   ```powershell
+   pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
+     -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6
+   ```
+   For incremental builds (already mirrored), drop `-Sync` and `-UseTemp` if not needed.
 
-### Release status (current)
-- Recommended (stable):
-  - `forge-3.2.5-r3`
-  - `forge-3.3.7-r2`
-- Deprecated (superseded by unified workflow):
-  - `forge-3.2.5-r1`, `forge-3.2.5-r2`
-  - `forge-3.3.7-r1`, all `forge-3.3.7-rc.*`
+2. **Generate ABI descriptors (must run before post_build):**
+   ```powershell
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
+   ```
 
-## Regression baseline
-
-- Baselines: `native-3.2.5` <-> `wasm-3.2.5`, and `native-3.3.7` <-> `wasm-3.3.7`
-- Determinism: fixed timestep, no randomization, warmstart disabled
-
-## Building locally (canonical)
-
-Preferred path: WSL Ubuntu 22.04 (or Docker) fully replicating `.github/workflows/forge.yml`.
-
-- Windows entrypoint (from repo root):
-  - First mirror repository into WSL ext4 and build:
-    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6`
-  - Subsequent builds (already mirrored):
-    - `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File local_tools/wsl/run.ps1 -Clean -Meta -PinNode20 -Jobs 6`
-  - After each build, run the consolidated post-build checks from a clean WSL shell:
-    - `./scripts/ci/post_build.sh --version 3.2.5 --short 325`
-    - `./scripts/ci/post_build.sh --version 3.3.7 --short 337`
-  - Flags:
-    - `-Clean` removes old caches for a clean reconfigure
-    - `-Meta` generates `version.json`, `sbom.spdx.json`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`
-    - `-PinNode20` attempts to run tests with Node 20 for CI parity
-     - `-WslWorkDir` sets WSL workspace (default `~/dev/mujoco-wasm-forge`)
-
-- WSL entrypoint (equivalent):
-  - `CLEAN=1 META=1 PIN_NODE20=1 TARGETS=325,337 MJVER_337=3.3.7 MJVER_325=3.2.5 bash ./local_tools/wsl/build.sh`
+3. **Run post-build checks inside WSL (after `build.sh`):**
+   ```bash
+   source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
+   ./scripts/ci/post_build.sh --version 3.2.5 --short 325
+   ./scripts/ci/post_build.sh --version 3.3.7 --short 337
+   ```
 
 Notes:
-- Run all builds and tests inside WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`), or use `-UseTemp` to build in `/tmp`. Avoid `/mnt/c/...` and OneDrive paths to prevent slow I/O and sync overhead. No files are written to Windows `~`.
-- For maximum parity with CI, prefer starting from a fresh workspace (e.g., `-UseTemp` or a clean clone) before invoking the scripts above; the post-build checks rely on the same command sequence used by GitHub Actions, so running them in a clean environment catches drift early.
-- Default parallel jobs is 6; override with `-Jobs` if needed.
-- The sync helper now excludes `.git` and purges accidental `?root?dev?...` folders that can appear if WSL paths are copied from Windows. Prefer `-Sync` over manual `cp /root/...` on Windows.
 
-## Using artifacts in other repos (e.g., mujoco-wasm-play)
+- Always run builds on WSL ext4 (e.g., `~/dev/mujoco-wasm-forge`) or use `-UseTemp` to build under `/tmp`. Avoid `/mnt/c/...` / OneDrive to prevent I/O issues.
+- Starting from a fresh workspace (`-UseTemp` or clean clone) best mirrors CI.
+- Default parallelism is 6 (`-Jobs` overrides).
+- The sync helper excludes `.git` and cleans stray `?root?...` folders; prefer it over manual copying.
 
-- Build here in WSL as above; artifacts land under `dist/<mjVer>/`.
-- In WSL, copy only the needed artifacts to the play repo:
-  - `cp -r ./dist/3.3.7 /path/to/mujoco-wasm-play/dist/3.3.7`
-- In the play repo, load from `dist/<mjVer>/mujoco.{js,wasm}` in your loader; avoid copying `build/` or `external/`.
-- For MuJoCo 3.3.7, the build performs a two-stage configuration to enforce static qhull under Emscripten (SHARED->STATIC, BUILD_SHARED_LIBS=OFF) before the final configure.
-- Artifacts (including metadata) will be under `dist/<mjVer>/` when `-Meta`/`META=1` is enabled.
+## Using artifacts in other projects
+
+- After building, copy only `dist/<mjVer>/` into the consumer repo.  
+- Load `dist/<mjVer>/mujoco.{js,wasm}` directly (avoid copying `build/` or `external/`).  
+- 3.3.7 enforces static qhull; artifacts already reflect that configuration.  
+- With `-Meta`/`META=1`, metadata files accompany the JS/WASM output.
+
+## Versioning
+
+- Stable tags: `forge-<mujocoVersion>-r<rev>` (e.g., `forge-3.3.7-r2`)  
+- Pre-release tags: `forge-<mujocoVersion>-rc.<n>`  
+- Artifacts are immutable; fixes publish a new revision (increment `-rN`)
 
 ## Notes
 
-- Front-end demo: on-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git
+- Front-end demo (work in progress): https://github.com/lshdlut/mujoco-wasm-play
 
 ## Provenance
 
-Portions of this repository's configurations, CI workflows, and documentation were authored or adapted with the assistance of generative AI, and were subsequently reviewed and validated by a human maintainer.
-
-
-
-
+Portions of this repository’s scripts and documentation were authored or refined with the help of generative AI, then reviewed by a human maintainer.
