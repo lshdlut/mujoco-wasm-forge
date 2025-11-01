@@ -158,7 +158,7 @@ jobs:
       - name: NM coverage (post-build)
         shell: bash
         run: |
-          node scripts/mujoco_abi/nm_coverage.mjs dist/${{ matrix.mjver }}/mujoco.wasm dist/${{ matrix.mjver }}/abi/wrapper_exports.json --out dist/${{ matrix.mjver }}/abi/nm_coverage.json
+          node scripts/mujoco_abi/nm_coverage.mjs build/${{ matrix.short }}/lib/libmujoco.a --out dist/${{ matrix.mjver }}/abi/nm_coverage.json
 
       - name: "[GATE:DTS] d.ts drift (skipped)"
         shell: bash
