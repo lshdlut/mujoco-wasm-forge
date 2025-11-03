@@ -10,6 +10,11 @@ It scans the upstream headers, derives the wrapper export set, compiles both WAS
 - **Toolchain**: emsdk 4.0.10 and Node 20 (parity with CI)  
 - **Scope**: simulation core only (visualization/UI families are intentionally excluded)
 
+### Investigations
+
+- We maintain an ongoing comparison between the forge wrapper and the official Embind-based WASM path. Findings, build parity notes, and benchmark methodology are recorded in `docs/wasm-investigation.md`.
+- We plan to keep two flows in parallel: a lean, customizable forge wrapper and the official Embind build (feature-rich, broadly compatible). See the investigation doc for rationale and commands.
+
 Repository mirror: https://github.com/lshdlut/mujoco-wasm-forge
 
 ### Upstream WASM alpha
