@@ -39,6 +39,7 @@ function parseArgs(argv) {
     version: 'unknown',
     outDir: 'build',
     abiDir: null,
+    extra: null,
   };
   for (let i = 2; i < argv.length; ++i) {
     const arg = argv[i];
@@ -49,6 +50,7 @@ function parseArgs(argv) {
     else if (arg === '--version') opts.version = argv[++i];
     else if (arg === '--out') opts.outDir = pathResolve(argv[++i]);
     else if (arg === '--abi') opts.abiDir = pathResolve(argv[++i]);
+    else if (arg === '--extra') opts.extra = pathResolve(argv[++i]);
     else {
       console.error(`Unknown argument: ${arg}`);
       process.exit(2);
@@ -305,7 +307,18 @@ function main() {
     finalFunctions.push(cloned);
   }
 
-  const finalNames = finalFunctions.map((fn) => fn.name);
+  let finalNames = finalFunctions.map((fn) => fn.name);
+  if (opts.extra) {
+    const extraRaw = readFileSync(opts.extra, 'utf8')
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const nameSet = new Set(finalNames);
+    for (const extra of extraRaw) {
+      if (extra) nameSet.add(extra);
+    }
+    finalNames = Array.from(nameSet).sort();
+  }
   const finalNameSet = new Set(finalNames);
 
   const excludedNameSet = new Set(specialExclusions.map((item) => item.name));

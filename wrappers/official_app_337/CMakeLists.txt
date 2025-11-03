@@ -90,9 +90,11 @@ add_custom_command(
           --version ${MJVER}
           --out ${CMAKE_CURRENT_BINARY_DIR}
           --abi ${MJWF_ABI_DIR}
+          --extra ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_extra_exports.lst
   DEPENDS
           ${MJWF_HEADERS_JSON}
           ${MJWF_IMPL_JSON}
+          ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_extra_exports.lst
           ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
   COMMENT "Generating wrapper aliases and export manifests (${MJVER})"
   VERBATIM

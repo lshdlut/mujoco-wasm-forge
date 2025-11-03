@@ -45,6 +45,10 @@ node scripts/mujoco_abi/check_exports.mjs \
   --wasm "${DIST_WASM}" \
   --expected "${ABI_DIR}/wrapper_exports.json"
 
+if [[ "${MJVER}" == "3.3.7" ]]; then
+  node scripts/ci/check_official_exports.mjs --dist "dist/${MJVER}"
+fi
+
 if [[ -f "$LIBMUJOCO" ]]; then
   node scripts/mujoco_abi/nm_coverage.mjs \
     "${LIBMUJOCO}" \
