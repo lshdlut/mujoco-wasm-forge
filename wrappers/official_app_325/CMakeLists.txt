@@ -165,7 +165,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     ${MJWF_EXC_FLAG}
     ${MJWF_DEBUG_FLAGS}
     ${MJWF_LTO_FLAG}
-    "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall','UTF8ToString','stringToUTF8','lengthBytesUTF8','FS','wasmExports','stackSave','stackRestore','stackAlloc','HEAP8']"
+    "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall','UTF8ToString','stringToUTF8','lengthBytesUTF8','FS','wasmExports','stackSave','stackRestore','stackAlloc','HEAP8','HEAPU8','HEAP32','HEAPU32','HEAPF32','HEAPF64']"
     "-sEXPORTED_FUNCTIONS=@${MJWF_EXPORTS_LIST}"
   )
 endif()

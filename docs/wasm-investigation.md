@@ -16,7 +16,7 @@ This document summarizes our recent experiments comparing the forge wrapper pipe
 
 1) Test abort: `HEAP8 was not exported`
    - Root cause: our tests access `Module.HEAP8` and other runtime methods. Emscripten requires these to be explicitly listed via `-sEXPORTED_RUNTIME_METHODS` when `MODULARIZE` + `EXPORT_ES6` builds are used.
-   - Fix: in wrapper CMake for all versions, include `['cwrap','ccall','UTF8ToString','stringToUTF8','lengthBytesUTF8','FS','wasmExports','stackSave','stackRestore','stackAlloc','HEAP8']` in `-sEXPORTED_RUNTIME_METHODS`.
+  - Fix: in wrapper CMake for all versions, include `['cwrap','ccall','UTF8ToString','stringToUTF8','lengthBytesUTF8','FS','wasmExports','stackSave','stackRestore','stackAlloc','HEAP8','HEAPU8','HEAP32','HEAPU32','HEAPF32','HEAPF64']` in `-sEXPORTED_RUNTIME_METHODS`.
 
 2) qhull linkage under Emscripten
    - Root cause: upstream qhull defaults to `SHARED` targets; Emscripten doesn’t support shared libs.
@@ -110,4 +110,3 @@ node scripts/benchmarks/profile_benchmark_official.mjs \
   [BENCH_PREFORWARD=1] [BENCH_READBACK=1] \
   [BENCH_ITERATIONS=100000] [BENCH_WARMUPS=1000]
 ```
-
