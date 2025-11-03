@@ -35,3 +35,24 @@ EMSCRIPTEN_KEEPALIVE const char* mjwf_version_string(void) {
   return buf;
 }
 
+EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_sensorPos(mjModel* m, mjData* d, int iterations) {
+  if (!m || !d || iterations <= 0) return;
+  for (int i = 0; i < iterations; ++i) {
+    mj_sensorPos(m, d);
+  }
+}
+
+EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_energyPos(mjModel* m, mjData* d, int iterations) {
+  if (!m || !d || iterations <= 0) return;
+  for (int i = 0; i < iterations; ++i) {
+    mj_energyPos(m, d);
+  }
+}
+
+EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_fwdConstraint(mjModel* m, mjData* d, int iterations) {
+  if (!m || !d || iterations <= 0) return;
+  for (int i = 0; i < iterations; ++i) {
+    mj_fwdConstraint(m, d);
+  }
+}
+

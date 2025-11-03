@@ -18,6 +18,9 @@ option(MUJOCO_BUILD_SAMPLES "" OFF)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+set(MJWF_PROFILE "default" CACHE STRING "MuJoCo WASM wrapper profile (default|fast|official|fast_official)")
+set_property(CACHE MJWF_PROFILE PROPERTY STRINGS default fast official fast_official)
+
 # Expect MuJoCo sources cloned to ../../external/mujoco
 add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
 
@@ -108,16 +111,45 @@ add_dependencies(mjwf_exports_${MJVER} mjwf_scan_${MJVER} mjwf_impl_${MJVER})
 set_source_files_properties(${MJWF_AUTO_HEADER} ${MJWF_AUTO_SOURCE} PROPERTIES GENERATED TRUE)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  set(MJWF_OPT_FLAG "-Oz")
+  set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
+  set(MJWF_FS_FLAG "-sFORCE_FILESYSTEM=0")
+  set(MJWF_EXC_FLAG "-sDISABLE_EXCEPTION_CATCHING=1")
+  set(MJWF_DEBUG_FLAGS "")
+  set(MJWF_LTO_FLAG "-flto")
+  if (MJWF_PROFILE STREQUAL "fast")
+    set(MJWF_OPT_FLAG "-O3")
+    set(MJWF_ASSERT_FLAG "-sASSERTIONS=0")
+  elseif (MJWF_PROFILE STREQUAL "official")
+    set(MJWF_OPT_FLAG "-O3")
+    set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
+    set(MJWF_FS_FLAG "-sFORCE_FILESYSTEM=1")
+    set(MJWF_EXC_FLAG "-sDISABLE_EXCEPTION_CATCHING=0")
+    set(MJWF_DEBUG_FLAGS "-gsource-map;-g")
+    set(MJWF_LTO_FLAG "")
+  elseif (MJWF_PROFILE STREQUAL "fast_official")
+    set(MJWF_OPT_FLAG "-O3")
+    set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
+    set(MJWF_FS_FLAG "-sFORCE_FILESYSTEM=1")
+    set(MJWF_EXC_FLAG "-sDISABLE_EXCEPTION_CATCHING=0")
+    set(MJWF_DEBUG_FLAGS "-gsource-map;-g")
+    set(MJWF_LTO_FLAG "-flto")
+  endif()
+
   add_executable(mujoco_wasm337
     ${MJWF_AUTO_SOURCE}
     ${MJWF_AUTO_DIR}/mjwf_stubs.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_handles.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_entrypoints.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_exports_generated.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_compat_minimal.c
   )
 
   add_dependencies(mujoco_wasm337 mujoco)
   add_dependencies(mujoco_wasm337 mjwf_exports_${MJVER})
   target_include_directories(mujoco_wasm337 PRIVATE ${MJWF_AUTO_DIR})
   target_link_libraries(mujoco_wasm337 PRIVATE mujoco)
-  target_compile_options(mujoco_wasm337 PRIVATE "-fvisibility=hidden")
+  target_compile_options(mujoco_wasm337 PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
   target_link_options(mujoco_wasm337 PRIVATE
     "-sWASM=1"
     "-sSTACK_SIZE=5242880"
@@ -125,15 +157,16 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     "-sMAXIMUM_MEMORY=536870912"
     "-sALLOW_MEMORY_GROWTH=1"
     "-sENVIRONMENT=web,worker,node"
-    "-sASSERTIONS=1"
     "-sEXPORT_ES6=1"
     "-sMODULARIZE=1"
-    "-sFORCE_FILESYSTEM=0"
     "-sWASM_BIGINT=1"
-    "-sDISABLE_EXCEPTION_CATCHING=1"
     "-sEXPORT_NAME=load_mujoco"
-    "-Oz"
-    "-flto"
+    ${MJWF_OPT_FLAG}
+    ${MJWF_ASSERT_FLAG}
+    ${MJWF_FS_FLAG}
+    ${MJWF_EXC_FLAG}
+    ${MJWF_DEBUG_FLAGS}
+    ${MJWF_LTO_FLAG}
     "-sEXPORTED_RUNTIME_METHODS=['cwrap','ccall','UTF8ToString','stringToUTF8','lengthBytesUTF8','FS','wasmExports','stackSave','stackRestore','stackAlloc','HEAP8']"
     "-sEXPORTED_FUNCTIONS=@${MJWF_EXPORTS_LIST}"
   )

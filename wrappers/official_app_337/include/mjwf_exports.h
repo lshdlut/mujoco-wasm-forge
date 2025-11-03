@@ -5,6 +5,9 @@
 
 #include <stdint.h>
 
+struct mjModel;
+struct mjData;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -90,6 +93,11 @@ EMSCRIPTEN_KEEPALIVE int         mjwf_name2id(int h, int type, const char* name)
 // Convenience: specialized name helpers
 EMSCRIPTEN_KEEPALIVE const char* mjwf_jnt_name_of(int h, int id);
 EMSCRIPTEN_KEEPALIVE const char* mjwf_actuator_name_of(int h, int id);
+
+// ----- Benchmark helpers -----
+EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_sensorPos(struct mjModel* m, struct mjData* d, int iterations);
+EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_energyPos(struct mjModel* m, struct mjData* d, int iterations);
+EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_fwdConstraint(struct mjModel* m, struct mjData* d, int iterations);
 
 #ifdef __cplusplus
 }

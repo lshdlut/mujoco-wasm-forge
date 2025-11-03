@@ -70,6 +70,10 @@ maybe_pin_node20() {
 build_one() {
   local short="$1" mjver="$2" app="$3" ref="${4:-}"
   log "=== Build ${mjver} (short=${short}) ==="
+  local wrapper_profile="${MJWF_PROFILE:-default}"
+  if [[ "${PROFILE_FAST:-0}" == "1" && "${wrapper_profile}" == "default" ]]; then
+    wrapper_profile="fast"
+  fi
   local build="build/${short}" native="build/${short}_native"
   mkdir -p external
   if [[ "${CLEAN:-}" == "1" ]]; then rm -rf "$build" "$native" external/mujoco || true; else [[ -f "$build/CMakeCache.txt" ]] && rm -rf "$build"; [[ -f "$native/CMakeCache.txt" ]] && rm -rf "$native"; fi
@@ -115,7 +119,7 @@ build_one() {
 
   local f="external/mujoco/src/engine/engine_util_errmem.c"; if [[ -f "$f" ]]; then sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/' "$f"; sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/' "$f"; fi
   if [[ "$short" == "337" || "$short" == "338" ]]; then
-    emcmake cmake -S "$app" -B "$build" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_ENABLE_QHULL=OFF -DMUJOCO_BUILD_PLUGINS=OFF -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON -DLIBM_LIBRARY:STRING=-lm -DMJVER="${mjver}" || true
+    emcmake cmake -S "$app" -B "$build" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_ENABLE_QHULL=OFF -DMUJOCO_BUILD_PLUGINS=OFF -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON -DLIBM_LIBRARY:STRING=-lm -DMJVER="${mjver}" -DMJWF_PROFILE="${wrapper_profile}" || true
     local QH="${build}/_deps/qhull-src/CMakeLists.txt"; if [[ -f "$QH" ]]; then sed -i 's/\bSHARED\b/STATIC/g' "$QH" || true; awk 'BEGIN{print "set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)"} {print}' "$QH" > "$QH.tmp" && mv "$QH.tmp" "$QH"; fi
   fi
   # Enable ccache if available
@@ -127,7 +131,7 @@ build_one() {
   fi
   local JOBS; JOBS=$(detect_jobs)
   export CMAKE_BUILD_PARALLEL_LEVEL="$JOBS"
-  emcmake cmake -S "$app" -B "$build" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON -DLIBM_LIBRARY:STRING=-lm -DMJVER="${mjver}" "${cacheFlags[@]}"
+  emcmake cmake -S "$app" -B "$build" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON -DLIBM_LIBRARY:STRING=-lm -DMJVER="${mjver}" -DMJWF_PROFILE="${wrapper_profile}" "${cacheFlags[@]}"
   cmake --build "$build" -j "$JOBS"
   cmake -S "$app" -B "$native" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON "${cacheFlags[@]}"
   cmake --build "$native" -j "$JOBS"
