@@ -208,6 +208,49 @@ def iter_declarations(block: str) -> Sequence[str]:
         segments.append("".join(acc))
     return segments
 
+def load_structs_from_scan(path: Path) -> Dict[str, Dict[str, FieldDef]]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    structs: Dict[str, Dict[str, FieldDef]] = {}
+    for struct_name, struct_data in data.get("structs", {}).items():
+        fields: Dict[str, FieldDef] = {}
+        for entry in struct_data.get("fields", []):
+            ctype = (entry.get("type") or "").strip()
+            if "*" not in ctype:
+                continue
+            base = ctype.replace("const", " ").replace("*", " ").strip()
+            base = re.sub(r"\s+", " ", base)
+            name = entry.get("name")
+            if not name:
+                continue
+            comment = entry.get("comment")
+            line = entry.get("line", -1)
+            fields[name] = FieldDef(
+                struct=struct_name,
+                name=name,
+                ctype=ctype,
+                base_type=base,
+                comment=comment,
+                line=line,
+            )
+        structs[struct_name] = fields
+    return structs
+
+def load_dim_hints(path: Path) -> Dict[Tuple[str, str], List[str]]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    hints: Dict[Tuple[str, str], List[str]] = {}
+    for dim, entries in data.get("dim_map", {}).items():
+        for entry in entries or []:
+            struct = entry.get("struct")
+            field = entry.get("field")
+            if not struct or not field:
+                continue
+            key = (struct, field)
+            if key not in hints:
+                hints[key] = []
+            if dim not in hints[key]:
+                hints[key].append(dim)
+    return hints
+
 def parse_fields(src: str, struct_name: str) -> Dict[str, FieldDef]:
     block, base_line = find_struct_block(src, struct_name)
     fields: Dict[str, FieldDef] = {}
@@ -417,7 +460,7 @@ def generate_count_impl(count: CountExport, dims: Dict[str, str], field_defs: Di
         f"}}\n\n"
     )
 
-def compile_rules(spec_rules, auto_rules, field_map, dims) -> Tuple[List[PointerExport], Dict[str, List[str]], List[str]]:
+def compile_rules(spec_rules, auto_rules, field_map, dims, dim_hints) -> Tuple[List[PointerExport], Dict[str, List[str]], List[str]]:
     pointers: List[PointerExport] = []
     matched: Dict[str, List[str]] = {"mjModel": [], "mjData": []}
     diagnostics: List[str] = []
@@ -457,6 +500,10 @@ def compile_rules(spec_rules, auto_rules, field_map, dims) -> Tuple[List[Pointer
                     len_expr = inferred
                 else:
                     diagnostics.append(f"[{rule_id}] Unable to infer length for field {fname} from comment")
+            if not len_expr:
+                dims_for_field = dim_hints.get((struct, fname)) if dim_hints else None
+                if dims_for_field:
+                    len_expr = dims_for_field[0]
             pointer_name = rule.get("export_name") or fname
             ctype = dtype_to_ctype(dtype, fdef.ctype.strip())
             register_pointer(PointerExport(
@@ -503,6 +550,10 @@ def compile_rules(spec_rules, auto_rules, field_map, dims) -> Tuple[List[Pointer
                     len_expr = inferred
                 else:
                     diagnostics.append(f"[{rule_id}] Unable to infer length for field {fname} from comment")
+            if not len_expr:
+                dims_for_field = dim_hints.get((struct, fname)) if dim_hints else None
+                if dims_for_field:
+                    len_expr = dims_for_field[0]
             pointer_name = rule.get("export_name") or fname
             ctype = dtype_to_ctype(dtype, fdef.ctype.strip())
             register_pointer(PointerExport(
@@ -560,8 +611,29 @@ def main() -> int:
     header_model_path = resolve_header_path(spec_dir, search_roots, mjmodel_header)
     header_data_path = resolve_header_path(spec_dir, search_roots, mjdata_header)
 
-    model_fields = parse_fields(load_text(header_model_path), "mjModel")
-    data_fields = parse_fields(load_text(header_data_path), "mjData")
+    scan_cfg = spec.get("scan", {}) or {}
+    structs_from_scan: Dict[str, Dict[str, FieldDef]] = {}
+    dim_hints: Dict[Tuple[str, str], List[str]] = {}
+    structs_path = scan_cfg.get("structs")
+    if structs_path:
+        scan_structs_path = (spec_dir / structs_path).resolve()
+        if scan_structs_path.is_file():
+            structs_from_scan = load_structs_from_scan(scan_structs_path)
+    dim_map_path = scan_cfg.get("dim_map")
+    if dim_map_path:
+        scan_dim_path = (spec_dir / dim_map_path).resolve()
+        if scan_dim_path.is_file():
+            dim_hints = load_dim_hints(scan_dim_path)
+
+    if "mjModel" in structs_from_scan:
+        model_fields = structs_from_scan["mjModel"]
+    else:
+        model_fields = parse_fields(load_text(header_model_path), "mjModel")
+    if "mjData" in structs_from_scan:
+        data_fields = structs_from_scan["mjData"]
+    else:
+        data_fields = parse_fields(load_text(header_data_path), "mjData")
+
     field_map = {"mjModel": model_fields, "mjData": data_fields}
 
     dims = normalize_dims(spec.get("dims"))
@@ -569,7 +641,7 @@ def main() -> int:
     auto_rules = spec.get("auto", [])
     rules = spec.get("rules", [])
 
-    pointers, matched, diagnostics = compile_rules(rules, auto_rules, field_map, dims)
+    pointers, matched, diagnostics = compile_rules(rules, auto_rules, field_map, dims, dim_hints)
     skipped = compute_skipped(field_map, matched)
 
     count_exports: List[CountExport] = []

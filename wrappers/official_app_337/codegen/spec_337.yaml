@@ -8,6 +8,10 @@ headers:
   mjData: mjdata.h
   report_json: ../build/export_rules_report.json
 
+scan:
+  structs: ../../dist/3.3.7/abi/structs.json
+  dim_map: ../../dist/3.3.7/abi/dim_map.json
+
 dims:
   nq: m->nq
   nv: m->nv

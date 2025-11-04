@@ -36,6 +36,8 @@ set(MJWF_AUTO_SOURCE "${MJWF_AUTO_DIR}/mjwf_auto_exports.c")
 set(MJWF_HEADERS_JSON "${CMAKE_CURRENT_BINARY_DIR}/mjapi_${MJVER}.json")
 set(MJWF_IMPL_JSON "${CMAKE_CURRENT_BINARY_DIR}/nm_${MJVER}.json")
 set(MJWF_ABI_DIR "${MJWF_ROOT}/dist/${MJVER}/abi")
+set(MJWF_STRUCTS_JSON "${MJWF_ABI_DIR}/structs.json")
+set(MJWF_DIM_MAP_JSON "${MJWF_ABI_DIR}/dim_map.json")
 set(MJWF_EXPORTS_JSON "${CMAKE_BINARY_DIR}/exports_${MJVER}.json")
 set(MJWF_EXPORTS_LIST "${CMAKE_BINARY_DIR}/exports_${MJVER}.lst")
 set(MJWF_TYPES_DTS "${CMAKE_CURRENT_BINARY_DIR}/types_${MJVER}.d.ts")
@@ -53,6 +55,30 @@ add_custom_command(
   VERBATIM
 )
 add_custom_target(mjwf_scan_${MJVER} DEPENDS ${MJWF_HEADERS_JSON})
+
+add_custom_command(
+  OUTPUT ${MJWF_STRUCTS_JSON}
+  BYPRODUCTS
+    ${MJWF_STRUCTS_JSON}
+    ${MJWF_DIM_MAP_JSON}
+    ${MJWF_ABI_DIR}/functions.json
+    ${MJWF_ABI_DIR}/enums.json
+    ${MJWF_ABI_DIR}/mappings.json
+    ${MJWF_ABI_DIR}/diagnostics.json
+    ${MJWF_ABI_DIR}/extensions.json
+    ${MJWF_ABI_DIR}/probe_spec.json
+    ${MJWF_ABI_DIR}/gate.json
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${MJWF_ABI_DIR}
+  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/scan.mjs
+          --repo ${MJWF_ROOT}/external/mujoco
+          --ref HEAD
+          --out ${MJWF_ABI_DIR}
+  DEPENDS mujoco ${MJWF_ROOT}/scripts/mujoco_abi/scan.mjs
+  COMMENT "Scanning MuJoCo structs and fields (${MJVER})"
+  VERBATIM
+)
+add_custom_target(mjwf_structs_${MJVER} DEPENDS ${MJWF_STRUCTS_JSON})
+add_dependencies(mjwf_structs_${MJVER} mjwf_scan_${MJVER})
 
 add_custom_command(
   OUTPUT ${MJWF_IMPL_JSON}
@@ -109,7 +135,7 @@ add_custom_target(mjwf_exports_${MJVER}
     ${MJWF_ABI_DIR}/wrapper_exports.json
     ${MJWF_ABI_DIR}/exports_report.md
 )
-add_dependencies(mjwf_exports_${MJVER} mjwf_scan_${MJVER} mjwf_impl_${MJVER})
+add_dependencies(mjwf_exports_${MJVER} mjwf_scan_${MJVER} mjwf_structs_${MJVER} mjwf_impl_${MJVER})
 set_source_files_properties(${MJWF_AUTO_HEADER} ${MJWF_AUTO_SOURCE} PROPERTIES GENERATED TRUE)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
