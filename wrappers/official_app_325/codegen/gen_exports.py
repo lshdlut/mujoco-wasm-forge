@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 import yaml
 
 HDR_PREAMBLE = """
-// AUTO-GENERATED. Do not edit by hand. See codegen/spec_338.yaml
+// AUTO-GENERATED. Do not edit by hand. See codegen/spec_325.yaml
 #pragma once
 #include <stdint.h>
 #if defined(__EMSCRIPTEN__)
@@ -32,7 +32,7 @@ HDR_POST = """
 """
 
 SRC_PREAMBLE = """
-// AUTO-GENERATED. Do not edit by hand. See codegen/spec_338.yaml
+// AUTO-GENERATED. Do not edit by hand. See codegen/spec_325.yaml
 #include <mujoco/mujoco.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -654,3 +654,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
