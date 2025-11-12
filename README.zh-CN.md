@@ -2,126 +2,122 @@
 
 English | 中文说明
 
-mujoco-wasm-forge 提供一套可复现的构建流程，将 MuJoCo 官方发布版本转换为 WebAssembly 产物。  
-流水线会扫描上游头文件、推导包装导出、分别编译 WASM 与对比用原生二进制、执行冒烟/回归检测，并生成带元数据的版本化产物。GitHub Actions 与本地流程保持一致。
+mujoco-wasm-forge 是一套可复现的构建流程，用来把 MuJoCo 发布版打包成 WebAssembly 产物。  
+流程会扫描上游头文件、生成包装与导出列表、同时构建 WASM 与原生对照程序、执行 smoke/regression 检查，并输出带元数据的版本化产物。GitHub Actions 与本地脚本共享同一条流水线。
 
-- **说明**：MuJoCo 标签当前涵盖 3.2.5、3.3.7 及 3.3.8-alpha。
+- **输入**：MuJoCo 标签（当前覆盖 3.2.5、3.3.7、3.3.8-alpha）  
 - **输出**：`dist/<version>/{mujoco.js, mujoco.wasm[, mujoco.wasm.map], version.json, sbom.spdx.json}`  
-- **工具链**：emsdk 4.0.10、Node 20（与 CI 相同）  
-- **范围**：仅包含仿真核心，视觉/UI 系符号会被排除
+- **工具链**：emsdk 4.0.10（含 Node 20），与 CI 保持一致  
+- **范围**：仅包含仿真内核；可视化 / UI 系列刻意排除
 
-### 官方 WASM 预览
+### 官方 WASM（official Embind）
 
-Google DeepMind 已经软发布了 MuJoCo 的官方 WebAssembly 绑定（参见 [issue #2585 评论](https://github.com/google-deepmind/mujoco/issues/2585#issuecomment-3473495118) 和 [commit 40862617](https://github.com/google-deepmind/mujoco/commit/4086261714d7cfbc1745d4c6cb0aa2116df45312)）。该构建依赖 Embind 并提供 MuJoCo 3.3.8。我们正在评估差异（API 覆盖、运行时体积、工具链），后续会同步调查结果；当前仓库继续提供自动化的 `_mjwf_*` 流水线与多版本构建。
+Google DeepMind 维护的官方 MuJoCo WebAssembly 绑定使用 Embind（见 [issue #2585](https://github.com/google-deepmind/mujoco/issues/2585#issuecomment-3473495118) 以及 [commit 40862617](https://github.com/google-deepmind/mujoco/commit/4086261714d7cfbc1745d4c6cb0aa2116df45312)）。  
+本仓库在命名方式与暴露策略上对齐官方 Embind：尽量直接暴露公开 API、优先提供结构体字段的指针视图，同时仍然输出多版本构建。
 
 仓库镜像：https://github.com/lshdlut/mujoco-wasm-forge
 
-## 导出规则（ABI 摘要）
+## 暴露策略（ABI 摘要）
 
-- 等式：**C = A ∩ B**  
-  - A → `mujoco.h`（以及存在时的 `mjspec.h`）中的公共 C API 声明  
-  - B → `libmujoco.a` 中通过 `llvm-nm` 枚举出的实际实现符号
-- 硬闸：`(A ∩ B) − C = 0`；仅允许 `mj_`、`mju_`、`mjs_`、`mjd_` 前缀进入导出集合
-- 特殊排除  
-  1. 排除视觉/UI/插件族 (`mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`)  
-  2. 变参函数必须存在对应的 `*_v` 实现；否则记录为 `variadic_no_v`
-- 完整报表位于 `dist/<ver>/abi/exports_report.md`（需要 JSON 时，可设置 `EMIT_JSON=1`）
+- 与官方 Embind 对齐：尽可能完整暴露 MuJoCo C API，并为 `mjModel` / `mjData` 等结构体提供指针视图，方便 JavaScript 侧读写。
+- 仍然排除可视化 / UI 家族（`mjv` / `mjr` / `mjui`）；聚焦仿真内核。
+- 变参函数优先导出 `*_v` 版本；缺少 `_v` 实现的变参函数暂不发布。
+- 详细导出报告位于 `dist/<ver>/abi/`。
 
-## 产物一览
+## 产物
 
-本地与 CI 都会生成：
+CI 与本地标准构建都会生成：
 
-- `dist/<mjVer>/mujoco.wasm` — WebAssembly 二进制
-- `dist/<mjVer>/mujoco.js` — ES 模块工厂 (`createMuJoCo`)
-- `dist/<mjVer>/mujoco.wasm.map` — 可选 source map
-- `dist/<mjVer>/version.json` — 元信息（MuJoCo 标签、emsdk、大小、sha256、git sha 等）
-- `dist/<mjVer>/sbom.spdx.json` — 轻量级 SPDX SBOM
+- `dist/<mjVer>/mujoco.wasm` —— WebAssembly 二进制
+- `dist/<mjVer>/mujoco.js` —— ES Module 工厂 (`createMuJoCo`)
+- `dist/<mjVer>/mujoco.wasm.map` —— 可选 source map
+- `dist/<mjVer>/version.json` —— 元数据（MuJoCo 版本、emsdk、构建哈希、尺寸等）
+- `dist/<mjVer>/sbom.spdx.json` —— SPDX SBOM
 
 ## 快速上手（Node ESM）
 
-同英文版示例，可直接导入 `dist/<version>/mujoco.js` 并通过 `Module.cwrap` 调用包装函数。
+用法与英文版示例一致，可直接引入 `dist/<version>/mujoco.js` 并通过 `Module.cwrap` 访问导出的函数/指针。
 
-## CI 与可复现性
+## CI 与可重复性
 
-唯一入口：`.github/workflows/forge.yml`。
+唯一工作流：`.github/workflows/forge.yml`
 
-- 矩阵覆盖 3.2.5 / 3.3.7 / 3.3.8-alpha
+- 构建矩阵覆盖 3.2.5 / 3.3.7 / 3.3.8-alpha
 - 工具链固定为 emsdk 4.0.10 + Node 20
-- 3.3.7 及 3.3.8-alpha 会执行两阶段配置并强制 qhull 静态链接（Emscripten 限制）
-- 质量闸：`[GATE:SYM]`、`[GATE:DTS]`、`[GATE:RUN]`（尚未实现的闸会标记为 skipped）
-- `dist/<mjVer>/` 中的产物直接上传
+- 3.3.7 与 3.3.8-alpha 使用两阶段 `emcmake` 并强制 qhull 静态链接（Emscripten 限制）
+- 校验项：类型声明再生成（DTS）以及运行时 smoke / regression / mesh 测试（RUN）
+- 构建产物直接从 `dist/<mjVer>/` 上传
 
-### ABI 驱动流水线（每次构建）
+### ABI 驱动流水线（每个版本）
 
-1. `node scripts/mujoco_abi/autogen_wrappers.mjs` → 扫描 C API（A 集合）  
-2. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a` → 枚举实现符号（B 集合）  
-3. `node scripts/mujoco_abi/gen_exports_from_abi.mjs` → 生成包装、导出白名单、TypeScript 声明与报表  
-4. CMake 读取 `exports_<ver>.lst`，在编译阶段指定 `-sEXPORTED_FUNCTIONS=@...`  
-5. `node scripts/mujoco_abi/check_exports.mjs ...` → 校验 `(A ∩ B) − C = 0` 且无黑名单前缀泄漏  
-6. `node scripts/mujoco_abi/nm_coverage.mjs ... --out dist/<ver>/abi/nm_coverage.json` → 记录实现覆盖率
+1. `node scripts/mujoco_abi/autogen_wrappers.mjs` —— 采集声明、生成自动包装
+2. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a` —— 收集实现符号
+3. `node scripts/mujoco_abi/gen_exports_from_abi.mjs` —— 生成包装、导出清单、TypeScript 声明与报告
+4. CMake 读取生成的导出列表（`-sEXPORTED_FUNCTIONS=@exports_<ver>.lst`）
+5. 存在性检查确保导出满足 official Embind 等效覆盖；允许扩展导出集合
+6. `node scripts/mujoco_abi/nm_coverage.mjs ... --out dist/<ver>/abi/nm_coverage.json` —— 记录实现覆盖率
 
-详情参阅 `docs/ABI_SCAN.md`。
+详情见 `docs/ABI_SCAN.md`。
 
-## 本地构建流程（推荐）
+## 本地构建（推荐流程）
 
-建议使用 WSL Ubuntu 22.04（或 Docker），执行顺序与 CI 保持一致。
+建议在 WSL Ubuntu 22.04（或 Docker）中执行，步骤与 CI 一致。
 
-1. **镜像并构建（Windows 主机）：**
+1. **同步并构建（Windows 侧）**
    ```powershell
    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
      -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6
    ```
-   增量构建可去掉 `-Sync`/`-UseTemp`。
+   已同步的工作区可根据需要去掉 `-Sync` / `-UseTemp`。
 
-2. **生成 ABI 描述（post_build 前置步骤）：**
-  ```powershell
-  pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
-  pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
-  pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.8-alpha -OutDir dist/3.3.8-alpha/abi
-  ```
+2. **生成 ABI 描述（post_build 前）**
+   ```powershell
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
+   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.8-alpha -OutDir dist/3.3.8-alpha/abi
+   ```
 
-3. **在 WSL 内执行 post_build 检查：**
+3. **在 WSL 内执行 post_build**
    ```bash
    source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
    ./scripts/ci/post_build.sh --version 3.2.5 --short 325
    ./scripts/ci/post_build.sh --version 3.3.7 --short 337
    ```
 
-注意事项：
+提示：
 
-- 请在 WSL ext4（如 `~/dev/mujoco-wasm-forge`）或 `/tmp` (`-UseTemp`) 下构建，避免 `/mnt/c/...` 与 OneDrive 带来的 I/O 问题。
-- 为保证与 CI 完全一致，推荐从干净目录开始（`-UseTemp` 或重新克隆）。
-- 默认并行度为 6，可通过 `-Jobs` 覆盖。
-- `-Sync` 会自动排除 `.git` 等目录，并清理 `?root?...` 异常路径，优先使用该方式同步。
+- 在 WSL ext4 目录（例如 `~/dev/mujoco-wasm-forge`）或 `/tmp`（`-UseTemp`）下构建，避免 `/mnt/c/...` 与 OneDrive 带来的 I/O 问题。
+- 建议从干净工作区（`-UseTemp` 或全新 clone）开始，以确保与 CI 一致。
+- 默认并行度为 6，可通过 `-Jobs` 重写。
+- `-Sync` 会自动排除 `.git` 并清理异常目录，更适合同步 Windows 工作副本。
 
-## 在其他项目中使用产物
+## 在其他项目中使用
 
-- 构建完成后，仅复制 `dist/<mjVer>/` 即可；不要拷贝 `build/` 或 `external/`。  
-- 直接加载 `dist/<mjVer>/mujoco.{js,wasm}`；3.3.7 已包含强制静态 qhull 的结果。  
-- 开启 `-Meta` / `META=1` 时，会额外生成元数据和 SBOM。
+- 构建后仅需拷贝 `dist/<mjVer>/`；无需携带 `build/` 或 `external/`。
+- 直接加载 `dist/<mjVer>/mujoco.{js,wasm}`；3.3.7 已包含静态 qhull。
+- 若启用 `-Meta`/`META=1`，会额外生成版本信息与 SBOM。
 
-## 版本与发布
+## 版本约定
 
-- 稳定标签：`forge-<mujocoVersion>-r<rev>`（例如 `forge-3.3.7-r2`）  
-- 预发布：`forge-<mujocoVersion>-rc.<n>`  
-- 产物不可变，修复需递增 `-rN` 再发布。
+- 稳定标签：`forge-<mujocoVersion>-r<rev>`（如 `forge-3.3.7-r2`）
+- 预发行：`forge-<mujocoVersion>-rc.<n>`
+- 产物不可变；若需修正，增量 bump `-rN`
 
-## 注意事项
+## 其他说明
 
-- 前端示例（开发中）：https://github.com/lshdlut/mujoco-wasm-play
+- 前端示例（进行中）：https://github.com/lshdlut/mujoco-wasm-play
 
 ## 致谢
 
-本项目灵感来源于更早的 MuJoCo → WASM 实验，它们验证了整体可行性并记录了关键注意事项：
+项目受到多份早期 MuJoCo→WASM 实验的启发，它们验证了可行性并总结了大量坑点：
 
 - [stillonearth/MuJoCo-WASM](https://github.com/stillonearth/MuJoCo-WASM)
 - [zalo/mujoco_wasm](https://github.com/zalo/mujoco_wasm)
 - [hashb/mujoco_web](https://github.com/hashb/mujoco_web)
 
-虽然如今已经演化为独立工具链，mujoco-wasm-forge 仍然感谢这些项目的开创性探索。
+虽然 mujoco-wasm-forge 已经演化为独立工具链，仍对这些先行者心怀感谢。
 
 ## Provenance
 
-仓库部分脚本和文档由生成式 AI 协助撰写，随后由维护者审核确认。
-
+仓库部分脚本和文档在生成阶段使用了生成式 AI，最终内容均由维护者审校。
 

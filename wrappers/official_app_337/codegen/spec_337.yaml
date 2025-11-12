@@ -83,7 +83,10 @@ dims:
   nnames_map: m->nnames_map
   npaths: m->npaths
   nM: m->nM
+  nC: m->nC
+  nD: m->nD
   nB: m->nB
+  noct: m->noct
   nconmax: m->nconmax
   nefc: d->nefc
   ncon: d->ncon
@@ -235,6 +238,24 @@ rules:
     dtype: f64
     len: 'nu*2'
 
+  - id: model_sparse_index_sets
+    struct: mjModel
+    match: '^(B_|D_|M_|mapD2M|mapM2D|mapM2M)'
+    dtype: i32
+    len_from_comment: true
+
+  - id: model_oct_int_arrays
+    struct: mjModel
+    match: '^oct_(depth|child)$'
+    dtype: i32
+    len_from_comment: true
+
+  - id: model_oct_num_arrays
+    struct: mjModel
+    match: '^oct_(aabb|coeff)$'
+    dtype: f64
+    len_from_comment: true
+
 auto:
   - id: auto_model_scalars
     struct: mjModel
@@ -281,6 +302,349 @@ auto:
     len_from_comment: true
     dtype: auto
 
+expand:
+  - owner: mjModel
+    field: opt
+    struct: mjOption
+  - owner: mjModel
+    field: vis
+    struct: mjVisual
+  - owner: mjModel
+    field: stat
+    struct: mjStatistic
+
 names:
   enabled: true
 
+extras:
+  exports:
+    - helper_make_from_xml
+    - helper_free
+    - helper_valid
+    - helper_model_ptr
+    - helper_data_ptr
+    - helper_errno_last_global
+    - helper_errmsg_last_global
+    - helper_errno_last
+    - helper_errmsg_last
+
+# Derived packed views (scratch buffers) for AoS fields
+derived:
+  # Contact fields
+  - id: data_contact_pos
+    name: data_contact_pos
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: pos
+    dtype: f64
+    width: 3
+    array: true
+    len: nconmax*3
+    count: ncon
+  - id: data_contact_frame
+    name: data_contact_frame
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: frame
+    dtype: f64
+    width: 9
+    array: true
+    len: nconmax*9
+    count: ncon
+  - id: data_contact_friction
+    name: data_contact_friction
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: friction
+    dtype: f64
+    width: 5
+    array: true
+    len: nconmax*5
+    count: ncon
+  - id: data_contact_solref
+    name: data_contact_solref
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: solref
+    dtype: f64
+    width: mjNREF
+    array: true
+    len: nconmax*mjNREF
+    count: ncon
+  - id: data_contact_solreffriction
+    name: data_contact_solreffriction
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: solreffriction
+    dtype: f64
+    width: mjNREF
+    array: true
+    len: nconmax*mjNREF
+    count: ncon
+  - id: data_contact_solimp
+    name: data_contact_solimp
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: solimp
+    dtype: f64
+    width: mjNIMP
+    array: true
+    len: nconmax*mjNIMP
+    count: ncon
+  - id: data_contact_H
+    name: data_contact_H
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: H
+    dtype: f64
+    width: 36
+    array: true
+    len: nconmax*36
+    count: ncon
+  - id: data_contact_dist
+    name: data_contact_dist
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: dist
+    dtype: f64
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_includemargin
+    name: data_contact_includemargin
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: includemargin
+    dtype: f64
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_mu
+    name: data_contact_mu
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: mu
+    dtype: f64
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_geom1
+    name: data_contact_geom1
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: geom1
+    dtype: i32
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_geom2
+    name: data_contact_geom2
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: geom2
+    dtype: i32
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_geom
+    name: data_contact_geom
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: geom
+    dtype: i32
+    width: 2
+    array: true
+    len: nconmax*2
+    count: ncon
+  - id: data_contact_flex
+    name: data_contact_flex
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: flex
+    dtype: i32
+    width: 2
+    array: true
+    len: nconmax*2
+    count: ncon
+  - id: data_contact_elem
+    name: data_contact_elem
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: elem
+    dtype: i32
+    width: 2
+    array: true
+    len: nconmax*2
+    count: ncon
+  - id: data_contact_vert
+    name: data_contact_vert
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: vert
+    dtype: i32
+    width: 2
+    array: true
+    len: nconmax*2
+    count: ncon
+  - id: data_contact_dim
+    name: data_contact_dim
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: dim
+    dtype: i32
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_exclude
+    name: data_contact_exclude
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: exclude
+    dtype: i32
+    width: 1
+    len: nconmax
+    count: ncon
+  - id: data_contact_efc_address
+    name: data_contact_efc_address
+    owner: mjData
+    base: contact
+    struct: mjContact
+    field: efc_address
+    dtype: i32
+    width: 1
+    len: nconmax
+    count: ncon
+
+  # Solver diagnostics
+  - id: data_solver_improvement
+    name: data_solver_improvement
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: improvement
+    dtype: f64
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+  - id: data_solver_gradient
+    name: data_solver_gradient
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: gradient
+    dtype: f64
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+  - id: data_solver_lineslope
+    name: data_solver_lineslope
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: lineslope
+    dtype: f64
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+  - id: data_solver_nactive
+    name: data_solver_nactive
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: nactive
+    dtype: i32
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+  - id: data_solver_nchange
+    name: data_solver_nchange
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: nchange
+    dtype: i32
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+  - id: data_solver_neval
+    name: data_solver_neval
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: neval
+    dtype: i32
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+  - id: data_solver_nupdate
+    name: data_solver_nupdate
+    owner: mjData
+    base: solver
+    struct: mjSolverStat
+    field: nupdate
+    dtype: i32
+    width: 1
+    len: mjNISLAND*mjNSOLVER
+    count: mjNISLAND*mjNSOLVER
+
+  # Timer diagnostics
+  - id: data_timer_duration
+    name: data_timer_duration
+    owner: mjData
+    base: timer
+    struct: mjTimerStat
+    field: duration
+    dtype: f64
+    width: 1
+    len: mjNTIMER
+    count: mjNTIMER
+  - id: data_timer_number
+    name: data_timer_number
+    owner: mjData
+    base: timer
+    struct: mjTimerStat
+    field: number
+    dtype: i32
+    width: 1
+    len: mjNTIMER
+    count: mjNTIMER
+
+  # Warning diagnostics
+  - id: data_warning_lastinfo
+    name: data_warning_lastinfo
+    owner: mjData
+    base: warning
+    struct: mjWarningStat
+    field: lastinfo
+    dtype: i32
+    width: 1
+    len: mjNWARNING
+    count: mjNWARNING
+  - id: data_warning_number
+    name: data_warning_number
+    owner: mjData
+    base: warning
+    struct: mjWarningStat
+    field: number
+    dtype: i32
+    width: 1
+    len: mjNWARNING
+    count: mjNWARNING

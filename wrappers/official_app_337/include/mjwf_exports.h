@@ -1,5 +1,5 @@
 // Unified exports for MuJoCo WASM 3.3.7 (forge, mjwf)
-// Keep declarations minimal and stable; all functions are C ABI compatible.
+// This header lists helper entrypoints plus the auto-generated exports.
 
 #pragma once
 
@@ -25,74 +25,22 @@ EMSCRIPTEN_KEEPALIVE int      mjwf_abi_version(void);
 EMSCRIPTEN_KEEPALIVE uint32_t mjwf_layout_hash(void);
 EMSCRIPTEN_KEEPALIVE const char* mjwf_version_string(void);
 
-// ----- Global error (for creation failures) -----
-EMSCRIPTEN_KEEPALIVE int         mjwf_errno_last_global(void);
-EMSCRIPTEN_KEEPALIVE const char* mjwf_errmsg_last_global(void);
+// ----- Global error (creation failures) -----
+EMSCRIPTEN_KEEPALIVE int         mjwf_helper_errno_last_global(void);
+EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last_global(void);
 
-// ----- Handle and lifecycle -----
-EMSCRIPTEN_KEEPALIVE int  mjwf_make_from_xml(const char* path);
-EMSCRIPTEN_KEEPALIVE void mjwf_free(int h);
-EMSCRIPTEN_KEEPALIVE int  mjwf_valid(int h);
-EMSCRIPTEN_KEEPALIVE int  mjwf_step(int h, int n);
-EMSCRIPTEN_KEEPALIVE int  mjwf_forward(int h);
-EMSCRIPTEN_KEEPALIVE int  mjwf_reset(int h);
+// ----- Handle and lifecycle helpers -----
+EMSCRIPTEN_KEEPALIVE int      mjwf_helper_make_from_xml(const char* path);
+EMSCRIPTEN_KEEPALIVE void     mjwf_helper_free(int h);
+EMSCRIPTEN_KEEPALIVE int      mjwf_helper_valid(int h);
+EMSCRIPTEN_KEEPALIVE mjModel* mjwf_helper_model_ptr(int h);
+EMSCRIPTEN_KEEPALIVE mjData*  mjwf_helper_data_ptr(int h);
 
 // ----- Per-handle error -----
-EMSCRIPTEN_KEEPALIVE int         mjwf_errno_last(int h);
-EMSCRIPTEN_KEEPALIVE const char* mjwf_errmsg_last(int h);
+EMSCRIPTEN_KEEPALIVE int         mjwf_helper_errno_last(int h);
+EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last(int h);
 
-// ----- Dimensions (partial; codegen may add more) -----
-EMSCRIPTEN_KEEPALIVE int mjwf_nq(int h);
-EMSCRIPTEN_KEEPALIVE int mjwf_nv(int h);
-EMSCRIPTEN_KEEPALIVE int mjwf_nu(int h);
-EMSCRIPTEN_KEEPALIVE int mjwf_nsensordata(int h);
-// Extended dims (model)
-EMSCRIPTEN_KEEPALIVE int mjwf_ngeom(int h);
-EMSCRIPTEN_KEEPALIVE int mjwf_nmat(int h);
-EMSCRIPTEN_KEEPALIVE int mjwf_njnt(int h);
-// Contacts (data)
-EMSCRIPTEN_KEEPALIVE int mjwf_ncon(int h);
-
-// ----- Time -----
-EMSCRIPTEN_KEEPALIVE double mjwf_timestep(int h);
-EMSCRIPTEN_KEEPALIVE double mjwf_time(int h);
-
-// ----- Views (pointers) -----
-EMSCRIPTEN_KEEPALIVE double* mjwf_qpos_ptr(int h);
-EMSCRIPTEN_KEEPALIVE double* mjwf_qvel_ptr(int h);
-EMSCRIPTEN_KEEPALIVE double* mjwf_ctrl_ptr(int h);
-EMSCRIPTEN_KEEPALIVE double* mjwf_sensordata_ptr(int h);
-// Geometry pose
-EMSCRIPTEN_KEEPALIVE double* mjwf_geom_xpos_ptr(int h);
-EMSCRIPTEN_KEEPALIVE double* mjwf_geom_xmat_ptr(int h);
-// Geometry attributes
-EMSCRIPTEN_KEEPALIVE double*   mjwf_geom_size_ptr(int h);
-EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_geom_type_ptr(int h);
-EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_geom_matid_ptr(int h);
-// Materials
-EMSCRIPTEN_KEEPALIVE float*    mjwf_mat_rgba_ptr(int h);
-// Joints
-EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_jnt_type_ptr(int h);
-EMSCRIPTEN_KEEPALIVE int32_t*  mjwf_jnt_qposadr_ptr(int h);
-EMSCRIPTEN_KEEPALIVE double*   mjwf_jnt_range_ptr(int h);
-// Actuators
-EMSCRIPTEN_KEEPALIVE double*   mjwf_actuator_ctrlrange_ptr(int h);
-// Contacts
-EMSCRIPTEN_KEEPALIVE double*   mjwf_contact_pos_ptr(int h);
-EMSCRIPTEN_KEEPALIVE double*   mjwf_contact_frame_ptr(int h);
-
-// ----- Writers (rw views) -----
-EMSCRIPTEN_KEEPALIVE void mjwf_set_qpos(int h, const double* buf, int n);
-EMSCRIPTEN_KEEPALIVE void mjwf_set_qvel(int h, const double* buf, int n);
-EMSCRIPTEN_KEEPALIVE void mjwf_set_ctrl(int h, const double* buf, int n);
-
-// ----- Names / indices -----
-// type uses mjOBJ_* enums from MuJoCo
-EMSCRIPTEN_KEEPALIVE const char* mjwf_name_at(int h, int type, int id);
-EMSCRIPTEN_KEEPALIVE int         mjwf_name2id(int h, int type, const char* name);
-// Convenience: specialized name helpers
-EMSCRIPTEN_KEEPALIVE const char* mjwf_jnt_name_of(int h, int id);
-EMSCRIPTEN_KEEPALIVE const char* mjwf_actuator_name_of(int h, int id);
+#include "mjwf_exports_generated.h"
 
 // ----- Benchmark helpers -----
 EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_sensorPos(struct mjModel* m, struct mjData* d, int iterations);
@@ -102,4 +50,3 @@ EMSCRIPTEN_KEEPALIVE void mjwf_bench_mj_fwdConstraint(struct mjModel* m, struct 
 #ifdef __cplusplus
 }
 #endif
-

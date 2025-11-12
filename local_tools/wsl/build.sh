@@ -117,6 +117,15 @@ build_one() {
     exit 1
   fi
 
+  # Regenerate ABI metadata and wrapper exports within WSL so they match the cloned MuJoCo tree.
+  local wrapper_dir="$app"
+  local spec_path="${wrapper_dir}/codegen/spec_${short}.yaml"
+  local hdr_path="${wrapper_dir}/include/mjwf_exports_generated.h"
+  local src_path="${wrapper_dir}/src/mjwf_exports_generated.c"
+  mkdir -p "dist/${mjver}/abi"
+  node scripts/mujoco_abi/scan.mjs --repo external/mujoco --ref HEAD --out "dist/${mjver}/abi"
+  python3 "${wrapper_dir}/codegen/gen_exports.py" "${spec_path}" "${hdr_path}" "${src_path}"
+
   local f="external/mujoco/src/engine/engine_util_errmem.c"; if [[ -f "$f" ]]; then sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/' "$f"; sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/' "$f"; fi
   if [[ "$short" == "337" || "$short" == "338" ]]; then
     emcmake cmake -S "$app" -B "$build" -DCMAKE_BUILD_TYPE=Release -DMUJOCO_ENABLE_QHULL=OFF -DMUJOCO_BUILD_PLUGINS=OFF -DMUJOCO_BUILD_EXAMPLES=OFF -DMUJOCO_BUILD_SIMULATE=OFF -DMUJOCO_BUILD_TESTS=OFF -DMUJOCO_BUILD_SAMPLES=OFF -DCMAKE_SKIP_INSTALL_RULES=ON -DLIBM_LIBRARY:STRING=-lm -DMJVER="${mjver}" -DMJWF_PROFILE="${wrapper_profile}" || true

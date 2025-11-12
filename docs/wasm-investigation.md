@@ -6,7 +6,7 @@ This document summarizes our recent experiments comparing the forge wrapper pipe
 
 - Goal: replicate CI locally, fix test aborts, and fairly compare performance between our wrapper and official Embind bindings.
 - Toolchains used locally:
-  - Emscripten: emsdk 4.0.10 (Note: canonical baseline for the repo is 3.1.55; 4.0.10 was used for convenience with local tests.)
+  - Emscripten: emsdk 4.0.10 (canonical baseline for the repo and CI)
   - Node: 22 (from emsdk). CI parity is Node 20; pin when byte-level reproducibility matters.
 - Versions under test:
   - Forge: 3.2.5, 3.3.7, 3.3.8-alpha (focus of benchmarks: 3.3.8-alpha)

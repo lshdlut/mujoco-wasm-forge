@@ -16,7 +16,7 @@
 #define MJWF_ABI_VERSION 1
 
 // Adjust when export surface changes in a breaking way
-#define MJWF_LAYOUT_HASH 0x3370A1B3u
+#define MJWF_LAYOUT_HASH 0xD7AE6E6Fu
 
 EMSCRIPTEN_KEEPALIVE int mjwf_abi_version(void) {
   return MJWF_ABI_VERSION;
