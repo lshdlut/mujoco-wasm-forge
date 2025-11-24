@@ -96,6 +96,24 @@ CI 与本地标准构建都会生成：
 - 构建后仅需拷贝 `dist/<mjVer>/`；无需携带 `build/` 或 `external/`。
 - 直接加载 `dist/<mjVer>/mujoco.{js,wasm}`；3.3.7 已包含静态 qhull。
 - 若启用 `-Meta`/`META=1`，会额外生成版本信息与 SBOM。
+### ����ʱ�������ο�
+
+- ����ڶ��δ���ڵĵ������ݣ���ʹ�� `stackSave + stackAlloc + stackRestore` ����ջ��ռ䡣
+- ��Ҫ�ֲ�ͬ����ʹ�õ� scratch (���� `mj_contactForce` �� 6×`mjtNum` ����) ���� `_malloc` ��ȡ���ڴ棬Ȼ��ͨ�� `_free` �ͷ�
+
+���� `mjtNum` �� `double`���Ա� 8 �ֽڣ�
+
+```ts
+const scratchBytes = 6 * 8;
+const scratchPtr = Module._malloc(scratchBytes);
+Module._mjwf_mj_contactForce(modelPtr, dataPtr, contactIndex, scratchPtr);
+const forces = Module.HEAPF64.subarray(scratchPtr / 8, scratchPtr / 8 + 6);
+// ... ʹ�� forces ...
+Module._free(scratchPtr);
+```
+
+Forge ģ���Ѿ��� `_malloc/_free/_realloc` ��ջ API �������嵥�����嶼���� Embind �����ĳ����÷�ģʽ��
+
 
 ## 版本约定
 

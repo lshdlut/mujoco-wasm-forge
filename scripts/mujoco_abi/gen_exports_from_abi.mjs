@@ -12,18 +12,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve as pathResolve, dirname, join as pathJoin } from 'node:path';
 
 const ALLOWED_PREFIXES = [/^mj_/, /^mju_/, /^mjs_/, /^mjd_/];
-const RUNTIME_KEEP = [
-  '_malloc',
-  '_free',
-  '_realloc',
-  'stackSave',
-  'stackRestore',
-  'stackAlloc',
-  '_emscripten_stack_alloc',
-  '_emscripten_stack_restore',
-  '_emscripten_timeout',
-  'strerror',
-];
+const RUNTIME_KEEP = ['_malloc', '_free', '_realloc'];
 const REPORT_MAX_LIST = 50;
 
 function ensureDirFor(filePath) {
@@ -199,9 +188,19 @@ function emitDts(finalFunctions) {
   return lines.join('\n');
 }
 
-function emitLst(finalNames) {
-  const exported = finalNames.map((n) => `_mjwf_${n}`);
-  return JSON.stringify(exported);
+function emitLst(finalNames, runtimeKeep) {
+  const set = new Set();
+  for (const n of finalNames) {
+    set.add(`_mjwf_${n}`);
+  }
+  if (Array.isArray(runtimeKeep)) {
+    for (const extra of runtimeKeep) {
+      if (extra) {
+        set.add(extra);
+      }
+    }
+  }
+  return JSON.stringify(Array.from(set));
 }
 
 function sliceWithEllipsis(list, max = REPORT_MAX_LIST) {
@@ -363,7 +362,10 @@ function main() {
 
   mkdirSync(opts.outDir, { recursive: true });
   writeFileSync(pathJoin(opts.outDir, `exports_${opts.version}.json`), JSON.stringify(exportsJson, null, 2));
-  writeFileSync(pathJoin(opts.outDir, `exports_${opts.version}.lst`), emitLst(finalNames));
+  writeFileSync(
+    pathJoin(opts.outDir, `exports_${opts.version}.lst`),
+    emitLst(finalNames, RUNTIME_KEEP),
+  );
   writeFileSync(pathJoin(opts.outDir, `types_${opts.version}.d.ts`), emitDts(finalFunctions));
 
   mkdirSync(opts.abiDir, { recursive: true });

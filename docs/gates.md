@@ -1,20 +1,18 @@
-# Quality Gates
+# Validation
 
 Intent
-- [GATE:SYM] Symbol integrity from JSON: ensure exported symbols match the generated allowlist.
-- [GATE:DTS] Type surface drift: regenerate TypeScript definitions from specs and diff against repository versions.
-- [GATE:RUN] Runtime validation: smoke (basic init/step), regression (WASM vs native harness), and mesh smoke (3.3.7).
+- Ensure exported surfaces cover the official Embind-equivalent API (presence checks).
+- Verify generated TypeScript definitions remain in sync with the exported surface.
+- Exercise runtime smoke/regression/mesh tests for functional parity.
 
 Inputs & outputs
-- SYM: inputs = `exports_<short>.json`; output = pass/fail list of missing symbols.
-- DTS: inputs = `spec_*.yaml`; output = zero-diff against `types/mjw<short>.d.ts`.
+- DTS: inputs = `spec_*.yaml`; output = zero-diff against generated `types/*.d.ts`.
 - RUN: inputs = test fixtures and harness; output = deterministic counters and invariants.
 
 Failure localization
-- SYM: missing `_mjwf_*` entries or mismatch with Emscripten mangling.
 - DTS: non-empty diff; check spec and generator.
 - RUN: mismatch between native and WASM or invariants violated.
 
 Notes
-- If a gate is not yet scripted, the workflow logs `[GATE:*] skipped` without changing behavior.
+- Presence checks allow extra exports; the repository favors broad exposure aligned with upstream Embind.
 

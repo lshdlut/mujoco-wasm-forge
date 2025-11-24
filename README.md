@@ -142,6 +142,26 @@ Notes:
 - 3.3.7 enforces static qhull; artifacts already reflect that configuration.
 - With `-Meta`/`META=1`, metadata files accompany the JS/WASM output.
 
+### Allocating temporary buffers
+
+Forge modules export both the engine stack helpers (`stackSave/stackAlloc/stackRestore`) and Emscripten's general-purpose allocator (`_malloc/_free/_realloc`):
+
+- Use `stackSave` + `stackAlloc` + `stackRestore` for short-lived temporaries inside a single call (e.g., parsing errors, scratch strings).
+- Use `_malloc/_free` for scratch that must persist across frames or be reused (e.g., the 6×`mjtNum` buffer required by `mj_contactForce`/`mj_contactTorque`).
+
+Example (mjtNum is `double`, so 8 bytes):
+
+```ts
+const scratchBytes = 6 * 8;
+const scratchPtr = Module._malloc(scratchBytes);
+Module._mjwf_mj_contactForce(modelPtr, dataPtr, contactIndex, scratchPtr);
+const forces = Module.HEAPF64.subarray(scratchPtr / 8, scratchPtr / 8 + 6);
+// ... consume forces ...
+Module._free(scratchPtr);
+```
+
+This pattern mirrors what Embind-based builds expose, so downstream renderers can rely on it without resorting to MuJoCo's internal stack APIs.
+
 ## Versioning
 
 - Stable tags: `forge-<mujocoVersion>-r<rev>` (e.g., `forge-3.3.7-r2`)
@@ -165,4 +185,3 @@ While mujoco-wasm-forge has since evolved into an independent toolchain, we rema
 ## Provenance
 
 Portions of this repository's scripts and documentation were authored or refined with the help of generative AI, then reviewed by a human maintainer.
-

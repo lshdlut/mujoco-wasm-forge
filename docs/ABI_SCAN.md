@@ -10,7 +10,6 @@ Outputs
 - `enums.json` - public enums under `include/mujoco/`.
 - `mappings.json` - name/id mapping functions, object types, topology field candidates.
 - `diagnostics.json` - error/warning hooks and version/layout symbols.
-- `gate.json` - exposure policy: required/optional/excluded.
 - `dim_map.json` - inferred count->array relationships (e.g., `nq -> qpos[nq]`).
 - `extensions.json` - `mjplugin.h`/`mjspec.h` related enums/functions (tagged caution).
 - `probe_spec.json` - minimal probe plan for Web acceptance.
@@ -28,27 +27,23 @@ Notes
 - Parsing is heuristic-first and intentionally conservative; refine mappings/grouping as needed.
 - Place upstream clone under `local_tools/mujoco` (ignored by VCS) or pass a custom path.
 - Grouping uses `scripts/mujoco_abi/functions_map.json` when present; otherwise falls back to heuristics.
-- Exposure tagging uses `scripts/mujoco_abi/exposure_map.json` when present.
 
-Gate Policy (summary)
-- Required: load/teardown, step/forward/reset/time, name mapping, VFS, errors/version/layout.
-- Optional: inverse/sub-stages, ray casting, mjspec, solver stats.
-- Excluded: native viz/UI (`mjv/mjr/mjui`), threading (`mjthread`).
+Exposure Policy (aligned with official Embind)
+- Favor broad, direct exposure matching upstream Embind naming and coverage.
+- Prefer pointer-first access for struct fields to enable read/write from JS.
+- Visualization/UI families (`mjv/mjr/mjui`) remain excluded to keep scope on simulation core.
 
 Diff
 - Generate another version (e.g., `3.3.6`), then run:
   - `node scripts/mujoco_abi/diff.mjs dist/3.3.6/abi dist/3.3.7/abi`
-- Produces `diff_report.json` with summary markdown and gate checks.
+- Produces `diff_report.json` summarizing changes in functions/structs/enums.
 
 Wrapper export workflow
 - Auto-generate wrappers: `node scripts/mujoco_abi/autogen_wrappers.mjs --include external/mujoco/include --header wrappers/auto/mjwf_auto_exports.h --source wrappers/auto/mjwf_auto_exports.c` (CMake target `mjwf_auto_wrappers`).
 - Generate ABI metadata: `pwsh scripts/mujoco_abi/run.ps1 -Ref 3.3.7 -OutDir dist/3.3.7/abi`.
-- Generate wrapper whitelist / d.ts / export list: `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/auto/mjwf_auto_exports.h --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7` (outputs `build/exports_3.3.7.{json,lst}`, `dist/3.3.7/abi/wrapper_exports.json`, `types_3.3.7.d.ts`).
-- Build: CMake consumes the generated files and injects `-sEXPORTED_FUNCTIONS=@build/exports_3.3.7.lst`.
-- Post-build checks (hard gates):
-  * `node scripts/mujoco_abi/check_exports.mjs dist/3.3.7/abi dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json`
-  * `node scripts/mujoco_abi/nm_coverage.mjs dist/3.3.7/mujoco.wasm dist/3.3.7/abi/wrapper_exports.json --out dist/3.3.7/abi/nm_coverage.json`
-- Build fails if required exports are missing, unexpected symbols leak (mjv/mjr/mjui), or nm coverage reveals unwrapped mj_/mju_/mjs_* implementations.
+- Generate exports and d.ts: `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/auto/mjwf_auto_exports.h --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7` (outputs `build/exports_3.3.7.{json,lst}`, `dist/3.3.7/abi/wrapper_exports.json`, `types_3.3.7.d.ts`).
+- Build: CMake consumes the generated list (`-sEXPORTED_FUNCTIONS=@build/exports_3.3.7.lst`).
+- Post-build checks ensure official Embind-equivalent surfaces are present; extra exports are allowed.
 WSL mirroring hints
 - Prefer `pwsh local_tools/wsl/run.ps1 -Sync` to mirror the Windows workspace into `~/dev/mujoco-wasm-forge`; the script now excludes `.git` and purges stale `?root?dev?...` folders automatically.
 - Avoid mixing Windows-native `Copy-Item`/`cp` with absolute WSL paths (e.g. `/root/...`); use `wsl.exe bash -lc 'cp ...'` instead to prevent Windows from materialising question-mark directories.

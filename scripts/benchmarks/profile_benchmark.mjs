@@ -52,7 +52,7 @@ const deleteData = ensureFn(bindExport("mjwf_mj_deleteData", null, ["number"]), 
 const deleteModel = ensureFn(bindExport("mjwf_mj_deleteModel", null, ["number"]), "mjwf_mj_deleteModel");
 const resetData = ensureFn(bindExport("mjwf_mj_resetData", null, ["number", "number"]), "mjwf_mj_resetData");
 const getNq = Module.cwrap("mjwf_nq", "number", ["number"]);
-const getQposPtr = Module.cwrap("mjwf_qpos_ptr", "number", ["number"]);
+const getQposPtr = Module.cwrap("mjwf_data_qpos_ptr", "number", ["number"]);
 
 const modelPtr = compile(specPtr, 0);
 if (!modelPtr) throw new Error("mj_compile returned null");

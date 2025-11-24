@@ -6,12 +6,12 @@
 - Single source of truth:
   - Generator: `wrappers/**/codegen/gen_exports.py`
   - Specs: `wrappers/**/codegen/spec_*.yaml`
-  - ABI factory: `scripts/mujoco_abi/*` (scan, diff, gate, export generation)
+  - ABI tooling: `scripts/mujoco_abi/*` (scan, diff, export generation)
 - Internal/experimental docs and scratch files live under `local_tools/` and are ignored; public docs stay under `docs/`.
 
 Compatibility & naming
-- Unified handle prefix: `mjwf_`.
-- Legacy `*_local` names may temporarily remain as thin forwarders; CI must not reference them.
+- Prefix: `mjwf_`; prefer names that encode the full path to the underlying field/function (e.g., `mjwf_model_opt_timestep_ptr`).
+- Avoid temporary forwarders; prefer a single, direct name per surface.
 
 Front-end demo
 - On-going. Repo: https://github.com/lshdlut/mujoco-wasm-play.git

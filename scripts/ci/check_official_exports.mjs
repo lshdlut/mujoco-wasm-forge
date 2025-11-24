@@ -101,6 +101,9 @@ async function main() {
     "_mjwf_data_timer_number_ptr",
     "_mjwf_data_warning_lastinfo_ptr",
     "_mjwf_data_warning_number_ptr",
+    "_malloc",
+    "_free",
+    "_realloc",
   ];
 
   const missing = expected.filter((name) => !moduleKeys.has(name));
