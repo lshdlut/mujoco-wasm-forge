@@ -68,6 +68,7 @@ CI 与本地标准构建都会生成：
    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
      -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6
    ```
+   默认会同时构建 3.2.5 / 3.3.7 / 3.3.8-alpha；如果只想迭代部分版本，可用 `-Targets '337'` 等参数缩小范围。
    已同步的工作区可根据需要去掉 `-Sync` / `-UseTemp`。
 
 2. **生成 ABI 描述（post_build 前）**
@@ -82,6 +83,7 @@ CI 与本地标准构建都会生成：
    source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
    ./scripts/ci/post_build.sh --version 3.2.5 --short 325
    ./scripts/ci/post_build.sh --version 3.3.7 --short 337
+   ./scripts/ci/post_build.sh --version 3.3.8-alpha --short 338
    ```
 
 提示：

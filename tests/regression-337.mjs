@@ -48,6 +48,22 @@ const allowedRuntime = new Set([
   "emscripten_stack_init",
   "emscripten_stack_set_limits",
   "fflush",
+  // Harness entrypoints not listed in wrapper_exports.json (official wrapper)
+  "mjwf_abi_version",
+  "mjwf_layout_hash",
+  "mjwf_version_string",
+  "mjwf_bench_mj_sensorPos",
+  "mjwf_bench_mj_energyPos",
+  "mjwf_bench_mj_fwdConstraint",
+  "mjwf_init",
+  "mjwf_step_demo",
+  "mjwf_qpos0",
+  "mjwf_qvel0",
+  // toolchain helpers surfaced by Emscripten
+  "_emscripten_timeout",
+  "_emscripten_stack_restore",
+  "_emscripten_stack_alloc",
+  "strerror",
 ]);
 
 const actual = new Set();

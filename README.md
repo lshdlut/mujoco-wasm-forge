@@ -112,6 +112,7 @@ Preferred environment: WSL Ubuntu 22.04 (or Docker) mirroring the GitHub Actions
    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
      -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6
    ```
+   The helper builds 3.2.5, 3.3.7, and 3.3.8-alpha by default; override with `-Targets '337'` or similar when iterating.
    For incremental builds (already mirrored), drop `-Sync` and `-UseTemp` if not needed.
 
 2. Generate ABI descriptors (must run before post_build):
@@ -126,6 +127,7 @@ Preferred environment: WSL Ubuntu 22.04 (or Docker) mirroring the GitHub Actions
    source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
    ./scripts/ci/post_build.sh --version 3.2.5 --short 325
    ./scripts/ci/post_build.sh --version 3.3.7 --short 337
+   ./scripts/ci/post_build.sh --version 3.3.8-alpha --short 338
    ```
 
 Notes:

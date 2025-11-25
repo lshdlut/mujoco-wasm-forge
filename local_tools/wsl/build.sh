@@ -104,6 +104,12 @@ build_one() {
         clone_ok=1
         break
       fi
+      if [[ "$candidate" =~ ^[0-9a-fA-F]{7,}$ ]]; then
+        if git fetch origin "$candidate" --depth 1 >/dev/null 2>&1 && git checkout -qf FETCH_HEAD >/dev/null 2>&1; then
+          clone_ok=1
+          break
+        fi
+      fi
       if git checkout -qf "refs/tags/$candidate" >/dev/null 2>&1; then
         clone_ok=1
         break
@@ -213,13 +219,8 @@ EOF
   if [[ -f "dist/${mjver}/abi/wrapper_exports.json" ]]; then
     cp "${build}/mjapi_${mjver}.json" "dist/${mjver}/abi/mjapi.json"
     cp "${build}/nm_${mjver}.json" "dist/${mjver}/abi/nm_symbols.json"
-    node scripts/mujoco_abi/check_exports.mjs \
-      --abi "dist/${mjver}/abi" \
-      --expected "dist/${mjver}/abi/wrapper_exports.json" \
-      --wasm "dist/${mjver}/mujoco.wasm"
-    node scripts/mujoco_abi/nm_coverage.mjs \
-      "${build}/lib/libmujoco.a" \
-      --out "dist/${mjver}/abi/nm_coverage.json"
+    log "post_build checks for ${mjver}"
+    ./scripts/ci/post_build.sh --version "${mjver}" --short "${short}"
   else
     warn "dist/${mjver}/abi/wrapper_exports.json missing; skipping export coverage checks"
   fi
@@ -247,19 +248,19 @@ main() {
   repo_root="$(cd "${script_dir}/../.." && pwd)"
   cd "$repo_root"; log "Repo root: $repo_root"
   : "${MJVER:=}"
-  : "${MJVER_325:=}"
-  : "${MJVER_337:=}"
-  : "${MJVER_338:=}"
+  : "${MJVER_325:=3.2.5}"
+  : "${MJVER_337:=3.3.7}"
+  : "${MJVER_338:=3.3.8-alpha}"
   : "${MJREF:=}"
   : "${MJREF_325:=}"
   : "${MJREF_337:=}"
-  : "${MJREF_338:=}"
-  IFS=',' read -r -a targets <<< "${TARGETS:-325,337}"
+  : "${MJREF_338:=4086261714d7cfbc1745d4c6cb0aa2116df45312}"
+  IFS=',' read -r -a targets <<< "${TARGETS:-325,337,338}"
   for t in "${targets[@]}"; do
     case "$t" in
       325) build_one 325 "${MJVER_325:-3.2.5}" "wrappers/official_app_325" "${MJREF_325:-${MJREF:-}}";;
       337) build_one 337 "${MJVER_337:-${MJVER:-3.3.7}}" "wrappers/official_app_337" "${MJREF_337:-${MJREF:-}}";;
-      338) build_one 338 "${MJVER_338:-${MJVER:-3.3.8}}" "wrappers/official_app_338" "${MJREF_338:-${MJREF:-}}";;
+      338) build_one 338 "${MJVER_338:-${MJVER:-3.3.8-alpha}}" "wrappers/official_app_338" "${MJREF_338:-${MJREF:-}}";;
       *) warn "Unknown target '$t'";;
     esac
   done

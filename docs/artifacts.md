@@ -13,4 +13,4 @@ version.json schema (current)
 - Blocks: `features`, `size`, `hash`
 
 Notes
-- Schema is unified across 3.2.5 and 3.3.7. Provenance fields are present in CI builds and in canonical local builds when metadata is enabled.
+- Schema is unified across 3.2.5, 3.3.7, and 3.3.8-alpha. Provenance fields are present in CI builds and in canonical local builds when metadata is enabled.
