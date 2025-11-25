@@ -114,6 +114,15 @@ jobs:
         run: |
           node scripts/mujoco_abi/ci_gate.mjs dist/${{ matrix.mjver }}/abi --threshold 95
 
+      - name: Generate wrapper exports (mjwf, ${{ matrix.mjver }})
+        shell: bash
+        run: |
+          set -euxo pipefail
+          spec="wrappers/official_app_${{ matrix.short }}/codegen/spec_${{ matrix.short }}.yaml"
+          out_h="wrappers/official_app_${{ matrix.short }}/include/mjwf_exports_generated.h"
+          out_c="wrappers/official_app_${{ matrix.short }}/src/mjwf_exports_generated.c"
+          python3 "wrappers/official_app_${{ matrix.short }}/codegen/gen_exports.py" "$spec" "$out_h" "$out_c"
+
       - name: Patch MuJoCo for Emscripten localtime_r
         shell: bash
         run: |
