@@ -82,4 +82,19 @@ jobs:
           CI_COPY="ci-build/dist/${{ matrix.ver }}"
           test -d "$BASE"
           test -d "$CI_COPY"
+          sanitize_meta() {
+            local dir="$1"
+            # Normalize human-readable timestamp in exports_report.md
+            if [ -f "$dir/abi/exports_report.md" ]; then
+              sed -i 's/^Generated at: .*/Generated at: NORMALIZED_TIME/' "$dir/abi/exports_report.md" || true
+            fi
+            # Normalize JSON generatedAt fields in mjapi.json and wrapper_exports.json
+            for f in "$dir/abi/mjapi.json" "$dir/abi/wrapper_exports.json"; do
+              if [ -f "$f" ]; then
+                sed -i 's/"generatedAt": *"[^"]*"/"generatedAt": "NORMALIZED_TIME"/' "$f" || true
+              fi
+            done
+          }
+          sanitize_meta "$BASE"
+          sanitize_meta "$CI_COPY"
           diff -ru "$BASE" "$CI_COPY"
