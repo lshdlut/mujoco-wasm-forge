@@ -2,7 +2,7 @@
   "meta": {
     "ref": "HEAD",
     "source_repo": "https://github.com/google-deepmind/mujoco",
-    "generated_at": "2025-11-26T04:58:43.158Z"
+    "generated_at": "2025-10-14T06:15:57-07:00"
   },
   "probe": {
     "functions_present": [

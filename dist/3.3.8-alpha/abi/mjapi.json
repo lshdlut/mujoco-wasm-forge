@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2025-11-26T05:00:29.439Z",
-  "includeDir": "/root/dev/mujoco-wasm-forge/external/mujoco/include",
+  "generatedAt": "2025-11-26T06:06:42.199Z",
+  "includeDir": "external/mujoco/include",
   "headers": [
-    "/root/dev/mujoco-wasm-forge/external/mujoco/include/mujoco/mujoco.h",
-    "/root/dev/mujoco-wasm-forge/external/mujoco/include/mujoco/mjspec.h"
+    "mujoco/mujoco.h",
+    "mujoco/mjspec.h"
   ],
   "count": 503,
   "names": [

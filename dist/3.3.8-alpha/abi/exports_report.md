@@ -1,5 +1,5 @@
 # MuJoCo WASM Export Report (ver 3.3.8-alpha)
-Generated at: 2025-11-26T05:00:29.586Z
+Generated at: 2025-11-26T06:06:42.199Z
 
 ## Special Exclusion Rules
 - Export prefixes allowed: `mj_`, `mju_`, `mjs_`, `mjd_`; other prefixes (e.g. `mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`) are removed.

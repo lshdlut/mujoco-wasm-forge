@@ -343,7 +343,11 @@ function main() {
     }
   }
 
-  const generatedAt = new Date().toISOString();
+  // Prefer the timestamp from the header metadata (which is derived from
+  // the upstream MuJoCo commit) to keep builds reproducible across
+  // environments. Fall back to the current time if not present.
+  const generatedAt =
+    (headerInfo.data && headerInfo.data.generatedAt) || new Date().toISOString();
 
   ensureDirFor(opts.headerOut);
   ensureDirFor(opts.sourceOut);

@@ -1,6 +1,6 @@
 {
-  "wasm": "/root/dev/mujoco-wasm-forge/dist/3.3.8-alpha/mujoco.wasm",
-  "expected": "/root/dev/mujoco-wasm-forge/dist/3.3.8-alpha/abi/wrapper_exports.json",
+  "wasm": "dist/3.3.8-alpha/mujoco.wasm",
+  "expected": "dist/3.3.8-alpha/abi/wrapper_exports.json",
   "counts": {
     "required": 449,
     "actualMjwf": 513,

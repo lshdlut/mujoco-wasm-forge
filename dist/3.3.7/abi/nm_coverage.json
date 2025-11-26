@@ -1,6 +1,6 @@
 {
-  "artifact": "/root/dev/mujoco-wasm-forge/build/337/lib/libmujoco.a",
-  "nmPath": "/root/emsdk/upstream/bin/llvm-nm",
+  "artifact": "build/337/lib/libmujoco.a",
+  "nmPath": "llvm-nm",
   "ok": true,
   "symbols": [
     "MJCF",

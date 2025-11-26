@@ -9,10 +9,9 @@
  * The script never exits with failure; errors are captured in the JSON payload.
  */
 
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve as pathResolve, dirname } from 'node:path';
-import { mkdirSync } from 'node:fs';
 
 function parseArgs(argv) {
   if (argv.length < 3) {
@@ -50,6 +49,23 @@ function ensureDirFor(filePath) {
   mkdirSync(dirname(filePath), { recursive: true });
 }
 
+function normalizeArtifactPath(artifact) {
+  const norm = artifact.replace(/\\/g, '/');
+  const idx = norm.indexOf('/build/');
+  if (idx !== -1) {
+    // Keep the build-relative portion only, so different workspaces agree.
+    return norm.slice(idx + 1);
+  }
+  const parts = norm.split('/').filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : artifact;
+}
+
+function normalizeNmPath(nmPath) {
+  const norm = nmPath.replace(/\\/g, '/');
+  const parts = norm.split('/').filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : nmPath;
+}
+
 function runNm(nmPath, artifact) {
   const res = spawnSync(nmPath, ['-g', '--defined-only', '-P', artifact], { encoding: 'utf8' });
   return res;
@@ -73,8 +89,8 @@ function collectSymbols(stdout) {
 function main() {
   const opts = parseArgs(process.argv);
   const report = {
-    artifact: opts.artifact,
-    nmPath: opts.nmPath,
+    artifact: normalizeArtifactPath(opts.artifact),
+    nmPath: normalizeNmPath(opts.nmPath),
     ok: false,
     symbols: [],
     count: 0,

@@ -12,8 +12,9 @@
  *        --out build/mjapi_functions.json
  */
 
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { resolve as pathResolve, join as pathJoin, dirname } from 'node:path';
+import { resolve as pathResolve, join as pathJoin, dirname, relative as pathRelative } from 'node:path';
 
 const TARGET_HEADERS = ['mujoco/mujoco.h', 'mujoco/mjspec.h'];
 
@@ -187,6 +188,36 @@ function collectFunctions(includeDir) {
   return { functions, scanned };
 }
 
+function gitCommitDateFromIncludeDir(includeDir) {
+  // Assume includeDir points inside the MuJoCo repo (e.g. external/mujoco/include).
+  // Walk up two levels to reach the repo root and derive a deterministic timestamp
+  // from the current HEAD, so local and CI builds agree.
+  const repoDir = pathResolve(includeDir, '..', '..');
+  try {
+    const out = execFileSync('git', ['-C', repoDir, 'log', '-1', '--format=%cI', 'HEAD'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return out.trim() || new Date().toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
+function normalizeHeaders(includeDir, scanned) {
+  return scanned.map((abs) => pathRelative(includeDir, abs).replace(/\\/g, '/'));
+}
+
+function normalizeIncludeDir(includeDir) {
+  const norm = includeDir.replace(/\\/g, '/');
+  const marker = '/external/mujoco/include';
+  const idx = norm.lastIndexOf(marker);
+  if (idx !== -1) {
+    return 'external/mujoco/include';
+  }
+  return norm;
+}
+
 function main() {
   const opts = parseArgs(process.argv);
   const { functions, scanned } = collectFunctions(opts.includeDir);
@@ -197,10 +228,12 @@ function main() {
     fn.has_v_alternative = fn.isVariadic ? nameSet.has(`${fn.name}_v`) : false;
     return fn;
   });
+  const generatedAt = gitCommitDateFromIncludeDir(opts.includeDir);
+  const headersRel = normalizeHeaders(opts.includeDir, scanned);
   const payload = {
-    generatedAt: new Date().toISOString(),
-    includeDir: opts.includeDir,
-    headers: scanned,
+    generatedAt,
+    includeDir: normalizeIncludeDir(opts.includeDir),
+    headers: headersRel,
     count: sortedNames.length,
     names: sortedNames,
     functions: functionList,

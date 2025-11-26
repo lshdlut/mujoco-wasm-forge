@@ -10,7 +10,7 @@
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { resolve as pathResolve, join as pathJoin, dirname } from 'node:path';
+import { resolve as pathResolve, join as pathJoin, dirname, relative as pathRelative } from 'node:path';
 
 const ALLOWED_RUNTIME = new Set([
   '__wasm_call_ctors',
@@ -119,9 +119,13 @@ function main() {
   const unexpectedList = Array.from(unexpectedNonMjwf).sort();
   const forbiddenList = Array.from(forbiddenPrefixExports).sort();
 
+  const cwd = process.cwd();
+  const wasmRel = pathRelative(cwd, opts.wasmPath).replace(/\\/g, '/');
+  const expectedRel = pathRelative(cwd, opts.expectedJson).replace(/\\/g, '/');
+
   const report = {
-    wasm: opts.wasmPath,
-    expected: opts.expectedJson,
+    wasm: wasmRel,
+    expected: expectedRel,
     counts: {
       required: requiredSet.size,
       actualMjwf: actualWrappers.size,

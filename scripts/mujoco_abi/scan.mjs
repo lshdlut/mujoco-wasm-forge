@@ -51,6 +51,14 @@ function gitRemote(repo) {
   }
 }
 
+function gitCommitDate(repo, ref) {
+  try {
+    return sh(['git', '-C', repo, 'log', '-1', '--format=%cI', ref]);
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
 function gitReadFile(repo, ref, relPath) {
   const spec = `${ref}:${relPath.replaceAll('\\', '/')}`;
   try {
@@ -580,10 +588,11 @@ async function main() {
   const extensions = buildExtensions(headers, enums, functions);
   const probeSpec = buildProbeSpec(gate, dimMap);
 
+  const generatedAt = gitCommitDate(repo, ref);
   const versionMeta = {
     ref,
     source_repo: remote,
-    generated_at: new Date().toISOString(),
+    generated_at: generatedAt,
   };
 
   // Write outputs

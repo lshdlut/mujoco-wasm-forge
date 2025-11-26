@@ -230,9 +230,9 @@ jobs:
             "emscripten": "${EMVER}",
             "buildTime": "${MJ_DATE}",
             "gitSha": "${MJ_SHA}",
-            "emsdk_root": "${EMSDK:-}",
-            "emsdk_node": "${EMSDK_NODE:-}",
-            "emsdk_python": "${EMSDK_PYTHON:-}",
+            "emsdk_root": "env:EMSDK",
+            "emsdk_node": "env:EMSDK_NODE",
+            "emsdk_python": "env:EMSDK_PYTHON",
             "flags": [
               "WASM=1",
               "MODULARIZE=1",
