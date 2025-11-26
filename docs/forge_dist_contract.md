@@ -81,26 +81,22 @@ If we standardise shared HDR assets in forge in the future, they will live under
 
 ## Hosting and public URLs
 
-Forge’s CI builds the `dist/<ver>/` trees and attaches them to GitHub Releases as archives (e.g. `mujoco-3.3.7.zip`).  
-There are two common hosting patterns for consumers:
+Forge follows **Mode 1** for public distribution: the `dist/<ver>/` tree is committed into the git history for release tags such as `forge-3.3.7-r1`. CI builds a fresh copy in a clean environment and verifies that it matches the committed `dist/<ver>/`, but CI-built artifacts are not treated as a separate source of truth.
 
-1. **GitHub Releases (download first)**  
-   - Download `mujoco-<ver>.zip` from the forge Release, extract `dist/<ver>/`, and serve it from your own static hosting (GitHub Pages, CDN, etc.).  
-   - This is the most flexible option and does not require dist contents to be committed to the git tree.
+Canonical hosting for external consumers (including `mujoco-wasm-play`) is via the tagged git tree mirrored on CDNs such as jsDelivr:
 
-2. **Static hosting from the git tree (for CDNs such as jsDelivr)**  
-   - If a release tag includes `dist/<ver>/` in the git tree, then CDNs that mirror the repository (e.g. jsDelivr) can serve files directly.  
-   - Canonical patterns in that case:
-     - Raw GitHub:  
-       `https://raw.githubusercontent.com/<owner>/mujoco-wasm-forge/<tag>/dist/<ver>/mujoco.wasm`  
-       `https://raw.githubusercontent.com/<owner>/mujoco-wasm-forge/<tag>/dist/<ver>/mujoco.js`
-     - jsDelivr:  
-       `https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@<tag>/dist/<ver>/mujoco.wasm`  
-       `https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@<tag>/dist/<ver>/mujoco.js`
-   - Example template for consumers that know `<ver>` and `<tag>`:  
-     `forgeBase = "https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@forge-{ver}-r1/dist/{ver}/";`
+- Raw GitHub:  
+  `https://raw.githubusercontent.com/<owner>/mujoco-wasm-forge/<tag>/dist/<ver>/mujoco.wasm`  
+  `https://raw.githubusercontent.com/<owner>/mujoco-wasm-forge/<tag>/dist/<ver>/mujoco.js`
+- jsDelivr:  
+  `https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@<tag>/dist/<ver>/mujoco.wasm`  
+  `https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@<tag>/dist/<ver>/mujoco.js`
 
-> Note: committing `dist/<ver>/` into the tagged tree is an explicit release decision, since `dist/` is ignored in normal development. For now, forge guarantees the relative layout under `dist/<ver>/`; how that tree is hosted (Release archives vs. committed files vs. a dedicated CDN repo) is up to the publisher.
+Template used by downstream consumers that know `<ver>` and `<tag>` (e.g. `forge-3.3.7-r1`):
+
+- `forgeBase = "https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@forge-{ver}-r1/dist/{ver}/";`
+
+GitHub Releases may additionally attach zip archives containing the same `dist/<ver>/` contents as a convenience, but the tagged git tree remains the authoritative source for public URLs.
 
 ### CORS and MIME
 
@@ -133,3 +129,51 @@ export function getForgeDistBase(ver: string, opts?: { owner?: string; rev?: str
 
 Downstream projects such as `mujoco-wasm-play` can treat this document as the single source of truth for forge’s public dist layout and adjust their own `getForgeDistBase(ver)` helpers accordingly.
 
+## Maintainer flow and CI verify (Mode 1)
+
+This section describes how forge maintainers build and publish `dist/<ver>/` while keeping CI as a reproducibility gate only.
+
+### Local release flow
+
+For a given MuJoCo version `<ver>` (e.g. `3.3.7`):
+
+1. Make sure you are on WSL / Linux with emsdk available (see `README.md` for environment notes).
+2. (Optional) Install Node dependencies once per workspace (currently there are no external deps, but this keeps the flow future-proof):  
+   `npm install`
+3. Build the canonical dist tree for the target version:  
+   `npm run build:forge -- <ver>`  
+   Examples:  
+   - `npm run build:forge -- 3.2.5`  
+   - `npm run build:forge -- 3.3.7`  
+   - `npm run build:forge -- 3.3.8-alpha`
+4. Inspect `dist/<ver>/` locally (at minimum `mujoco.{js,wasm}`, `version.json`, `sbom.spdx.json`, `SHA256SUMS.txt`, `RELEASE_NOTES.md`, and `abi/*`).
+5. Commit the new dist tree:  
+   `git add dist/<ver>`  
+   `git commit -m "Publish dist/<ver> for forge-<ver>-rN"`
+6. Tag the release revision and push:  
+   `git tag forge-<ver>-rN` (e.g. `forge-3.3.7-r1`)  
+   `git push && git push --tags`
+
+From this point, CDNs such as jsDelivr can serve the committed `dist/<ver>/` directly using the patterns above.
+
+### CI’s role
+
+The workflow `.github/workflows/forge-dist-verify.yml` keeps `dist/<ver>/` reproducible without publishing its own artifacts:
+
+- On `pull_request` to `main`/`master`, on `push` to those branches, and on `forge-*` tags, CI checks whether any `dist/<ver>/` directories are present in the tree.
+- For each known MuJoCo version (`3.2.5`, `3.3.7`, `3.3.8-alpha`) where `dist/<ver>/` exists, CI:
+  - Checks out a fresh copy of the repo into `ci-build/`.
+  - Runs `npm ci` and then `npm run build:forge -- <ver>` in that clean workspace.
+  - Compares `dist/<ver>/` (committed) against `ci-build/dist/<ver>/` using a recursive `diff`.
+- Any difference between the committed dist and the CI rebuild causes the job to fail; matching trees pass.
+- CI does not overwrite or publish `dist/<ver>/`; the git tree remains the single source of truth for public artifacts.
+
+### Recommended stable version for consumers
+
+For external consumers such as `mujoco-wasm-play`, the recommended stable version is:
+
+- `ver = "3.3.7"`, tag `forge-3.3.7-r1`, dist base `dist/3.3.7/`.
+
+Example jsDelivr template:
+
+- `https://cdn.jsdelivr.net/gh/<owner>/mujoco-wasm-forge@forge-3.3.7-r1/dist/3.3.7/`

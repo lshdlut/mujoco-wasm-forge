@@ -9,7 +9,7 @@ node_modules/
 ## Build outputs
 build/
 emsdk-cache/
-dist/
+dist-ci/
 external/
 _tools/
 local_tools/

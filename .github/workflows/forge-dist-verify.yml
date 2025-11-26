@@ -1,0 +1,87 @@
+name: forge-dist-verify
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'forge-*'
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  verify-dist:
+    # Only run when there is at least one tracked dist/ directory.
+    if: ${{ hashFiles('dist/**') != '' }}
+    runs-on: ubuntu-latest
+    env:
+      EMSDK_VERSION: '4.0.10'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ver: 3.2.5
+          - ver: 3.3.7
+          - ver: 3.3.8-alpha
+
+    steps:
+      - name: Checkout baseline (with committed dist/)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check dist presence for ${{ matrix.ver }}
+        id: precheck
+        run: |
+          if [ -d "dist/${{ matrix.ver }}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.precheck.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Emscripten SDK
+        if: steps.precheck.outputs.present == 'true'
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSDK_VERSION }}
+
+      - name: Checkout repo for reproducible build
+        if: steps.precheck.outputs.present == 'true'
+        uses: actions/checkout@v4
+        with:
+          path: ci-build
+          fetch-depth: 0
+
+      - name: Install dependencies (ci-build)
+        if: steps.precheck.outputs.present == 'true'
+        working-directory: ci-build
+        run: npm install
+
+      - name: Build dist-ci for ${{ matrix.ver }}
+        if: steps.precheck.outputs.present == 'true'
+        working-directory: ci-build
+        env:
+          EMSDK_VERSION: ${{ env.EMSDK_VERSION }}
+          META: '1'
+          RUN_TESTS: '0'
+        run: |
+          npm run build:forge -- ${{ matrix.ver }}
+
+      - name: Verify dist matches reproducible build
+        if: steps.precheck.outputs.present == 'true'
+        run: |
+          set -euxo pipefail
+          BASE="dist/${{ matrix.ver }}"
+          CI_COPY="ci-build/dist/${{ matrix.ver }}"
+          test -d "$BASE"
+          test -d "$CI_COPY"
+          diff -ru "$BASE" "$CI_COPY"

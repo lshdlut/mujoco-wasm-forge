@@ -172,7 +172,10 @@ build_one() {
     local WSB=$(stat -c %s "$WASM" 2>/dev/null || echo 0)
     local JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
     local WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
-    local NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    # Use the upstream MuJoCo commit timestamp as a deterministic build time
+    # so that local and CI builds for the same commit produce identical metadata.
+    local NOW
+    NOW=$(git -C external/mujoco log -1 --format=%cI HEAD 2>/dev/null || date -u +"%Y-%m-%dT%H:%M:%SZ")
     cat > "dist/${OUT_VER}/version.json" <<JSON
 {
   "mujocoVersion": "${OUT_VER}",
@@ -188,7 +191,9 @@ build_one() {
   "hash": {"wasmSha256": "${WSUM}", "jsSha256": "${JSUM}"}
 }
 JSON
-    local NS="https://local/wsl/sbom/$(date +%s)"
+    # Tie the SPDX document namespace to the upstream MuJoCo commit for
+    # reproducibility across environments.
+    local NS="https://github.com/lshdlut/mujoco-wasm-forge/sbom/${MJ_SHA}"
     cat > "dist/${OUT_VER}/sbom.spdx.json" <<SBOM
 {
   "spdxVersion": "SPDX-2.3",

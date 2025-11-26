@@ -223,12 +223,12 @@ jobs:
           WSB=$(stat -c %s "$WASM") || WSB=0
           JSUM=$(sha256sum "$JS" | cut -d' ' -f1)
           WSUM=$(sha256sum "$WASM" | cut -d' ' -f1)
-          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          MJ_DATE=$(git -C external/mujoco log -1 --format=%cI HEAD || date -u +"%Y-%m-%dT%H:%M:%SZ")
           cat > dist/${MJVER}/version.json <<JSON
           {
             "mujocoVersion": "${MJVER}",
             "emscripten": "${EMVER}",
-            "buildTime": "${NOW}",
+            "buildTime": "${MJ_DATE}",
             "gitSha": "${MJ_SHA}",
             "emsdk_root": "${EMSDK:-}",
             "emsdk_node": "${EMSDK_NODE:-}",
@@ -261,8 +261,8 @@ jobs:
           EMVER=${EMSDK_VERSION}
           MJVER=${{ matrix.mjver }}
           MJ_SHA=$(git -C external/mujoco rev-parse HEAD)
-          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          NS="https://github.com/lshdlut/mujoco-wasm-forge/sbom/${GITHUB_RUN_ID}"
+          MJ_DATE=$(git -C external/mujoco log -1 --format=%cI HEAD || date -u +"%Y-%m-%dT%H:%M:%SZ")
+          NS="https://github.com/lshdlut/mujoco-wasm-forge/sbom/${MJ_SHA}"
           cat > dist/${MJVER}/sbom.spdx.json <<SBOM
           {
             "spdxVersion": "SPDX-2.3",
@@ -270,7 +270,7 @@ jobs:
             "SPDXID": "SPDXRef-DOCUMENT",
             "name": "mujoco-wasm-forge-${MJVER}",
             "documentNamespace": "${NS}",
-            "creationInfo": {"created": "${NOW}", "creators": ["Tool: forge workflow"]},
+            "creationInfo": {"created": "${MJ_DATE}", "creators": ["Tool: forge workflow"]},
             "packages": [
               {"name": "mujoco", "SPDXID": "SPDXRef-Pkg-MuJoCo", "versionInfo": "${MJVER}", "downloadLocation": "https://github.com/google-deepmind/mujoco", "sourceInfo": "git@${MJ_SHA}"},
               {"name": "emscripten", "SPDXID": "SPDXRef-Pkg-Emscripten", "versionInfo": "${EMVER}", "downloadLocation": "https://github.com/emscripten-core/emsdk"}
