@@ -14,8 +14,6 @@ on:
 
 jobs:
   verify-dist:
-    # Only run when there is at least one tracked dist/ directory.
-    if: ${{ hashFiles('dist/**') != '' }}
     runs-on: ubuntu-latest
     env:
       EMSDK_VERSION: '4.0.10'
