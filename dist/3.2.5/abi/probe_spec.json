@@ -1,0 +1,205 @@
+{
+  "meta": {
+    "ref": "HEAD",
+    "source_repo": "https://github.com/google-deepmind/mujoco",
+    "generated_at": "2025-11-26T04:56:46.128Z"
+  },
+  "probe": {
+    "functions_present": [
+      "mj_version",
+      "mj_versionString",
+      "mj_parseXML",
+      "mj_parseXMLString",
+      "mj_compile",
+      "mj_recompile",
+      "mj_makeData",
+      "mj_deleteData",
+      "mj_resetData",
+      "mj_step",
+      "mj_step1",
+      "mj_step2",
+      "mj_forward",
+      "mj_forwardSkip",
+      "mj_inverse",
+      "mj_inverseSkip",
+      "mj_contactForce",
+      "mj_name2id",
+      "mj_id2name",
+      "mj_getState",
+      "mj_setState",
+      "mj_stateSize"
+    ],
+    "arrays_size_consistency": [
+      {
+        "count": "nq",
+        "struct": "mjModel",
+        "field": "qpos0"
+      },
+      {
+        "count": "nq",
+        "struct": "mjModel",
+        "field": "qpos_spring"
+      },
+      {
+        "count": "nq",
+        "struct": "mjModel",
+        "field": "key_qpos"
+      },
+      {
+        "count": "nq",
+        "struct": "mjData",
+        "field": "qpos"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_parentid"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_rootid"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_weldid"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_mocapid"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_jntnum"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_jntadr"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_dofnum"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_dofadr"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_treeid"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_geomnum"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_geomadr"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_simple"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_pos"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_quat"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_ipos"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_iquat"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_mass"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_subtreemass"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_inertia"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_gravcomp"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_margin"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_user"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_plugin"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_contype"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_conaffinity"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_bvhadr"
+      },
+      {
+        "count": "nbody",
+        "struct": "mjModel",
+        "field": "body_bvhnum"
+      }
+    ],
+    "name_mapping": {
+      "required": [
+        "mj_name2id",
+        "mj_id2name"
+      ],
+      "buffers": [
+        "names",
+        "nnames"
+      ]
+    },
+    "vfs_required": [
+      "mj_defaultVFS",
+      "mj_addFileVFS",
+      "mj_deleteVFS"
+    ]
+  }
+}

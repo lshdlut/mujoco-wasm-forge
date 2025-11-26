@@ -1,0 +1,160 @@
+# MuJoCo WASM Export Report (ver 3.2.5)
+Generated at: 2025-11-26T04:56:46.170Z
+
+## Special Exclusion Rules
+- Export prefixes allowed: `mj_`, `mju_`, `mjs_`, `mjd_`; other prefixes (e.g. `mjv_`, `mjr_`, `mjui_`, `mjp_`, `mjc_`) are removed.
+- Variadic functions are exported only when a matching `*_v` variant exists; otherwise they are recorded as `variadic_no_v`.
+- Export set is strictly `C = A intersect B`; no handcrafted helpers.
+
+## A, B, C Overview
+- **A (declarations)**: public C API discovered from `mujoco.h` and `mjspec.h`.
+- **B (implementations)**: external symbols reported by `llvm-nm -g --defined-only` on `libmujoco.a`.
+- **C (exports)**: `A intersect B` after applying the exclusion rules, emitted as `_mjwf_*` wrappers.
+- **Hard gate**: `(A intersect B) - C = 0`, and exports must not include `mjv_/mjr_/mjui_/mjp_/mjc_` nor non-`_mjwf_*` symbols.
+
+## Totals
+- A: 466
+- B: 2922
+- C: 891
+- Prefix breakdown: mj: 139 / mju: 122 / mjs: 118 / mjd: 4
+
+## Excluded Items
+- mjp_defaultPlugin -> non_core_prefix
+- mjp_defaultResourceProvider -> non_core_prefix
+- mjp_getPlugin -> non_core_prefix
+- mjp_getPluginAtSlot -> non_core_prefix
+- mjp_getResourceProvider -> non_core_prefix
+- mjp_getResourceProviderAtSlot -> non_core_prefix
+- mjp_pluginCount -> non_core_prefix
+- mjp_registerPlugin -> non_core_prefix
+- mjp_registerResourceProvider -> non_core_prefix
+- mjp_resourceProviderCount -> non_core_prefix
+- mjr_addAux -> non_core_prefix
+- mjr_blitAux -> non_core_prefix
+- mjr_blitBuffer -> non_core_prefix
+- mjr_changeFont -> non_core_prefix
+- mjr_defaultContext -> non_core_prefix
+- mjr_drawPixels -> non_core_prefix
+- mjr_figure -> non_core_prefix
+- mjr_findRect -> non_core_prefix
+- mjr_finish -> non_core_prefix
+- mjr_freeContext -> non_core_prefix
+- mjr_getError -> non_core_prefix
+- mjr_label -> non_core_prefix
+- mjr_makeContext -> non_core_prefix
+- mjr_maxViewport -> non_core_prefix
+- mjr_overlay -> non_core_prefix
+- mjr_readPixels -> non_core_prefix
+- mjr_rectangle -> non_core_prefix
+- mjr_render -> non_core_prefix
+- mjr_resizeOffscreen -> non_core_prefix
+- mjr_restoreBuffer -> non_core_prefix
+- mjr_setAux -> non_core_prefix
+- mjr_setBuffer -> non_core_prefix
+- mjr_text -> non_core_prefix
+- mjr_uploadHField -> non_core_prefix
+- mjr_uploadMesh -> non_core_prefix
+- mjr_uploadTexture -> non_core_prefix
+- mju_error -> variadic_no_v
+- mju_warning -> variadic_no_v
+- mjui_add -> non_core_prefix
+- mjui_addToSection -> non_core_prefix
+- mjui_event -> non_core_prefix
+- mjui_render -> non_core_prefix
+- mjui_resize -> non_core_prefix
+- mjui_themeColor -> non_core_prefix
+- mjui_themeSpacing -> non_core_prefix
+- mjui_update -> non_core_prefix
+- mjv_addGeoms -> non_core_prefix
+- mjv_alignToCamera -> non_core_prefix
+- mjv_applyPerturbForce -> non_core_prefix
+- mjv_applyPerturbPose -> non_core_prefix
+- mjv_averageCamera -> non_core_prefix
+- mjv_cameraInModel -> non_core_prefix
+- mjv_cameraInRoom -> non_core_prefix
+- mjv_connector -> non_core_prefix
+- mjv_defaultCamera -> non_core_prefix
+- mjv_defaultFigure -> non_core_prefix
+- mjv_defaultFreeCamera -> non_core_prefix
+- mjv_defaultOption -> non_core_prefix
+- mjv_defaultPerturb -> non_core_prefix
+- mjv_defaultScene -> non_core_prefix
+- mjv_defaultSceneState -> non_core_prefix
+- mjv_freeScene -> non_core_prefix
+- mjv_freeSceneState -> non_core_prefix
+- mjv_frustumHeight -> non_core_prefix
+- mjv_initGeom -> non_core_prefix
+- mjv_initPerturb -> non_core_prefix
+- mjv_makeLights -> non_core_prefix
+- mjv_makeScene -> non_core_prefix
+- mjv_makeSceneState -> non_core_prefix
+- mjv_model2room -> non_core_prefix
+- mjv_moveCamera -> non_core_prefix
+- mjv_moveCameraFromState -> non_core_prefix
+- mjv_moveModel -> non_core_prefix
+- mjv_movePerturb -> non_core_prefix
+- mjv_movePerturbFromState -> non_core_prefix
+- mjv_room2model -> non_core_prefix
+- mjv_select -> non_core_prefix
+- mjv_updateCamera -> non_core_prefix
+- mjv_updateScene -> non_core_prefix
+- mjv_updateSceneFromState -> non_core_prefix
+- mjv_updateSceneState -> non_core_prefix
+- mjv_updateSkin -> non_core_prefix
+
+## Set Differences (for auditing)
+- A - B (declared but not implemented): 1
+  - void
+- B - A (implemented but not declared): 2457
+  - MJCF
+  - RK4_A
+  - RK4_B
+  - TFAuto_map
+  - Z10mjuu_dist3PKdS0_
+  - Z11CompileMeshP7mjCMeshPK6mjVFS_RSt13exception_ptrRNSt3__25mutexEPNS6_12basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEE
+  - Z11mjCopyErrorPcPKci
+  - Z11mjuu_getextNSt3__217basic_string_viewIcNS_11char_traitsIcEEEE
+  - Z11mjuu_matadriii
+  - Z11mjuu_mulmatPdPKdS1_
+  - Z11mjuu_setvecPddd
+  - Z11mjuu_setvecPdddd
+  - Z11mjuu_setvecPddddd
+  - Z11mjuu_setvecPfddd
+  - Z11mjuu_setvecPfdddd
+  - Z11mjuu_z2quatPdPKd
+  - Z11vertcompareiiRKNSt3__26vectorIfNS_9allocatorIfEEEE
+  - Z12ComputeBasisI9Stencil2DEvPdPKdPKiS5_S5_d
+  - Z12ComputeBasisI9Stencil3DEvPdPKdPKiS5_S5_d
+  - Z12MetricTensorI9Stencil2DEvPdiddPA9_Kd
+  - Z12MetricTensorI9Stencil3DEvPdiddPA9_Kd
+  - Z12mjuu_definedd
+  - Z12mjuu_mulRMRTPdPKdS1_
+  - Z12mjuu_mulquatPdPKdS1_
+  - Z12mjuu_normvecPdi
+  - Z12mjuu_normvecPfi
+  - Z12mjuu_zerovecPdi
+  - Z12mjuu_zerovecPfi
+  - Z13mjuu_addtovecPdPKdi
+  - Z13mjuu_crossvecPdPKdS1_
+  - Z13mjuu_localposPdPKdS1_S1_
+  - Z13mjuu_quat2matPdPKd
+  - Z13mjuu_stripextNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+  - Z13mjuu_visccoefPddPKdd
+  - Z14mjuu_isabspathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+  - Z14mjuu_localaxisPdPKdS1_
+  - Z14mjuu_localquatPdPKdS1_
+  - Z14mjuu_mulvecmatPdPKdS1_
+  - Z14mjuu_offcenterPddPKd
+  - Z14mjuu_strippathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+  - Z15mjuu_dirnamelenPKc
+  - Z15mjuu_frame2quatPdPKdS1_S1_
+  - Z15mjuu_frameaccumPdS_PKdS1_
+  - Z15mjuu_makenormalPdPKfS1_S1_
+  - Z15mjuu_mulvecmatTPdPKdS1_
+  - Z15mjuu_rotVecQuatPdPKdS1_
+  - Z15mjuu_trnVecPosePdPKdS1_S1_
+  - Z16ComputeStiffnessI9Stencil2DEvRNSt3__26vectorIdNS1_9allocatorIdEEEERKS5_PKiiddd
+  - Z16ComputeStiffnessI9Stencil3DEvRNSt3__26vectorIdNS1_9allocatorIdEEEERKS5_PKiiddd
+  - Z16mjuu_frameinvertPdS_PKdS1_
+  - ... (+2407 more)
+- (A intersect B) - C (should be zero): 0

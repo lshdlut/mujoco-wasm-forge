@@ -1,0 +1,2596 @@
+{
+  "meta": {
+    "ref": "HEAD",
+    "source_repo": "https://github.com/google-deepmind/mujoco",
+    "generated_at": "2025-11-26T05:00:29.545Z"
+  },
+  "extensions": {
+    "mjplugin": {
+      "header": "include/mujoco/mjplugin.h",
+      "enums": [
+        {
+          "name": "mjtPluginCapabilityBit",
+          "tag": "mjtPluginCapabilityBit_",
+          "file": "include/mujoco/mjplugin.h",
+          "line": 91,
+          "members": [
+            {
+              "name": "mjPLUGIN_ACTUATOR",
+              "value": "1<<0"
+            },
+            {
+              "name": "mjPLUGIN_SENSOR",
+              "value": "1<<1"
+            },
+            {
+              "name": "mjPLUGIN_PASSIVE",
+              "value": "1<<2"
+            },
+            {
+              "name": "mjPLUGIN_SDF",
+              "value": "1<<3"
+            }
+          ]
+        }
+      ],
+      "exposure": "caution"
+    },
+    "mjspec": {
+      "header": "include/mujoco/mjspec.h",
+      "enums": [
+        {
+          "name": "mjtGeomInertia",
+          "tag": "mjtGeomInertia_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 61,
+          "members": [
+            {
+              "name": "mjINERTIA_VOLUME",
+              "value": "0"
+            },
+            {
+              "name": "mjINERTIA_SHELL"
+            }
+          ]
+        },
+        {
+          "name": "mjtMeshInertia",
+          "tag": "mjtMeshInertia_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 67,
+          "members": [
+            {
+              "name": "mjMESH_INERTIA_CONVEX",
+              "value": "0"
+            },
+            {
+              "name": "mjMESH_INERTIA_EXACT"
+            },
+            {
+              "name": "mjMESH_INERTIA_LEGACY"
+            },
+            {
+              "name": "mjMESH_INERTIA_SHELL"
+            }
+          ]
+        },
+        {
+          "name": "mjtMeshBuiltin",
+          "tag": "mjtMeshBuiltin_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 74,
+          "members": [
+            {
+              "name": "mjMESH_BUILTIN_NONE",
+              "value": "0"
+            },
+            {
+              "name": "mjMESH_BUILTIN_SPHERE"
+            },
+            {
+              "name": "mjMESH_BUILTIN_HEMISPHERE"
+            },
+            {
+              "name": "mjMESH_BUILTIN_CONE"
+            },
+            {
+              "name": "mjMESH_BUILTIN_SUPERSPHERE"
+            },
+            {
+              "name": "mjMESH_BUILTIN_SUPERTORUS"
+            },
+            {
+              "name": "mjMESH_BUILTIN_WEDGE"
+            },
+            {
+              "name": "mjMESH_BUILTIN_PLATE"
+            }
+          ]
+        },
+        {
+          "name": "mjtBuiltin",
+          "tag": "mjtBuiltin_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 85,
+          "members": [
+            {
+              "name": "mjBUILTIN_NONE",
+              "value": "0"
+            },
+            {
+              "name": "mjBUILTIN_GRADIENT"
+            },
+            {
+              "name": "mjBUILTIN_CHECKER"
+            },
+            {
+              "name": "mjBUILTIN_FLAT"
+            }
+          ]
+        },
+        {
+          "name": "mjtMark",
+          "tag": "mjtMark_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 93,
+          "members": [
+            {
+              "name": "mjMARK_NONE",
+              "value": "0"
+            },
+            {
+              "name": "mjMARK_EDGE"
+            },
+            {
+              "name": "mjMARK_CROSS"
+            },
+            {
+              "name": "mjMARK_RANDOM"
+            }
+          ]
+        },
+        {
+          "name": "mjtLimited",
+          "tag": "mjtLimited_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 101,
+          "members": [
+            {
+              "name": "mjLIMITED_FALSE",
+              "value": "0"
+            },
+            {
+              "name": "mjLIMITED_TRUE"
+            },
+            {
+              "name": "mjLIMITED_AUTO"
+            }
+          ]
+        },
+        {
+          "name": "mjtAlignFree",
+          "tag": "mjtAlignFree_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 107,
+          "members": [
+            {
+              "name": "mjALIGNFREE_FALSE",
+              "value": "0"
+            },
+            {
+              "name": "mjALIGNFREE_TRUE"
+            },
+            {
+              "name": "mjALIGNFREE_AUTO"
+            }
+          ]
+        },
+        {
+          "name": "mjtInertiaFromGeom",
+          "tag": "mjtInertiaFromGeom_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 114,
+          "members": [
+            {
+              "name": "mjINERTIAFROMGEOM_FALSE",
+              "value": "0"
+            },
+            {
+              "name": "mjINERTIAFROMGEOM_TRUE"
+            },
+            {
+              "name": "mjINERTIAFROMGEOM_AUTO"
+            }
+          ]
+        },
+        {
+          "name": "mjtOrientation",
+          "tag": "mjtOrientation_",
+          "file": "include/mujoco/mjspec.h",
+          "line": 121,
+          "members": [
+            {
+              "name": "mjORIENTATION_QUAT",
+              "value": "0"
+            },
+            {
+              "name": "mjORIENTATION_AXISANGLE"
+            },
+            {
+              "name": "mjORIENTATION_XYAXES"
+            },
+            {
+              "name": "mjORIENTATION_ZAXIS"
+            },
+            {
+              "name": "mjORIENTATION_EULER"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "mjs_activatePlugin",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 286,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setDeepCopy",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "int",
+              "name": "deepcopy"
+            }
+          ],
+          "line": 289,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getError",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 932,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_isWarning",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 935,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_attach",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "parent"
+            },
+            {
+              "type": "const mjsElement*",
+              "name": "child"
+            },
+            {
+              "type": "const char*",
+              "name": "prefix"
+            },
+            {
+              "type": "const char*",
+              "name": "suffix"
+            }
+          ],
+          "line": 1493,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addBody",
+          "return": "mjsBody*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1501,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addSite",
+          "return": "mjsSite*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1505,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addJoint",
+          "return": "mjsJoint*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1509,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addFreeJoint",
+          "return": "mjsJoint*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            }
+          ],
+          "line": 1512,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addGeom",
+          "return": "mjsGeom*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1516,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addCamera",
+          "return": "mjsCamera*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1520,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addLight",
+          "return": "mjsLight*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1524,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addFrame",
+          "return": "mjsFrame*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "mjsFrame*",
+              "name": "parentframe"
+            }
+          ],
+          "line": 1527,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_delete",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "spec"
+            },
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1530,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addActuator",
+          "return": "mjsActuator*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1537,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addSensor",
+          "return": "mjsSensor*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1540,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addFlex",
+          "return": "mjsFlex*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1543,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addPair",
+          "return": "mjsPair*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1547,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addExclude",
+          "return": "mjsExclude*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1550,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addEquality",
+          "return": "mjsEquality*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1554,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addTendon",
+          "return": "mjsTendon*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1558,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_wrapSite",
+          "return": "mjsWrap*",
+          "params": [
+            {
+              "type": "mjsTendon*",
+              "name": "tendon"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1561,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_wrapGeom",
+          "return": "mjsWrap*",
+          "params": [
+            {
+              "type": "mjsTendon*",
+              "name": "tendon"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            },
+            {
+              "type": "const char*",
+              "name": "sidesite"
+            }
+          ],
+          "line": 1564,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_wrapJoint",
+          "return": "mjsWrap*",
+          "params": [
+            {
+              "type": "mjsTendon*",
+              "name": "tendon"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            },
+            {
+              "type": "double",
+              "name": "coef"
+            }
+          ],
+          "line": 1567,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_wrapPulley",
+          "return": "mjsWrap*",
+          "params": [
+            {
+              "type": "mjsTendon*",
+              "name": "tendon"
+            },
+            {
+              "type": "double",
+              "name": "divisor"
+            }
+          ],
+          "line": 1570,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addNumeric",
+          "return": "mjsNumeric*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1573,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addText",
+          "return": "mjsText*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1576,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addTuple",
+          "return": "mjsTuple*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1579,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addKey",
+          "return": "mjsKey*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1582,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addPlugin",
+          "return": "mjsPlugin*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1585,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addDefault",
+          "return": "mjsDefault*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const char*",
+              "name": "classname"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "parent"
+            }
+          ],
+          "line": 1589,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToMotor",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            }
+          ],
+          "line": 1595,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToPosition",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "kp"
+            },
+            {
+              "type": "double",
+              "name": "kv[1]"
+            },
+            {
+              "type": "double",
+              "name": "dampratio[1]"
+            },
+            {
+              "type": "double",
+              "name": "timeconst[1]"
+            },
+            {
+              "type": "double",
+              "name": "inheritrange"
+            }
+          ],
+          "line": 1598,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToIntVelocity",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "kp"
+            },
+            {
+              "type": "double",
+              "name": "kv[1]"
+            },
+            {
+              "type": "double",
+              "name": "dampratio[1]"
+            },
+            {
+              "type": "double",
+              "name": "timeconst[1]"
+            },
+            {
+              "type": "double",
+              "name": "inheritrange"
+            }
+          ],
+          "line": 1602,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToVelocity",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "kv"
+            }
+          ],
+          "line": 1606,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToDamper",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "kv"
+            }
+          ],
+          "line": 1609,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToCylinder",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "timeconst"
+            },
+            {
+              "type": "double",
+              "name": "bias"
+            },
+            {
+              "type": "double",
+              "name": "area"
+            },
+            {
+              "type": "double",
+              "name": "diameter"
+            }
+          ],
+          "line": 1612,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToMuscle",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "timeconst[2]"
+            },
+            {
+              "type": "double",
+              "name": "tausmooth"
+            },
+            {
+              "type": "double",
+              "name": "range[2]"
+            },
+            {
+              "type": "double",
+              "name": "force"
+            },
+            {
+              "type": "double",
+              "name": "scale"
+            },
+            {
+              "type": "double",
+              "name": "lmin"
+            },
+            {
+              "type": "double",
+              "name": "lmax"
+            },
+            {
+              "type": "double",
+              "name": "vmax"
+            },
+            {
+              "type": "double",
+              "name": "fpmax"
+            },
+            {
+              "type": "double",
+              "name": "fvmax"
+            }
+          ],
+          "line": 1616,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setToAdhesion",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            },
+            {
+              "type": "double",
+              "name": "gain"
+            }
+          ],
+          "line": 1621,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addMesh",
+          "return": "mjsMesh*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1628,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addHField",
+          "return": "mjsHField*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1631,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addSkin",
+          "return": "mjsSkin*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1634,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addTexture",
+          "return": "mjsTexture*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1637,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_addMaterial",
+          "return": "mjsMaterial*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1641,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_makeMesh",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjsMesh*",
+              "name": "mesh"
+            },
+            {
+              "type": "mjtMeshBuiltin",
+              "name": "builtin"
+            },
+            {
+              "type": "double*",
+              "name": "params"
+            },
+            {
+              "type": "int",
+              "name": "nparams"
+            }
+          ],
+          "line": 1644,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getSpec",
+          "return": "mjSpec*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1649,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_findSpec",
+          "return": "mjSpec*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "spec"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1652,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_findBody",
+          "return": "mjsBody*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1655,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_findElement",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "mjtObj",
+              "name": "type"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1658,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_findChild",
+          "return": "mjsBody*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1661,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getParent",
+          "return": "mjsBody*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1664,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getFrame",
+          "return": "mjsFrame*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1667,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_findFrame",
+          "return": "mjsFrame*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1670,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getDefault",
+          "return": "mjsDefault*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1673,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_findDefault",
+          "return": "mjsDefault*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "const char*",
+              "name": "classname"
+            }
+          ],
+          "line": 1676,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getSpecDefault",
+          "return": "mjsDefault*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            }
+          ],
+          "line": 1679,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getId",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1682,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_firstChild",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "mjtObj",
+              "name": "type"
+            },
+            {
+              "type": "int",
+              "name": "recurse"
+            }
+          ],
+          "line": 1685,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_nextChild",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            },
+            {
+              "type": "mjsElement*",
+              "name": "child"
+            },
+            {
+              "type": "int",
+              "name": "recurse"
+            }
+          ],
+          "line": 1689,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_firstElement",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "mjtObj",
+              "name": "type"
+            }
+          ],
+          "line": 1692,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_nextElement",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "s"
+            },
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1695,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getWrapTarget",
+          "return": "mjsElement*",
+          "params": [
+            {
+              "type": "mjsWrap*",
+              "name": "wrap"
+            }
+          ],
+          "line": 1698,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getWrapSideSite",
+          "return": "mjsSite*",
+          "params": [
+            {
+              "type": "mjsWrap*",
+              "name": "wrap"
+            }
+          ],
+          "line": 1701,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getWrapDivisor",
+          "return": "double",
+          "params": [
+            {
+              "type": "mjsWrap*",
+              "name": "wrap"
+            }
+          ],
+          "line": 1704,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getWrapCoef",
+          "return": "double",
+          "params": [
+            {
+              "type": "mjsWrap*",
+              "name": "wrap"
+            }
+          ],
+          "line": 1707,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setName",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            },
+            {
+              "type": "const char*",
+              "name": "name"
+            }
+          ],
+          "line": 1712,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setBuffer",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjByteVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const void*",
+              "name": "array"
+            },
+            {
+              "type": "int",
+              "name": "size"
+            }
+          ],
+          "line": 1715,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setString",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjString*",
+              "name": "dest"
+            },
+            {
+              "type": "const char*",
+              "name": "text"
+            }
+          ],
+          "line": 1718,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setStringVec",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjStringVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const char*",
+              "name": "text"
+            }
+          ],
+          "line": 1721,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setInStringVec",
+          "return": "mjtByte",
+          "params": [
+            {
+              "type": "mjStringVec*",
+              "name": "dest"
+            },
+            {
+              "type": "int",
+              "name": "i"
+            },
+            {
+              "type": "const char*",
+              "name": "text"
+            }
+          ],
+          "line": 1724,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_appendString",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjStringVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const char*",
+              "name": "text"
+            }
+          ],
+          "line": 1727,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setInt",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjIntVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const int*",
+              "name": "array"
+            },
+            {
+              "type": "int",
+              "name": "size"
+            }
+          ],
+          "line": 1730,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_appendIntVec",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjIntVecVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const int*",
+              "name": "array"
+            },
+            {
+              "type": "int",
+              "name": "size"
+            }
+          ],
+          "line": 1733,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setFloat",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjFloatVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const float*",
+              "name": "array"
+            },
+            {
+              "type": "int",
+              "name": "size"
+            }
+          ],
+          "line": 1736,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_appendFloatVec",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjFloatVecVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const float*",
+              "name": "array"
+            },
+            {
+              "type": "int",
+              "name": "size"
+            }
+          ],
+          "line": 1739,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setDouble",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjDoubleVec*",
+              "name": "dest"
+            },
+            {
+              "type": "const double*",
+              "name": "array"
+            },
+            {
+              "type": "int",
+              "name": "size"
+            }
+          ],
+          "line": 1742,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setPluginAttributes",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsPlugin*",
+              "name": "plugin"
+            },
+            {
+              "type": "void*",
+              "name": "attributes"
+            }
+          ],
+          "line": 1745,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getName",
+          "return": "mjString*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1751,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getString",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "const mjString*",
+              "name": "source"
+            }
+          ],
+          "line": 1754,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getDouble",
+          "return": "const double*",
+          "params": [
+            {
+              "type": "const mjDoubleVec*",
+              "name": "source"
+            },
+            {
+              "type": "int*",
+              "name": "size"
+            }
+          ],
+          "line": 1758,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getWrapNum",
+          "return": "int",
+          "params": [
+            {
+              "type": "const mjsTendon*",
+              "name": "tendonspec"
+            }
+          ],
+          "line": 1761,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getWrap",
+          "return": "mjsWrap*",
+          "params": [
+            {
+              "type": "const mjsTendon*",
+              "name": "tendonspec"
+            },
+            {
+              "type": "int",
+              "name": "i"
+            }
+          ],
+          "line": 1764,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getPluginAttributes",
+          "return": "const void*",
+          "params": [
+            {
+              "type": "const mjsPlugin*",
+              "name": "plugin"
+            }
+          ],
+          "line": 1767,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setDefault",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            },
+            {
+              "type": "const mjsDefault*",
+              "name": "def"
+            }
+          ],
+          "line": 1773,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setFrame",
+          "return": "int",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "dest"
+            },
+            {
+              "type": "mjsFrame*",
+              "name": "frame"
+            }
+          ],
+          "line": 1776,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_resolveOrientation",
+          "return": "const char*",
+          "params": [
+            {
+              "type": "double",
+              "name": "quat[4]"
+            },
+            {
+              "type": "mjtByte",
+              "name": "degree"
+            },
+            {
+              "type": "const char*",
+              "name": "sequence"
+            },
+            {
+              "type": "const mjsOrientation*",
+              "name": "orientation"
+            }
+          ],
+          "line": 1779,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_bodyToFrame",
+          "return": "mjsFrame*",
+          "params": [
+            {
+              "type": "mjsBody**",
+              "name": "body"
+            }
+          ],
+          "line": 1783,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_setUserValue",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            },
+            {
+              "type": "const char*",
+              "name": "key"
+            },
+            {
+              "type": "const void*",
+              "name": "data"
+            }
+          ],
+          "line": 1786,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_getUserValue",
+          "return": "const void*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            },
+            {
+              "type": "const char*",
+              "name": "key"
+            }
+          ],
+          "line": 1796,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_deleteUserValue",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            },
+            {
+              "type": "const char*",
+              "name": "key"
+            }
+          ],
+          "line": 1799,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_sensorDim",
+          "return": "int",
+          "params": [
+            {
+              "type": "const mjsSensor*",
+              "name": "sensor"
+            }
+          ],
+          "line": 1802,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultSpec",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjSpec*",
+              "name": "spec"
+            }
+          ],
+          "line": 1807,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultOrientation",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsOrientation*",
+              "name": "orient"
+            }
+          ],
+          "line": 1810,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultBody",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsBody*",
+              "name": "body"
+            }
+          ],
+          "line": 1813,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultFrame",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsFrame*",
+              "name": "frame"
+            }
+          ],
+          "line": 1816,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultJoint",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsJoint*",
+              "name": "joint"
+            }
+          ],
+          "line": 1819,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultGeom",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsGeom*",
+              "name": "geom"
+            }
+          ],
+          "line": 1822,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultSite",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsSite*",
+              "name": "site"
+            }
+          ],
+          "line": 1825,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultCamera",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsCamera*",
+              "name": "camera"
+            }
+          ],
+          "line": 1828,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultLight",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsLight*",
+              "name": "light"
+            }
+          ],
+          "line": 1831,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultFlex",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsFlex*",
+              "name": "flex"
+            }
+          ],
+          "line": 1834,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultMesh",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsMesh*",
+              "name": "mesh"
+            }
+          ],
+          "line": 1837,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultHField",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsHField*",
+              "name": "hfield"
+            }
+          ],
+          "line": 1840,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultSkin",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsSkin*",
+              "name": "skin"
+            }
+          ],
+          "line": 1843,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultTexture",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsTexture*",
+              "name": "texture"
+            }
+          ],
+          "line": 1846,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultMaterial",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsMaterial*",
+              "name": "material"
+            }
+          ],
+          "line": 1849,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultPair",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsPair*",
+              "name": "pair"
+            }
+          ],
+          "line": 1852,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultEquality",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsEquality*",
+              "name": "equality"
+            }
+          ],
+          "line": 1855,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultTendon",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsTendon*",
+              "name": "tendon"
+            }
+          ],
+          "line": 1858,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultActuator",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsActuator*",
+              "name": "actuator"
+            }
+          ],
+          "line": 1861,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultSensor",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsSensor*",
+              "name": "sensor"
+            }
+          ],
+          "line": 1864,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultNumeric",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsNumeric*",
+              "name": "numeric"
+            }
+          ],
+          "line": 1867,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultText",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsText*",
+              "name": "text"
+            }
+          ],
+          "line": 1870,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultTuple",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsTuple*",
+              "name": "tuple"
+            }
+          ],
+          "line": 1873,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultKey",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsKey*",
+              "name": "key"
+            }
+          ],
+          "line": 1876,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_defaultPlugin",
+          "return": "void",
+          "params": [
+            {
+              "type": "mjsPlugin*",
+              "name": "plugin"
+            }
+          ],
+          "line": 1879,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asBody",
+          "return": "mjsBody*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1885,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asGeom",
+          "return": "mjsGeom*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1888,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asJoint",
+          "return": "mjsJoint*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1891,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asSite",
+          "return": "mjsSite*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1894,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asCamera",
+          "return": "mjsCamera*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1897,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asLight",
+          "return": "mjsLight*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1900,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asFrame",
+          "return": "mjsFrame*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1903,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asActuator",
+          "return": "mjsActuator*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1906,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asSensor",
+          "return": "mjsSensor*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1909,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asFlex",
+          "return": "mjsFlex*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1912,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asPair",
+          "return": "mjsPair*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1915,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asEquality",
+          "return": "mjsEquality*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1918,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asExclude",
+          "return": "mjsExclude*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1921,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asTendon",
+          "return": "mjsTendon*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1924,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asNumeric",
+          "return": "mjsNumeric*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1927,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asText",
+          "return": "mjsText*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1930,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asTuple",
+          "return": "mjsTuple*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1933,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asKey",
+          "return": "mjsKey*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1936,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asMesh",
+          "return": "mjsMesh*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1939,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asHField",
+          "return": "mjsHField*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1942,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asSkin",
+          "return": "mjsSkin*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1945,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asTexture",
+          "return": "mjsTexture*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1948,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asMaterial",
+          "return": "mjsMaterial*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1951,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        },
+        {
+          "name": "mjs_asPlugin",
+          "return": "mjsPlugin*",
+          "params": [
+            {
+              "type": "mjsElement*",
+              "name": "element"
+            }
+          ],
+          "line": 1954,
+          "file": "include/mujoco/mujoco.h",
+          "group": "support",
+          "gate": "none"
+        }
+      ],
+      "exposure": "caution"
+    }
+  }
+}

@@ -1,0 +1,3864 @@
+{
+  "meta": {
+    "ref": "HEAD",
+    "source_repo": "https://github.com/google-deepmind/mujoco",
+    "generated_at": "2025-11-26T04:56:46.128Z"
+  },
+  "structs": {
+    "mjModel": {
+      "name": "mjModel",
+      "fields": [
+        {
+          "name": "nq",
+          "type": "int",
+          "comment": "number of generalized coordinates = dim(qpos)",
+          "line": 595
+        },
+        {
+          "name": "nv",
+          "type": "int",
+          "comment": "number of degrees of freedom = dim(qvel)",
+          "line": 596
+        },
+        {
+          "name": "nu",
+          "type": "int",
+          "comment": "number of actuators/controls = dim(ctrl)",
+          "line": 597
+        },
+        {
+          "name": "na",
+          "type": "int",
+          "comment": "number of activation states = dim(act)",
+          "line": 598
+        },
+        {
+          "name": "nbody",
+          "type": "int",
+          "comment": "number of bodies",
+          "line": 599
+        },
+        {
+          "name": "nbvh",
+          "type": "int",
+          "comment": "number of total bounding volumes in all bodies",
+          "line": 600
+        },
+        {
+          "name": "nbvhstatic",
+          "type": "int",
+          "comment": "number of static bounding volumes (aabb stored in mjModel)",
+          "line": 601
+        },
+        {
+          "name": "nbvhdynamic",
+          "type": "int",
+          "comment": "number of dynamic bounding volumes (aabb stored in mjData)",
+          "line": 602
+        },
+        {
+          "name": "njnt",
+          "type": "int",
+          "comment": "number of joints",
+          "line": 603
+        },
+        {
+          "name": "ngeom",
+          "type": "int",
+          "comment": "number of geoms",
+          "line": 604
+        },
+        {
+          "name": "nsite",
+          "type": "int",
+          "comment": "number of sites",
+          "line": 605
+        },
+        {
+          "name": "ncam",
+          "type": "int",
+          "comment": "number of cameras",
+          "line": 606
+        },
+        {
+          "name": "nlight",
+          "type": "int",
+          "comment": "number of lights",
+          "line": 607
+        },
+        {
+          "name": "nflex",
+          "type": "int",
+          "comment": "number of flexes",
+          "line": 608
+        },
+        {
+          "name": "nflexvert",
+          "type": "int",
+          "comment": "number of vertices in all flexes",
+          "line": 609
+        },
+        {
+          "name": "nflexedge",
+          "type": "int",
+          "comment": "number of edges in all flexes",
+          "line": 610
+        },
+        {
+          "name": "nflexelem",
+          "type": "int",
+          "comment": "number of elements in all flexes",
+          "line": 611
+        },
+        {
+          "name": "nflexelemdata",
+          "type": "int",
+          "comment": "number of element vertex ids in all flexes",
+          "line": 612
+        },
+        {
+          "name": "nflexelemedge",
+          "type": "int",
+          "comment": "number of element edge ids in all flexes",
+          "line": 613
+        },
+        {
+          "name": "nflexshelldata",
+          "type": "int",
+          "comment": "number of shell fragment vertex ids in all flexes",
+          "line": 614
+        },
+        {
+          "name": "nflexevpair",
+          "type": "int",
+          "comment": "number of element-vertex pairs in all flexes",
+          "line": 615
+        },
+        {
+          "name": "nflextexcoord",
+          "type": "int",
+          "comment": "number of vertices with texture coordinates",
+          "line": 616
+        },
+        {
+          "name": "nmesh",
+          "type": "int",
+          "comment": "number of meshes",
+          "line": 617
+        },
+        {
+          "name": "nmeshvert",
+          "type": "int",
+          "comment": "number of vertices in all meshes",
+          "line": 618
+        },
+        {
+          "name": "nmeshnormal",
+          "type": "int",
+          "comment": "number of normals in all meshes",
+          "line": 619
+        },
+        {
+          "name": "nmeshtexcoord",
+          "type": "int",
+          "comment": "number of texcoords in all meshes",
+          "line": 620
+        },
+        {
+          "name": "nmeshface",
+          "type": "int",
+          "comment": "number of triangular faces in all meshes",
+          "line": 621
+        },
+        {
+          "name": "nmeshgraph",
+          "type": "int",
+          "comment": "number of ints in mesh auxiliary data",
+          "line": 622
+        },
+        {
+          "name": "nskin",
+          "type": "int",
+          "comment": "number of skins",
+          "line": 623
+        },
+        {
+          "name": "nskinvert",
+          "type": "int",
+          "comment": "number of vertices in all skins",
+          "line": 624
+        },
+        {
+          "name": "nskintexvert",
+          "type": "int",
+          "comment": "number of vertiex with texcoords in all skins",
+          "line": 625
+        },
+        {
+          "name": "nskinface",
+          "type": "int",
+          "comment": "number of triangular faces in all skins",
+          "line": 626
+        },
+        {
+          "name": "nskinbone",
+          "type": "int",
+          "comment": "number of bones in all skins",
+          "line": 627
+        },
+        {
+          "name": "nskinbonevert",
+          "type": "int",
+          "comment": "number of vertices in all skin bones",
+          "line": 628
+        },
+        {
+          "name": "nhfield",
+          "type": "int",
+          "comment": "number of heightfields",
+          "line": 629
+        },
+        {
+          "name": "nhfielddata",
+          "type": "int",
+          "comment": "number of data points in all heightfields",
+          "line": 630
+        },
+        {
+          "name": "ntex",
+          "type": "int",
+          "comment": "number of textures",
+          "line": 631
+        },
+        {
+          "name": "ntexdata",
+          "type": "int",
+          "comment": "number of bytes in texture rgb data",
+          "line": 632
+        },
+        {
+          "name": "nmat",
+          "type": "int",
+          "comment": "number of materials",
+          "line": 633
+        },
+        {
+          "name": "npair",
+          "type": "int",
+          "comment": "number of predefined geom pairs",
+          "line": 634
+        },
+        {
+          "name": "nexclude",
+          "type": "int",
+          "comment": "number of excluded geom pairs",
+          "line": 635
+        },
+        {
+          "name": "neq",
+          "type": "int",
+          "comment": "number of equality constraints",
+          "line": 636
+        },
+        {
+          "name": "ntendon",
+          "type": "int",
+          "comment": "number of tendons",
+          "line": 637
+        },
+        {
+          "name": "nwrap",
+          "type": "int",
+          "comment": "number of wrap objects in all tendon paths",
+          "line": 638
+        },
+        {
+          "name": "nsensor",
+          "type": "int",
+          "comment": "number of sensors",
+          "line": 639
+        },
+        {
+          "name": "nnumeric",
+          "type": "int",
+          "comment": "number of numeric custom fields",
+          "line": 640
+        },
+        {
+          "name": "nnumericdata",
+          "type": "int",
+          "comment": "number of mjtNums in all numeric fields",
+          "line": 641
+        },
+        {
+          "name": "ntext",
+          "type": "int",
+          "comment": "number of text custom fields",
+          "line": 642
+        },
+        {
+          "name": "ntextdata",
+          "type": "int",
+          "comment": "number of mjtBytes in all text fields",
+          "line": 643
+        },
+        {
+          "name": "ntuple",
+          "type": "int",
+          "comment": "number of tuple custom fields",
+          "line": 644
+        },
+        {
+          "name": "ntupledata",
+          "type": "int",
+          "comment": "number of objects in all tuple fields",
+          "line": 645
+        },
+        {
+          "name": "nkey",
+          "type": "int",
+          "comment": "number of keyframes",
+          "line": 646
+        },
+        {
+          "name": "nmocap",
+          "type": "int",
+          "comment": "number of mocap bodies",
+          "line": 647
+        },
+        {
+          "name": "nplugin",
+          "type": "int",
+          "comment": "number of plugin instances",
+          "line": 648
+        },
+        {
+          "name": "npluginattr",
+          "type": "int",
+          "comment": "number of chars in all plugin config attributes",
+          "line": 649
+        },
+        {
+          "name": "nuser_body",
+          "type": "int",
+          "comment": "number of mjtNums in body_user",
+          "line": 650
+        },
+        {
+          "name": "nuser_jnt",
+          "type": "int",
+          "comment": "number of mjtNums in jnt_user",
+          "line": 651
+        },
+        {
+          "name": "nuser_geom",
+          "type": "int",
+          "comment": "number of mjtNums in geom_user",
+          "line": 652
+        },
+        {
+          "name": "nuser_site",
+          "type": "int",
+          "comment": "number of mjtNums in site_user",
+          "line": 653
+        },
+        {
+          "name": "nuser_cam",
+          "type": "int",
+          "comment": "number of mjtNums in cam_user",
+          "line": 654
+        },
+        {
+          "name": "nuser_tendon",
+          "type": "int",
+          "comment": "number of mjtNums in tendon_user",
+          "line": 655
+        },
+        {
+          "name": "nuser_actuator",
+          "type": "int",
+          "comment": "number of mjtNums in actuator_user",
+          "line": 656
+        },
+        {
+          "name": "nuser_sensor",
+          "type": "int",
+          "comment": "number of mjtNums in sensor_user",
+          "line": 657
+        },
+        {
+          "name": "nnames",
+          "type": "int",
+          "comment": "number of chars in all names",
+          "line": 658
+        },
+        {
+          "name": "nnames_map",
+          "type": "int",
+          "comment": "number of slots in the names hash map",
+          "line": 659
+        },
+        {
+          "name": "npaths",
+          "type": "int",
+          "comment": "number of chars in all paths",
+          "line": 660
+        },
+        {
+          "name": "nM",
+          "type": "int",
+          "comment": "number of non-zeros in sparse inertia matrix",
+          "line": 663
+        },
+        {
+          "name": "nB",
+          "type": "int",
+          "comment": "number of non-zeros in sparse body-dof matrix",
+          "line": 664
+        },
+        {
+          "name": "nC",
+          "type": "int",
+          "comment": "number of non-zeros in sparse reduced dof-dof matrix",
+          "line": 665
+        },
+        {
+          "name": "nD",
+          "type": "int",
+          "comment": "number of non-zeros in sparse dof-dof matrix",
+          "line": 666
+        },
+        {
+          "name": "ntree",
+          "type": "int",
+          "comment": "number of kinematic trees under world body",
+          "line": 667
+        },
+        {
+          "name": "ngravcomp",
+          "type": "int",
+          "comment": "number of bodies with nonzero gravcomp",
+          "line": 668
+        },
+        {
+          "name": "nemax",
+          "type": "int",
+          "comment": "number of potential equality-constraint rows",
+          "line": 669
+        },
+        {
+          "name": "njmax",
+          "type": "int",
+          "comment": "number of available rows in constraint Jacobian",
+          "line": 670
+        },
+        {
+          "name": "nconmax",
+          "type": "int",
+          "comment": "number of potential contacts in contact list",
+          "line": 671
+        },
+        {
+          "name": "nuserdata",
+          "type": "int",
+          "comment": "number of mjtNums reserved for the user",
+          "line": 672
+        },
+        {
+          "name": "nsensordata",
+          "type": "int",
+          "comment": "number of mjtNums in sensor data vector",
+          "line": 673
+        },
+        {
+          "name": "npluginstate",
+          "type": "int",
+          "comment": "number of mjtNums in plugin state vector",
+          "line": 674
+        },
+        {
+          "name": "narena",
+          "type": "size_t",
+          "comment": "number of bytes in the mjData arena (inclusive of stack)",
+          "line": 676
+        },
+        {
+          "name": "nbuffer",
+          "type": "size_t",
+          "comment": "number of bytes in buffer",
+          "line": 677
+        },
+        {
+          "name": "opt",
+          "type": "mjOption",
+          "comment": "physics options",
+          "line": 681
+        },
+        {
+          "name": "vis",
+          "type": "mjVisual",
+          "comment": "visualization options",
+          "line": 682
+        },
+        {
+          "name": "stat",
+          "type": "mjStatistic",
+          "comment": "model statistics",
+          "line": 683
+        },
+        {
+          "name": "buffer",
+          "type": "void*",
+          "comment": "main buffer; all pointers point in it    (nbuffer)",
+          "line": 688
+        },
+        {
+          "name": "qpos0",
+          "type": "mjtNum*",
+          "comment": "qpos values at default pose              (nq x 1)",
+          "line": 691
+        },
+        {
+          "name": "qpos_spring",
+          "type": "mjtNum*",
+          "comment": "reference pose for springs               (nq x 1)",
+          "line": 692
+        },
+        {
+          "name": "body_parentid",
+          "type": "int*",
+          "comment": "id of body's parent                      (nbody x 1)",
+          "line": 695
+        },
+        {
+          "name": "body_rootid",
+          "type": "int*",
+          "comment": "id of root above body                    (nbody x 1)",
+          "line": 696
+        },
+        {
+          "name": "body_weldid",
+          "type": "int*",
+          "comment": "id of body that this body is welded to   (nbody x 1)",
+          "line": 697
+        },
+        {
+          "name": "body_mocapid",
+          "type": "int*",
+          "comment": "id of mocap data; -1: none               (nbody x 1)",
+          "line": 698
+        },
+        {
+          "name": "body_jntnum",
+          "type": "int*",
+          "comment": "number of joints for this body           (nbody x 1)",
+          "line": 699
+        },
+        {
+          "name": "body_jntadr",
+          "type": "int*",
+          "comment": "start addr of joints; -1: no joints      (nbody x 1)",
+          "line": 700
+        },
+        {
+          "name": "body_dofnum",
+          "type": "int*",
+          "comment": "number of motion degrees of freedom      (nbody x 1)",
+          "line": 701
+        },
+        {
+          "name": "body_dofadr",
+          "type": "int*",
+          "comment": "start addr of dofs; -1: no dofs          (nbody x 1)",
+          "line": 702
+        },
+        {
+          "name": "body_treeid",
+          "type": "int*",
+          "comment": "id of body's kinematic tree; -1: static  (nbody x 1)",
+          "line": 703
+        },
+        {
+          "name": "body_geomnum",
+          "type": "int*",
+          "comment": "number of geoms                          (nbody x 1)",
+          "line": 704
+        },
+        {
+          "name": "body_geomadr",
+          "type": "int*",
+          "comment": "start addr of geoms; -1: no geoms        (nbody x 1)",
+          "line": 705
+        },
+        {
+          "name": "body_simple",
+          "type": "mjtByte*",
+          "comment": "1: diag M; 2: diag M, sliders only       (nbody x 1)",
+          "line": 706
+        },
+        {
+          "name": "body_sameframe",
+          "type": "mjtByte*",
+          "comment": "same frame as inertia (mjtSameframe)     (nbody x 1)",
+          "line": 707
+        },
+        {
+          "name": "body_pos",
+          "type": "mjtNum*",
+          "comment": "position offset rel. to parent body      (nbody x 3)",
+          "line": 708
+        },
+        {
+          "name": "body_quat",
+          "type": "mjtNum*",
+          "comment": "orientation offset rel. to parent body   (nbody x 4)",
+          "line": 709
+        },
+        {
+          "name": "body_ipos",
+          "type": "mjtNum*",
+          "comment": "local position of center of mass         (nbody x 3)",
+          "line": 710
+        },
+        {
+          "name": "body_iquat",
+          "type": "mjtNum*",
+          "comment": "local orientation of inertia ellipsoid   (nbody x 4)",
+          "line": 711
+        },
+        {
+          "name": "body_mass",
+          "type": "mjtNum*",
+          "comment": "mass                                     (nbody x 1)",
+          "line": 712
+        },
+        {
+          "name": "body_subtreemass",
+          "type": "mjtNum*",
+          "comment": "mass of subtree starting at this body    (nbody x 1)",
+          "line": 713
+        },
+        {
+          "name": "body_inertia",
+          "type": "mjtNum*",
+          "comment": "diagonal inertia in ipos/iquat frame     (nbody x 3)",
+          "line": 714
+        },
+        {
+          "name": "body_invweight0",
+          "type": "mjtNum*",
+          "comment": "mean inv inert in qpos0 (trn, rot)       (nbody x 2)",
+          "line": 715
+        },
+        {
+          "name": "body_gravcomp",
+          "type": "mjtNum*",
+          "comment": "antigravity force, units of body weight  (nbody x 1)",
+          "line": 716
+        },
+        {
+          "name": "body_margin",
+          "type": "mjtNum*",
+          "comment": "MAX over all geom margins                (nbody x 1)",
+          "line": 717
+        },
+        {
+          "name": "body_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (nbody x nuser_body)",
+          "line": 718
+        },
+        {
+          "name": "body_plugin",
+          "type": "int*",
+          "comment": "plugin instance id; -1: not in use       (nbody x 1)",
+          "line": 719
+        },
+        {
+          "name": "body_contype",
+          "type": "int*",
+          "comment": "OR over all geom contypes                (nbody x 1)",
+          "line": 720
+        },
+        {
+          "name": "body_conaffinity",
+          "type": "int*",
+          "comment": "OR over all geom conaffinities           (nbody x 1)",
+          "line": 721
+        },
+        {
+          "name": "body_bvhadr",
+          "type": "int*",
+          "comment": "address of bvh root                      (nbody x 1)",
+          "line": 722
+        },
+        {
+          "name": "body_bvhnum",
+          "type": "int*",
+          "comment": "number of bounding volumes               (nbody x 1)",
+          "line": 723
+        },
+        {
+          "name": "bvh_depth",
+          "type": "int*",
+          "comment": "depth in the bounding volume hierarchy   (nbvh x 1)",
+          "line": 726
+        },
+        {
+          "name": "bvh_child",
+          "type": "int*",
+          "comment": "left and right children in tree          (nbvh x 2)",
+          "line": 727
+        },
+        {
+          "name": "bvh_nodeid",
+          "type": "int*",
+          "comment": "geom or elem id of node; -1: non-leaf    (nbvh x 1)",
+          "line": 728
+        },
+        {
+          "name": "bvh_aabb",
+          "type": "mjtNum*",
+          "comment": "local bounding box (center, size)        (nbvhstatic x 6)",
+          "line": 729
+        },
+        {
+          "name": "jnt_type",
+          "type": "int*",
+          "comment": "type of joint (mjtJoint)                 (njnt x 1)",
+          "line": 732
+        },
+        {
+          "name": "jnt_qposadr",
+          "type": "int*",
+          "comment": "start addr in 'qpos' for joint's data    (njnt x 1)",
+          "line": 733
+        },
+        {
+          "name": "jnt_dofadr",
+          "type": "int*",
+          "comment": "start addr in 'qvel' for joint's data    (njnt x 1)",
+          "line": 734
+        },
+        {
+          "name": "jnt_bodyid",
+          "type": "int*",
+          "comment": "id of joint's body                       (njnt x 1)",
+          "line": 735
+        },
+        {
+          "name": "jnt_group",
+          "type": "int*",
+          "comment": "group for visibility                     (njnt x 1)",
+          "line": 736
+        },
+        {
+          "name": "jnt_limited",
+          "type": "mjtByte*",
+          "comment": "does joint have limits                   (njnt x 1)",
+          "line": 737
+        },
+        {
+          "name": "jnt_actfrclimited",
+          "type": "mjtByte*",
+          "comment": "does joint have actuator force limits    (njnt x 1)",
+          "line": 738
+        },
+        {
+          "name": "jnt_actgravcomp",
+          "type": "mjtByte*",
+          "comment": "is gravcomp force applied via actuators  (njnt x 1)",
+          "line": 739
+        },
+        {
+          "name": "jnt_solref",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference: limit       (njnt x mjNREF)",
+          "line": 740
+        },
+        {
+          "name": "jnt_solimp",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance: limit       (njnt x mjNIMP)",
+          "line": 741
+        },
+        {
+          "name": "jnt_pos",
+          "type": "mjtNum*",
+          "comment": "local anchor position                    (njnt x 3)",
+          "line": 742
+        },
+        {
+          "name": "jnt_axis",
+          "type": "mjtNum*",
+          "comment": "local joint axis                         (njnt x 3)",
+          "line": 743
+        },
+        {
+          "name": "jnt_stiffness",
+          "type": "mjtNum*",
+          "comment": "stiffness coefficient                    (njnt x 1)",
+          "line": 744
+        },
+        {
+          "name": "jnt_range",
+          "type": "mjtNum*",
+          "comment": "joint limits                             (njnt x 2)",
+          "line": 745
+        },
+        {
+          "name": "jnt_actfrcrange",
+          "type": "mjtNum*",
+          "comment": "range of total actuator force            (njnt x 2)",
+          "line": 746
+        },
+        {
+          "name": "jnt_margin",
+          "type": "mjtNum*",
+          "comment": "min distance for limit detection         (njnt x 1)",
+          "line": 747
+        },
+        {
+          "name": "jnt_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (njnt x nuser_jnt)",
+          "line": 748
+        },
+        {
+          "name": "dof_bodyid",
+          "type": "int*",
+          "comment": "id of dof's body                         (nv x 1)",
+          "line": 751
+        },
+        {
+          "name": "dof_jntid",
+          "type": "int*",
+          "comment": "id of dof's joint                        (nv x 1)",
+          "line": 752
+        },
+        {
+          "name": "dof_parentid",
+          "type": "int*",
+          "comment": "id of dof's parent; -1: none             (nv x 1)",
+          "line": 753
+        },
+        {
+          "name": "dof_treeid",
+          "type": "int*",
+          "comment": "id of dof's kinematic tree               (nv x 1)",
+          "line": 754
+        },
+        {
+          "name": "dof_Madr",
+          "type": "int*",
+          "comment": "dof address in M-diagonal                (nv x 1)",
+          "line": 755
+        },
+        {
+          "name": "dof_simplenum",
+          "type": "int*",
+          "comment": "number of consecutive simple dofs        (nv x 1)",
+          "line": 756
+        },
+        {
+          "name": "dof_solref",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference:frictionloss (nv x mjNREF)",
+          "line": 757
+        },
+        {
+          "name": "dof_solimp",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance:frictionloss (nv x mjNIMP)",
+          "line": 758
+        },
+        {
+          "name": "dof_frictionloss",
+          "type": "mjtNum*",
+          "comment": "dof friction loss                        (nv x 1)",
+          "line": 759
+        },
+        {
+          "name": "dof_armature",
+          "type": "mjtNum*",
+          "comment": "dof armature inertia/mass                (nv x 1)",
+          "line": 760
+        },
+        {
+          "name": "dof_damping",
+          "type": "mjtNum*",
+          "comment": "damping coefficient                      (nv x 1)",
+          "line": 761
+        },
+        {
+          "name": "dof_invweight0",
+          "type": "mjtNum*",
+          "comment": "diag. inverse inertia in qpos0           (nv x 1)",
+          "line": 762
+        },
+        {
+          "name": "dof_M0",
+          "type": "mjtNum*",
+          "comment": "diag. inertia in qpos0                   (nv x 1)",
+          "line": 763
+        },
+        {
+          "name": "geom_type",
+          "type": "int*",
+          "comment": "geometric type (mjtGeom)                 (ngeom x 1)",
+          "line": 766
+        },
+        {
+          "name": "geom_contype",
+          "type": "int*",
+          "comment": "geom contact type                        (ngeom x 1)",
+          "line": 767
+        },
+        {
+          "name": "geom_conaffinity",
+          "type": "int*",
+          "comment": "geom contact affinity                    (ngeom x 1)",
+          "line": 768
+        },
+        {
+          "name": "geom_condim",
+          "type": "int*",
+          "comment": "contact dimensionality (1, 3, 4, 6)      (ngeom x 1)",
+          "line": 769
+        },
+        {
+          "name": "geom_bodyid",
+          "type": "int*",
+          "comment": "id of geom's body                        (ngeom x 1)",
+          "line": 770
+        },
+        {
+          "name": "geom_dataid",
+          "type": "int*",
+          "comment": "id of geom's mesh/hfield; -1: none       (ngeom x 1)",
+          "line": 771
+        },
+        {
+          "name": "geom_matid",
+          "type": "int*",
+          "comment": "material id for rendering; -1: none      (ngeom x 1)",
+          "line": 772
+        },
+        {
+          "name": "geom_group",
+          "type": "int*",
+          "comment": "group for visibility                     (ngeom x 1)",
+          "line": 773
+        },
+        {
+          "name": "geom_priority",
+          "type": "int*",
+          "comment": "geom contact priority                    (ngeom x 1)",
+          "line": 774
+        },
+        {
+          "name": "geom_plugin",
+          "type": "int*",
+          "comment": "plugin instance id; -1: not in use       (ngeom x 1)",
+          "line": 775
+        },
+        {
+          "name": "geom_sameframe",
+          "type": "mjtByte*",
+          "comment": "same frame as body (mjtSameframe)        (ngeom x 1)",
+          "line": 776
+        },
+        {
+          "name": "geom_solmix",
+          "type": "mjtNum*",
+          "comment": "mixing coef for solref/imp in geom pair  (ngeom x 1)",
+          "line": 777
+        },
+        {
+          "name": "geom_solref",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference: contact     (ngeom x mjNREF)",
+          "line": 778
+        },
+        {
+          "name": "geom_solimp",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance: contact     (ngeom x mjNIMP)",
+          "line": 779
+        },
+        {
+          "name": "geom_size",
+          "type": "mjtNum*",
+          "comment": "geom-specific size parameters            (ngeom x 3)",
+          "line": 780
+        },
+        {
+          "name": "geom_aabb",
+          "type": "mjtNum*",
+          "comment": "bounding box, (center, size)             (ngeom x 6)",
+          "line": 781
+        },
+        {
+          "name": "geom_rbound",
+          "type": "mjtNum*",
+          "comment": "radius of bounding sphere                (ngeom x 1)",
+          "line": 782
+        },
+        {
+          "name": "geom_pos",
+          "type": "mjtNum*",
+          "comment": "local position offset rel. to body       (ngeom x 3)",
+          "line": 783
+        },
+        {
+          "name": "geom_quat",
+          "type": "mjtNum*",
+          "comment": "local orientation offset rel. to body    (ngeom x 4)",
+          "line": 784
+        },
+        {
+          "name": "geom_friction",
+          "type": "mjtNum*",
+          "comment": "friction for (slide, spin, roll)         (ngeom x 3)",
+          "line": 785
+        },
+        {
+          "name": "geom_margin",
+          "type": "mjtNum*",
+          "comment": "detect contact if dist<margin            (ngeom x 1)",
+          "line": 786
+        },
+        {
+          "name": "geom_gap",
+          "type": "mjtNum*",
+          "comment": "include in solver if dist<margin-gap     (ngeom x 1)",
+          "line": 787
+        },
+        {
+          "name": "geom_fluid",
+          "type": "mjtNum*",
+          "comment": "fluid interaction parameters             (ngeom x mjNFLUID)",
+          "line": 788
+        },
+        {
+          "name": "geom_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (ngeom x nuser_geom)",
+          "line": 789
+        },
+        {
+          "name": "geom_rgba",
+          "type": "float*",
+          "comment": "rgba when material is omitted            (ngeom x 4)",
+          "line": 790
+        },
+        {
+          "name": "site_type",
+          "type": "int*",
+          "comment": "geom type for rendering (mjtGeom)        (nsite x 1)",
+          "line": 793
+        },
+        {
+          "name": "site_bodyid",
+          "type": "int*",
+          "comment": "id of site's body                        (nsite x 1)",
+          "line": 794
+        },
+        {
+          "name": "site_matid",
+          "type": "int*",
+          "comment": "material id for rendering; -1: none      (nsite x 1)",
+          "line": 795
+        },
+        {
+          "name": "site_group",
+          "type": "int*",
+          "comment": "group for visibility                     (nsite x 1)",
+          "line": 796
+        },
+        {
+          "name": "site_sameframe",
+          "type": "mjtByte*",
+          "comment": "same frame as body (mjtSameframe)        (nsite x 1)",
+          "line": 797
+        },
+        {
+          "name": "site_size",
+          "type": "mjtNum*",
+          "comment": "geom size for rendering                  (nsite x 3)",
+          "line": 798
+        },
+        {
+          "name": "site_pos",
+          "type": "mjtNum*",
+          "comment": "local position offset rel. to body       (nsite x 3)",
+          "line": 799
+        },
+        {
+          "name": "site_quat",
+          "type": "mjtNum*",
+          "comment": "local orientation offset rel. to body    (nsite x 4)",
+          "line": 800
+        },
+        {
+          "name": "site_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (nsite x nuser_site)",
+          "line": 801
+        },
+        {
+          "name": "site_rgba",
+          "type": "float*",
+          "comment": "rgba when material is omitted            (nsite x 4)",
+          "line": 802
+        },
+        {
+          "name": "cam_mode",
+          "type": "int*",
+          "comment": "camera tracking mode (mjtCamLight)       (ncam x 1)",
+          "line": 805
+        },
+        {
+          "name": "cam_bodyid",
+          "type": "int*",
+          "comment": "id of camera's body                      (ncam x 1)",
+          "line": 806
+        },
+        {
+          "name": "cam_targetbodyid",
+          "type": "int*",
+          "comment": "id of targeted body; -1: none            (ncam x 1)",
+          "line": 807
+        },
+        {
+          "name": "cam_pos",
+          "type": "mjtNum*",
+          "comment": "position rel. to body frame              (ncam x 3)",
+          "line": 808
+        },
+        {
+          "name": "cam_quat",
+          "type": "mjtNum*",
+          "comment": "orientation rel. to body frame           (ncam x 4)",
+          "line": 809
+        },
+        {
+          "name": "cam_poscom0",
+          "type": "mjtNum*",
+          "comment": "global position rel. to sub-com in qpos0 (ncam x 3)",
+          "line": 810
+        },
+        {
+          "name": "cam_pos0",
+          "type": "mjtNum*",
+          "comment": "global position rel. to body in qpos0    (ncam x 3)",
+          "line": 811
+        },
+        {
+          "name": "cam_mat0",
+          "type": "mjtNum*",
+          "comment": "global orientation in qpos0              (ncam x 9)",
+          "line": 812
+        },
+        {
+          "name": "cam_orthographic",
+          "type": "int*",
+          "comment": "orthographic camera; 0: no, 1: yes       (ncam x 1)",
+          "line": 813
+        },
+        {
+          "name": "cam_fovy",
+          "type": "mjtNum*",
+          "comment": "y field-of-view (ortho ? len : deg)      (ncam x 1)",
+          "line": 814
+        },
+        {
+          "name": "cam_ipd",
+          "type": "mjtNum*",
+          "comment": "inter-pupilary distance                  (ncam x 1)",
+          "line": 815
+        },
+        {
+          "name": "cam_resolution",
+          "type": "int*",
+          "comment": "resolution: pixels [width, height]       (ncam x 2)",
+          "line": 816
+        },
+        {
+          "name": "cam_sensorsize",
+          "type": "float*",
+          "comment": "sensor size: length [width, height]      (ncam x 2)",
+          "line": 817
+        },
+        {
+          "name": "cam_intrinsic",
+          "type": "float*",
+          "comment": "[focal length; principal point]          (ncam x 4)",
+          "line": 818
+        },
+        {
+          "name": "cam_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (ncam x nuser_cam)",
+          "line": 819
+        },
+        {
+          "name": "light_mode",
+          "type": "int*",
+          "comment": "light tracking mode (mjtCamLight)        (nlight x 1)",
+          "line": 822
+        },
+        {
+          "name": "light_bodyid",
+          "type": "int*",
+          "comment": "id of light's body                       (nlight x 1)",
+          "line": 823
+        },
+        {
+          "name": "light_targetbodyid",
+          "type": "int*",
+          "comment": "id of targeted body; -1: none            (nlight x 1)",
+          "line": 824
+        },
+        {
+          "name": "light_directional",
+          "type": "mjtByte*",
+          "comment": "directional light                        (nlight x 1)",
+          "line": 825
+        },
+        {
+          "name": "light_castshadow",
+          "type": "mjtByte*",
+          "comment": "does light cast shadows                  (nlight x 1)",
+          "line": 826
+        },
+        {
+          "name": "light_bulbradius",
+          "type": "float*",
+          "comment": "light radius for soft shadows            (nlight x 1)",
+          "line": 827
+        },
+        {
+          "name": "light_active",
+          "type": "mjtByte*",
+          "comment": "is light on                              (nlight x 1)",
+          "line": 828
+        },
+        {
+          "name": "light_pos",
+          "type": "mjtNum*",
+          "comment": "position rel. to body frame              (nlight x 3)",
+          "line": 829
+        },
+        {
+          "name": "light_dir",
+          "type": "mjtNum*",
+          "comment": "direction rel. to body frame             (nlight x 3)",
+          "line": 830
+        },
+        {
+          "name": "light_poscom0",
+          "type": "mjtNum*",
+          "comment": "global position rel. to sub-com in qpos0 (nlight x 3)",
+          "line": 831
+        },
+        {
+          "name": "light_pos0",
+          "type": "mjtNum*",
+          "comment": "global position rel. to body in qpos0    (nlight x 3)",
+          "line": 832
+        },
+        {
+          "name": "light_dir0",
+          "type": "mjtNum*",
+          "comment": "global direction in qpos0                (nlight x 3)",
+          "line": 833
+        },
+        {
+          "name": "light_attenuation",
+          "type": "float*",
+          "comment": "OpenGL attenuation (quadratic model)     (nlight x 3)",
+          "line": 834
+        },
+        {
+          "name": "light_cutoff",
+          "type": "float*",
+          "comment": "OpenGL cutoff                            (nlight x 1)",
+          "line": 835
+        },
+        {
+          "name": "light_exponent",
+          "type": "float*",
+          "comment": "OpenGL exponent                          (nlight x 1)",
+          "line": 836
+        },
+        {
+          "name": "light_ambient",
+          "type": "float*",
+          "comment": "ambient rgb (alpha=1)                    (nlight x 3)",
+          "line": 837
+        },
+        {
+          "name": "light_diffuse",
+          "type": "float*",
+          "comment": "diffuse rgb (alpha=1)                    (nlight x 3)",
+          "line": 838
+        },
+        {
+          "name": "light_specular",
+          "type": "float*",
+          "comment": "specular rgb (alpha=1)                   (nlight x 3)",
+          "line": 839
+        },
+        {
+          "name": "flex_contype",
+          "type": "int*",
+          "comment": "flex contact type                        (nflex x 1)",
+          "line": 842
+        },
+        {
+          "name": "flex_conaffinity",
+          "type": "int*",
+          "comment": "flex contact affinity                    (nflex x 1)",
+          "line": 843
+        },
+        {
+          "name": "flex_condim",
+          "type": "int*",
+          "comment": "contact dimensionality (1, 3, 4, 6)      (nflex x 1)",
+          "line": 844
+        },
+        {
+          "name": "flex_priority",
+          "type": "int*",
+          "comment": "flex contact priority                    (nflex x 1)",
+          "line": 845
+        },
+        {
+          "name": "flex_solmix",
+          "type": "mjtNum*",
+          "comment": "mix coef for solref/imp in contact pair  (nflex x 1)",
+          "line": 846
+        },
+        {
+          "name": "flex_solref",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference: contact     (nflex x mjNREF)",
+          "line": 847
+        },
+        {
+          "name": "flex_solimp",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance: contact     (nflex x mjNIMP)",
+          "line": 848
+        },
+        {
+          "name": "flex_friction",
+          "type": "mjtNum*",
+          "comment": "friction for (slide, spin, roll)         (nflex x 3)",
+          "line": 849
+        },
+        {
+          "name": "flex_margin",
+          "type": "mjtNum*",
+          "comment": "detect contact if dist<margin            (nflex x 1)",
+          "line": 850
+        },
+        {
+          "name": "flex_gap",
+          "type": "mjtNum*",
+          "comment": "include in solver if dist<margin-gap     (nflex x 1)",
+          "line": 851
+        },
+        {
+          "name": "flex_internal",
+          "type": "mjtByte*",
+          "comment": "internal flex collision enabled          (nflex x 1)",
+          "line": 852
+        },
+        {
+          "name": "flex_selfcollide",
+          "type": "int*",
+          "comment": "self collision mode (mjtFlexSelf)        (nflex x 1)",
+          "line": 853
+        },
+        {
+          "name": "flex_activelayers",
+          "type": "int*",
+          "comment": "number of active element layers, 3D only (nflex x 1)",
+          "line": 854
+        },
+        {
+          "name": "flex_dim",
+          "type": "int*",
+          "comment": "1: lines, 2: triangles, 3: tetrahedra    (nflex x 1)",
+          "line": 857
+        },
+        {
+          "name": "flex_matid",
+          "type": "int*",
+          "comment": "material id for rendering                (nflex x 1)",
+          "line": 858
+        },
+        {
+          "name": "flex_group",
+          "type": "int*",
+          "comment": "group for visibility                     (nflex x 1)",
+          "line": 859
+        },
+        {
+          "name": "flex_vertadr",
+          "type": "int*",
+          "comment": "first vertex address                     (nflex x 1)",
+          "line": 860
+        },
+        {
+          "name": "flex_vertnum",
+          "type": "int*",
+          "comment": "number of vertices                       (nflex x 1)",
+          "line": 861
+        },
+        {
+          "name": "flex_edgeadr",
+          "type": "int*",
+          "comment": "first edge address                       (nflex x 1)",
+          "line": 862
+        },
+        {
+          "name": "flex_edgenum",
+          "type": "int*",
+          "comment": "number of edges                          (nflex x 1)",
+          "line": 863
+        },
+        {
+          "name": "flex_elemadr",
+          "type": "int*",
+          "comment": "first element address                    (nflex x 1)",
+          "line": 864
+        },
+        {
+          "name": "flex_elemnum",
+          "type": "int*",
+          "comment": "number of elements                       (nflex x 1)",
+          "line": 865
+        },
+        {
+          "name": "flex_elemdataadr",
+          "type": "int*",
+          "comment": "first element vertex id address          (nflex x 1)",
+          "line": 866
+        },
+        {
+          "name": "flex_elemedgeadr",
+          "type": "int*",
+          "comment": "first element edge id address            (nflex x 1)",
+          "line": 867
+        },
+        {
+          "name": "flex_shellnum",
+          "type": "int*",
+          "comment": "number of shells                         (nflex x 1)",
+          "line": 868
+        },
+        {
+          "name": "flex_shelldataadr",
+          "type": "int*",
+          "comment": "first shell data address                 (nflex x 1)",
+          "line": 869
+        },
+        {
+          "name": "flex_evpairadr",
+          "type": "int*",
+          "comment": "first evpair address                     (nflex x 1)",
+          "line": 870
+        },
+        {
+          "name": "flex_evpairnum",
+          "type": "int*",
+          "comment": "number of evpairs                        (nflex x 1)",
+          "line": 871
+        },
+        {
+          "name": "flex_texcoordadr",
+          "type": "int*",
+          "comment": "address in flex_texcoord; -1: none       (nflex x 1)",
+          "line": 872
+        },
+        {
+          "name": "flex_vertbodyid",
+          "type": "int*",
+          "comment": "vertex body ids                          (nflexvert x 1)",
+          "line": 873
+        },
+        {
+          "name": "flex_edge",
+          "type": "int*",
+          "comment": "edge vertex ids (2 per edge)             (nflexedge x 2)",
+          "line": 874
+        },
+        {
+          "name": "flex_elem",
+          "type": "int*",
+          "comment": "element vertex ids (dim+1 per elem)      (nflexelemdata x 1)",
+          "line": 875
+        },
+        {
+          "name": "flex_elemedge",
+          "type": "int*",
+          "comment": "element edge ids                         (nflexelemedge x 1)",
+          "line": 876
+        },
+        {
+          "name": "flex_elemlayer",
+          "type": "int*",
+          "comment": "element distance from surface, 3D only   (nflexelem x 1)",
+          "line": 877
+        },
+        {
+          "name": "flex_shell",
+          "type": "int*",
+          "comment": "shell fragment vertex ids (dim per frag) (nflexshelldata x 1)",
+          "line": 878
+        },
+        {
+          "name": "flex_evpair",
+          "type": "int*",
+          "comment": "(element, vertex) collision pairs        (nflexevpair x 2)",
+          "line": 879
+        },
+        {
+          "name": "flex_vert",
+          "type": "mjtNum*",
+          "comment": "vertex positions in local body frames    (nflexvert x 3)",
+          "line": 880
+        },
+        {
+          "name": "flex_vert0",
+          "type": "mjtNum*",
+          "comment": "vertex positions in qpos0 on [0, 1]^d    (nflexvert x 3)",
+          "line": 881
+        },
+        {
+          "name": "flexedge_length0",
+          "type": "mjtNum*",
+          "comment": "edge lengths in qpos0                    (nflexedge x 1)",
+          "line": 882
+        },
+        {
+          "name": "flexedge_invweight0",
+          "type": "mjtNum*",
+          "comment": "edge inv. weight in qpos0                (nflexedge x 1)",
+          "line": 883
+        },
+        {
+          "name": "flex_radius",
+          "type": "mjtNum*",
+          "comment": "radius around primitive element          (nflex x 1)",
+          "line": 884
+        },
+        {
+          "name": "flex_stiffness",
+          "type": "mjtNum*",
+          "comment": "finite element stiffness matrix          (nflexelem x 21)",
+          "line": 885
+        },
+        {
+          "name": "flex_damping",
+          "type": "mjtNum*",
+          "comment": "Rayleigh's damping coefficient           (nflex x 1)",
+          "line": 886
+        },
+        {
+          "name": "flex_edgestiffness",
+          "type": "mjtNum*",
+          "comment": "edge stiffness                           (nflex x 1)",
+          "line": 887
+        },
+        {
+          "name": "flex_edgedamping",
+          "type": "mjtNum*",
+          "comment": "edge damping                             (nflex x 1)",
+          "line": 888
+        },
+        {
+          "name": "flex_edgeequality",
+          "type": "mjtByte*",
+          "comment": "is edge equality constraint defined      (nflex x 1)",
+          "line": 889
+        },
+        {
+          "name": "flex_rigid",
+          "type": "mjtByte*",
+          "comment": "are all verices in the same body         (nflex x 1)",
+          "line": 890
+        },
+        {
+          "name": "flexedge_rigid",
+          "type": "mjtByte*",
+          "comment": "are both edge vertices in same body      (nflexedge x 1)",
+          "line": 891
+        },
+        {
+          "name": "flex_centered",
+          "type": "mjtByte*",
+          "comment": "are all vertex coordinates (0,0,0)       (nflex x 1)",
+          "line": 892
+        },
+        {
+          "name": "flex_flatskin",
+          "type": "mjtByte*",
+          "comment": "render flex skin with flat shading       (nflex x 1)",
+          "line": 893
+        },
+        {
+          "name": "flex_bvhadr",
+          "type": "int*",
+          "comment": "address of bvh root; -1: no bvh          (nflex x 1)",
+          "line": 894
+        },
+        {
+          "name": "flex_bvhnum",
+          "type": "int*",
+          "comment": "number of bounding volumes               (nflex x 1)",
+          "line": 895
+        },
+        {
+          "name": "flex_rgba",
+          "type": "float*",
+          "comment": "rgba when material is omitted            (nflex x 4)",
+          "line": 896
+        },
+        {
+          "name": "flex_texcoord",
+          "type": "float*",
+          "comment": "vertex texture coordinates               (nflextexcoord x 2)",
+          "line": 897
+        },
+        {
+          "name": "mesh_vertadr",
+          "type": "int*",
+          "comment": "first vertex address                     (nmesh x 1)",
+          "line": 900
+        },
+        {
+          "name": "mesh_vertnum",
+          "type": "int*",
+          "comment": "number of vertices                       (nmesh x 1)",
+          "line": 901
+        },
+        {
+          "name": "mesh_faceadr",
+          "type": "int*",
+          "comment": "first face address                       (nmesh x 1)",
+          "line": 902
+        },
+        {
+          "name": "mesh_facenum",
+          "type": "int*",
+          "comment": "number of faces                          (nmesh x 1)",
+          "line": 903
+        },
+        {
+          "name": "mesh_bvhadr",
+          "type": "int*",
+          "comment": "address of bvh root                      (nmesh x 1)",
+          "line": 904
+        },
+        {
+          "name": "mesh_bvhnum",
+          "type": "int*",
+          "comment": "number of bvh                            (nmesh x 1)",
+          "line": 905
+        },
+        {
+          "name": "mesh_normaladr",
+          "type": "int*",
+          "comment": "first normal address                     (nmesh x 1)",
+          "line": 906
+        },
+        {
+          "name": "mesh_normalnum",
+          "type": "int*",
+          "comment": "number of normals                        (nmesh x 1)",
+          "line": 907
+        },
+        {
+          "name": "mesh_texcoordadr",
+          "type": "int*",
+          "comment": "texcoord data address; -1: no texcoord   (nmesh x 1)",
+          "line": 908
+        },
+        {
+          "name": "mesh_texcoordnum",
+          "type": "int*",
+          "comment": "number of texcoord                       (nmesh x 1)",
+          "line": 909
+        },
+        {
+          "name": "mesh_graphadr",
+          "type": "int*",
+          "comment": "graph data address; -1: no graph         (nmesh x 1)",
+          "line": 910
+        },
+        {
+          "name": "mesh_vert",
+          "type": "float*",
+          "comment": "vertex positions for all meshes          (nmeshvert x 3)",
+          "line": 911
+        },
+        {
+          "name": "mesh_normal",
+          "type": "float*",
+          "comment": "normals for all meshes                   (nmeshnormal x 3)",
+          "line": 912
+        },
+        {
+          "name": "mesh_texcoord",
+          "type": "float*",
+          "comment": "vertex texcoords for all meshes          (nmeshtexcoord x 2)",
+          "line": 913
+        },
+        {
+          "name": "mesh_face",
+          "type": "int*",
+          "comment": "vertex face data                         (nmeshface x 3)",
+          "line": 914
+        },
+        {
+          "name": "mesh_facenormal",
+          "type": "int*",
+          "comment": "normal face data                         (nmeshface x 3)",
+          "line": 915
+        },
+        {
+          "name": "mesh_facetexcoord",
+          "type": "int*",
+          "comment": "texture face data                        (nmeshface x 3)",
+          "line": 916
+        },
+        {
+          "name": "mesh_graph",
+          "type": "int*",
+          "comment": "convex graph data                        (nmeshgraph x 1)",
+          "line": 917
+        },
+        {
+          "name": "mesh_scale",
+          "type": "mjtNum*",
+          "comment": "scaling applied to asset vertices        (nmesh x 3)",
+          "line": 918
+        },
+        {
+          "name": "mesh_pos",
+          "type": "mjtNum*",
+          "comment": "translation applied to asset vertices    (nmesh x 3)",
+          "line": 919
+        },
+        {
+          "name": "mesh_quat",
+          "type": "mjtNum*",
+          "comment": "rotation applied to asset vertices       (nmesh x 4)",
+          "line": 920
+        },
+        {
+          "name": "mesh_pathadr",
+          "type": "int*",
+          "comment": "address of asset path for mesh; -1: none (nmesh x 1)",
+          "line": 921
+        },
+        {
+          "name": "skin_matid",
+          "type": "int*",
+          "comment": "skin material id; -1: none               (nskin x 1)",
+          "line": 924
+        },
+        {
+          "name": "skin_group",
+          "type": "int*",
+          "comment": "group for visibility                     (nskin x 1)",
+          "line": 925
+        },
+        {
+          "name": "skin_rgba",
+          "type": "float*",
+          "comment": "skin rgba                                (nskin x 4)",
+          "line": 926
+        },
+        {
+          "name": "skin_inflate",
+          "type": "float*",
+          "comment": "inflate skin in normal direction         (nskin x 1)",
+          "line": 927
+        },
+        {
+          "name": "skin_vertadr",
+          "type": "int*",
+          "comment": "first vertex address                     (nskin x 1)",
+          "line": 928
+        },
+        {
+          "name": "skin_vertnum",
+          "type": "int*",
+          "comment": "number of vertices                       (nskin x 1)",
+          "line": 929
+        },
+        {
+          "name": "skin_texcoordadr",
+          "type": "int*",
+          "comment": "texcoord data address; -1: no texcoord   (nskin x 1)",
+          "line": 930
+        },
+        {
+          "name": "skin_faceadr",
+          "type": "int*",
+          "comment": "first face address                       (nskin x 1)",
+          "line": 931
+        },
+        {
+          "name": "skin_facenum",
+          "type": "int*",
+          "comment": "number of faces                          (nskin x 1)",
+          "line": 932
+        },
+        {
+          "name": "skin_boneadr",
+          "type": "int*",
+          "comment": "first bone in skin                       (nskin x 1)",
+          "line": 933
+        },
+        {
+          "name": "skin_bonenum",
+          "type": "int*",
+          "comment": "number of bones in skin                  (nskin x 1)",
+          "line": 934
+        },
+        {
+          "name": "skin_vert",
+          "type": "float*",
+          "comment": "vertex positions for all skin meshes     (nskinvert x 3)",
+          "line": 935
+        },
+        {
+          "name": "skin_texcoord",
+          "type": "float*",
+          "comment": "vertex texcoords for all skin meshes     (nskintexvert x 2)",
+          "line": 936
+        },
+        {
+          "name": "skin_face",
+          "type": "int*",
+          "comment": "triangle faces for all skin meshes       (nskinface x 3)",
+          "line": 937
+        },
+        {
+          "name": "skin_bonevertadr",
+          "type": "int*",
+          "comment": "first vertex in each bone                (nskinbone x 1)",
+          "line": 938
+        },
+        {
+          "name": "skin_bonevertnum",
+          "type": "int*",
+          "comment": "number of vertices in each bone          (nskinbone x 1)",
+          "line": 939
+        },
+        {
+          "name": "skin_bonebindpos",
+          "type": "float*",
+          "comment": "bind pos of each bone                    (nskinbone x 3)",
+          "line": 940
+        },
+        {
+          "name": "skin_bonebindquat",
+          "type": "float*",
+          "comment": "bind quat of each bone                   (nskinbone x 4)",
+          "line": 941
+        },
+        {
+          "name": "skin_bonebodyid",
+          "type": "int*",
+          "comment": "body id of each bone                     (nskinbone x 1)",
+          "line": 942
+        },
+        {
+          "name": "skin_bonevertid",
+          "type": "int*",
+          "comment": "mesh ids of vertices in each bone        (nskinbonevert x 1)",
+          "line": 943
+        },
+        {
+          "name": "skin_bonevertweight",
+          "type": "float*",
+          "comment": "weights of vertices in each bone         (nskinbonevert x 1)",
+          "line": 944
+        },
+        {
+          "name": "skin_pathadr",
+          "type": "int*",
+          "comment": "address of asset path for skin; -1: none (nskin x 1)",
+          "line": 945
+        },
+        {
+          "name": "hfield_size",
+          "type": "mjtNum*",
+          "comment": "(x, y, z_top, z_bottom)                  (nhfield x 4)",
+          "line": 948
+        },
+        {
+          "name": "hfield_nrow",
+          "type": "int*",
+          "comment": "number of rows in grid                   (nhfield x 1)",
+          "line": 949
+        },
+        {
+          "name": "hfield_ncol",
+          "type": "int*",
+          "comment": "number of columns in grid                (nhfield x 1)",
+          "line": 950
+        },
+        {
+          "name": "hfield_adr",
+          "type": "int*",
+          "comment": "address in hfield_data                   (nhfield x 1)",
+          "line": 951
+        },
+        {
+          "name": "hfield_data",
+          "type": "float*",
+          "comment": "elevation data                           (nhfielddata x 1)",
+          "line": 952
+        },
+        {
+          "name": "hfield_pathadr",
+          "type": "int*",
+          "comment": "address of hfield asset path; -1: none   (nhfield x 1)",
+          "line": 953
+        },
+        {
+          "name": "tex_type",
+          "type": "int*",
+          "comment": "texture type (mjtTexture)                (ntex x 1)",
+          "line": 956
+        },
+        {
+          "name": "tex_height",
+          "type": "int*",
+          "comment": "number of rows in texture image          (ntex x 1)",
+          "line": 957
+        },
+        {
+          "name": "tex_width",
+          "type": "int*",
+          "comment": "number of columns in texture image       (ntex x 1)",
+          "line": 958
+        },
+        {
+          "name": "tex_nchannel",
+          "type": "int*",
+          "comment": "number of channels in texture image      (ntex x 1)",
+          "line": 959
+        },
+        {
+          "name": "tex_adr",
+          "type": "int*",
+          "comment": "start address in tex_data                (ntex x 1)",
+          "line": 960
+        },
+        {
+          "name": "tex_data",
+          "type": "mjtByte*",
+          "comment": "pixel values                             (ntexdata x 1)",
+          "line": 961
+        },
+        {
+          "name": "tex_pathadr",
+          "type": "int*",
+          "comment": "address of texture asset path; -1: none  (ntex x 1)",
+          "line": 962
+        },
+        {
+          "name": "mat_texid",
+          "type": "int*",
+          "comment": "indices of textures; -1: none            (nmat x mjNTEXROLE)",
+          "line": 965
+        },
+        {
+          "name": "mat_texuniform",
+          "type": "mjtByte*",
+          "comment": "make texture cube uniform                (nmat x 1)",
+          "line": 966
+        },
+        {
+          "name": "mat_texrepeat",
+          "type": "float*",
+          "comment": "texture repetition for 2d mapping        (nmat x 2)",
+          "line": 967
+        },
+        {
+          "name": "mat_emission",
+          "type": "float*",
+          "comment": "emission (x rgb)                         (nmat x 1)",
+          "line": 968
+        },
+        {
+          "name": "mat_specular",
+          "type": "float*",
+          "comment": "specular (x white)                       (nmat x 1)",
+          "line": 969
+        },
+        {
+          "name": "mat_shininess",
+          "type": "float*",
+          "comment": "shininess coef                           (nmat x 1)",
+          "line": 970
+        },
+        {
+          "name": "mat_reflectance",
+          "type": "float*",
+          "comment": "reflectance (0: disable)                 (nmat x 1)",
+          "line": 971
+        },
+        {
+          "name": "mat_metallic",
+          "type": "float*",
+          "comment": "metallic coef                            (nmat x 1)",
+          "line": 972
+        },
+        {
+          "name": "mat_roughness",
+          "type": "float*",
+          "comment": "roughness coef                           (nmat x 1)",
+          "line": 973
+        },
+        {
+          "name": "mat_rgba",
+          "type": "float*",
+          "comment": "rgba                                     (nmat x 4)",
+          "line": 974
+        },
+        {
+          "name": "pair_dim",
+          "type": "int*",
+          "comment": "contact dimensionality                   (npair x 1)",
+          "line": 977
+        },
+        {
+          "name": "pair_geom1",
+          "type": "int*",
+          "comment": "id of geom1                              (npair x 1)",
+          "line": 978
+        },
+        {
+          "name": "pair_geom2",
+          "type": "int*",
+          "comment": "id of geom2                              (npair x 1)",
+          "line": 979
+        },
+        {
+          "name": "pair_signature",
+          "type": "int*",
+          "comment": "body1 << 16 + body2                      (npair x 1)",
+          "line": 980
+        },
+        {
+          "name": "pair_solref",
+          "type": "mjtNum*",
+          "comment": "solver reference: contact normal         (npair x mjNREF)",
+          "line": 981
+        },
+        {
+          "name": "pair_solreffriction",
+          "type": "mjtNum*",
+          "comment": "solver reference: contact friction       (npair x mjNREF)",
+          "line": 982
+        },
+        {
+          "name": "pair_solimp",
+          "type": "mjtNum*",
+          "comment": "solver impedance: contact                (npair x mjNIMP)",
+          "line": 983
+        },
+        {
+          "name": "pair_margin",
+          "type": "mjtNum*",
+          "comment": "detect contact if dist<margin            (npair x 1)",
+          "line": 984
+        },
+        {
+          "name": "pair_gap",
+          "type": "mjtNum*",
+          "comment": "include in solver if dist<margin-gap     (npair x 1)",
+          "line": 985
+        },
+        {
+          "name": "pair_friction",
+          "type": "mjtNum*",
+          "comment": "tangent1, 2, spin, roll1, 2              (npair x 5)",
+          "line": 986
+        },
+        {
+          "name": "exclude_signature",
+          "type": "int*",
+          "comment": "body1 << 16 + body2                      (nexclude x 1)",
+          "line": 989
+        },
+        {
+          "name": "eq_type",
+          "type": "int*",
+          "comment": "constraint type (mjtEq)                  (neq x 1)",
+          "line": 992
+        },
+        {
+          "name": "eq_obj1id",
+          "type": "int*",
+          "comment": "id of object 1                           (neq x 1)",
+          "line": 993
+        },
+        {
+          "name": "eq_obj2id",
+          "type": "int*",
+          "comment": "id of object 2                           (neq x 1)",
+          "line": 994
+        },
+        {
+          "name": "eq_objtype",
+          "type": "int*",
+          "comment": "type of both objects (mjtObj)            (neq x 1)",
+          "line": 995
+        },
+        {
+          "name": "eq_active0",
+          "type": "mjtByte*",
+          "comment": "initial enable/disable constraint state  (neq x 1)",
+          "line": 996
+        },
+        {
+          "name": "eq_solref",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference              (neq x mjNREF)",
+          "line": 997
+        },
+        {
+          "name": "eq_solimp",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance              (neq x mjNIMP)",
+          "line": 998
+        },
+        {
+          "name": "eq_data",
+          "type": "mjtNum*",
+          "comment": "numeric data for constraint              (neq x mjNEQDATA)",
+          "line": 999
+        },
+        {
+          "name": "tendon_adr",
+          "type": "int*",
+          "comment": "address of first object in tendon's path (ntendon x 1)",
+          "line": 1002
+        },
+        {
+          "name": "tendon_num",
+          "type": "int*",
+          "comment": "number of objects in tendon's path       (ntendon x 1)",
+          "line": 1003
+        },
+        {
+          "name": "tendon_matid",
+          "type": "int*",
+          "comment": "material id for rendering                (ntendon x 1)",
+          "line": 1004
+        },
+        {
+          "name": "tendon_group",
+          "type": "int*",
+          "comment": "group for visibility                     (ntendon x 1)",
+          "line": 1005
+        },
+        {
+          "name": "tendon_limited",
+          "type": "mjtByte*",
+          "comment": "does tendon have length limits           (ntendon x 1)",
+          "line": 1006
+        },
+        {
+          "name": "tendon_width",
+          "type": "mjtNum*",
+          "comment": "width for rendering                      (ntendon x 1)",
+          "line": 1007
+        },
+        {
+          "name": "tendon_solref_lim",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference: limit       (ntendon x mjNREF)",
+          "line": 1008
+        },
+        {
+          "name": "tendon_solimp_lim",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance: limit       (ntendon x mjNIMP)",
+          "line": 1009
+        },
+        {
+          "name": "tendon_solref_fri",
+          "type": "mjtNum*",
+          "comment": "constraint solver reference: friction    (ntendon x mjNREF)",
+          "line": 1010
+        },
+        {
+          "name": "tendon_solimp_fri",
+          "type": "mjtNum*",
+          "comment": "constraint solver impedance: friction    (ntendon x mjNIMP)",
+          "line": 1011
+        },
+        {
+          "name": "tendon_range",
+          "type": "mjtNum*",
+          "comment": "tendon length limits                     (ntendon x 2)",
+          "line": 1012
+        },
+        {
+          "name": "tendon_margin",
+          "type": "mjtNum*",
+          "comment": "min distance for limit detection         (ntendon x 1)",
+          "line": 1013
+        },
+        {
+          "name": "tendon_stiffness",
+          "type": "mjtNum*",
+          "comment": "stiffness coefficient                    (ntendon x 1)",
+          "line": 1014
+        },
+        {
+          "name": "tendon_damping",
+          "type": "mjtNum*",
+          "comment": "damping coefficient                      (ntendon x 1)",
+          "line": 1015
+        },
+        {
+          "name": "tendon_frictionloss",
+          "type": "mjtNum*",
+          "comment": "loss due to friction                     (ntendon x 1)",
+          "line": 1016
+        },
+        {
+          "name": "tendon_lengthspring",
+          "type": "mjtNum*",
+          "comment": "spring resting length range              (ntendon x 2)",
+          "line": 1017
+        },
+        {
+          "name": "tendon_length0",
+          "type": "mjtNum*",
+          "comment": "tendon length in qpos0                   (ntendon x 1)",
+          "line": 1018
+        },
+        {
+          "name": "tendon_invweight0",
+          "type": "mjtNum*",
+          "comment": "inv. weight in qpos0                     (ntendon x 1)",
+          "line": 1019
+        },
+        {
+          "name": "tendon_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (ntendon x nuser_tendon)",
+          "line": 1020
+        },
+        {
+          "name": "tendon_rgba",
+          "type": "float*",
+          "comment": "rgba when material is omitted            (ntendon x 4)",
+          "line": 1021
+        },
+        {
+          "name": "wrap_type",
+          "type": "int*",
+          "comment": "wrap object type (mjtWrap)               (nwrap x 1)",
+          "line": 1024
+        },
+        {
+          "name": "wrap_objid",
+          "type": "int*",
+          "comment": "object id: geom, site, joint             (nwrap x 1)",
+          "line": 1025
+        },
+        {
+          "name": "wrap_prm",
+          "type": "mjtNum*",
+          "comment": "divisor, joint coef, or site id          (nwrap x 1)",
+          "line": 1026
+        },
+        {
+          "name": "actuator_trntype",
+          "type": "int*",
+          "comment": "transmission type (mjtTrn)               (nu x 1)",
+          "line": 1029
+        },
+        {
+          "name": "actuator_dyntype",
+          "type": "int*",
+          "comment": "dynamics type (mjtDyn)                   (nu x 1)",
+          "line": 1030
+        },
+        {
+          "name": "actuator_gaintype",
+          "type": "int*",
+          "comment": "gain type (mjtGain)                      (nu x 1)",
+          "line": 1031
+        },
+        {
+          "name": "actuator_biastype",
+          "type": "int*",
+          "comment": "bias type (mjtBias)                      (nu x 1)",
+          "line": 1032
+        },
+        {
+          "name": "actuator_trnid",
+          "type": "int*",
+          "comment": "transmission id: joint, tendon, site     (nu x 2)",
+          "line": 1033
+        },
+        {
+          "name": "actuator_actadr",
+          "type": "int*",
+          "comment": "first activation address; -1: stateless  (nu x 1)",
+          "line": 1034
+        },
+        {
+          "name": "actuator_actnum",
+          "type": "int*",
+          "comment": "number of activation variables           (nu x 1)",
+          "line": 1035
+        },
+        {
+          "name": "actuator_group",
+          "type": "int*",
+          "comment": "group for visibility                     (nu x 1)",
+          "line": 1036
+        },
+        {
+          "name": "actuator_ctrllimited",
+          "type": "mjtByte*",
+          "comment": "is control limited                       (nu x 1)",
+          "line": 1037
+        },
+        {
+          "name": "actuator_forcelimited",
+          "type": "mjtByte*",
+          "comment": "is force limited                         (nu x 1)",
+          "line": 1038
+        },
+        {
+          "name": "actuator_actlimited",
+          "type": "mjtByte*",
+          "comment": "is activation limited                    (nu x 1)",
+          "line": 1039
+        },
+        {
+          "name": "actuator_dynprm",
+          "type": "mjtNum*",
+          "comment": "dynamics parameters                      (nu x mjNDYN)",
+          "line": 1040
+        },
+        {
+          "name": "actuator_gainprm",
+          "type": "mjtNum*",
+          "comment": "gain parameters                          (nu x mjNGAIN)",
+          "line": 1041
+        },
+        {
+          "name": "actuator_biasprm",
+          "type": "mjtNum*",
+          "comment": "bias parameters                          (nu x mjNBIAS)",
+          "line": 1042
+        },
+        {
+          "name": "actuator_actearly",
+          "type": "mjtByte*",
+          "comment": "step activation before force             (nu x 1)",
+          "line": 1043
+        },
+        {
+          "name": "actuator_ctrlrange",
+          "type": "mjtNum*",
+          "comment": "range of controls                        (nu x 2)",
+          "line": 1044
+        },
+        {
+          "name": "actuator_forcerange",
+          "type": "mjtNum*",
+          "comment": "range of forces                          (nu x 2)",
+          "line": 1045
+        },
+        {
+          "name": "actuator_actrange",
+          "type": "mjtNum*",
+          "comment": "range of activations                     (nu x 2)",
+          "line": 1046
+        },
+        {
+          "name": "actuator_gear",
+          "type": "mjtNum*",
+          "comment": "scale length and transmitted force       (nu x 6)",
+          "line": 1047
+        },
+        {
+          "name": "actuator_cranklength",
+          "type": "mjtNum*",
+          "comment": "crank length for slider-crank            (nu x 1)",
+          "line": 1048
+        },
+        {
+          "name": "actuator_acc0",
+          "type": "mjtNum*",
+          "comment": "acceleration from unit force in qpos0    (nu x 1)",
+          "line": 1049
+        },
+        {
+          "name": "actuator_length0",
+          "type": "mjtNum*",
+          "comment": "actuator length in qpos0                 (nu x 1)",
+          "line": 1050
+        },
+        {
+          "name": "actuator_lengthrange",
+          "type": "mjtNum*",
+          "comment": "feasible actuator length range           (nu x 2)",
+          "line": 1051
+        },
+        {
+          "name": "actuator_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (nu x nuser_actuator)",
+          "line": 1052
+        },
+        {
+          "name": "actuator_plugin",
+          "type": "int*",
+          "comment": "plugin instance id; -1: not a plugin     (nu x 1)",
+          "line": 1053
+        },
+        {
+          "name": "sensor_type",
+          "type": "int*",
+          "comment": "sensor type (mjtSensor)                  (nsensor x 1)",
+          "line": 1056
+        },
+        {
+          "name": "sensor_datatype",
+          "type": "int*",
+          "comment": "numeric data type (mjtDataType)          (nsensor x 1)",
+          "line": 1057
+        },
+        {
+          "name": "sensor_needstage",
+          "type": "int*",
+          "comment": "required compute stage (mjtStage)        (nsensor x 1)",
+          "line": 1058
+        },
+        {
+          "name": "sensor_objtype",
+          "type": "int*",
+          "comment": "type of sensorized object (mjtObj)       (nsensor x 1)",
+          "line": 1059
+        },
+        {
+          "name": "sensor_objid",
+          "type": "int*",
+          "comment": "id of sensorized object                  (nsensor x 1)",
+          "line": 1060
+        },
+        {
+          "name": "sensor_reftype",
+          "type": "int*",
+          "comment": "type of reference frame (mjtObj)         (nsensor x 1)",
+          "line": 1061
+        },
+        {
+          "name": "sensor_refid",
+          "type": "int*",
+          "comment": "id of reference frame; -1: global frame  (nsensor x 1)",
+          "line": 1062
+        },
+        {
+          "name": "sensor_dim",
+          "type": "int*",
+          "comment": "number of scalar outputs                 (nsensor x 1)",
+          "line": 1063
+        },
+        {
+          "name": "sensor_adr",
+          "type": "int*",
+          "comment": "address in sensor array                  (nsensor x 1)",
+          "line": 1064
+        },
+        {
+          "name": "sensor_cutoff",
+          "type": "mjtNum*",
+          "comment": "cutoff for real and positive; 0: ignore  (nsensor x 1)",
+          "line": 1065
+        },
+        {
+          "name": "sensor_noise",
+          "type": "mjtNum*",
+          "comment": "noise standard deviation                 (nsensor x 1)",
+          "line": 1066
+        },
+        {
+          "name": "sensor_user",
+          "type": "mjtNum*",
+          "comment": "user data                                (nsensor x nuser_sensor)",
+          "line": 1067
+        },
+        {
+          "name": "sensor_plugin",
+          "type": "int*",
+          "comment": "plugin instance id; -1: not a plugin     (nsensor x 1)",
+          "line": 1068
+        },
+        {
+          "name": "plugin",
+          "type": "int*",
+          "comment": "globally registered plugin slot number   (nplugin x 1)",
+          "line": 1071
+        },
+        {
+          "name": "plugin_stateadr",
+          "type": "int*",
+          "comment": "address in the plugin state array        (nplugin x 1)",
+          "line": 1072
+        },
+        {
+          "name": "plugin_statenum",
+          "type": "int*",
+          "comment": "number of states in the plugin instance  (nplugin x 1)",
+          "line": 1073
+        },
+        {
+          "name": "plugin_attr",
+          "type": "char*",
+          "comment": "config attributes of plugin instances    (npluginattr x 1)",
+          "line": 1074
+        },
+        {
+          "name": "plugin_attradr",
+          "type": "int*",
+          "comment": "address to each instance's config attrib (nplugin x 1)",
+          "line": 1075
+        },
+        {
+          "name": "numeric_adr",
+          "type": "int*",
+          "comment": "address of field in numeric_data         (nnumeric x 1)",
+          "line": 1078
+        },
+        {
+          "name": "numeric_size",
+          "type": "int*",
+          "comment": "size of numeric field                    (nnumeric x 1)",
+          "line": 1079
+        },
+        {
+          "name": "numeric_data",
+          "type": "mjtNum*",
+          "comment": "array of all numeric fields              (nnumericdata x 1)",
+          "line": 1080
+        },
+        {
+          "name": "text_adr",
+          "type": "int*",
+          "comment": "address of text in text_data             (ntext x 1)",
+          "line": 1083
+        },
+        {
+          "name": "text_size",
+          "type": "int*",
+          "comment": "size of text field (strlen+1)            (ntext x 1)",
+          "line": 1084
+        },
+        {
+          "name": "text_data",
+          "type": "char*",
+          "comment": "array of all text fields (0-terminated)  (ntextdata x 1)",
+          "line": 1085
+        },
+        {
+          "name": "tuple_adr",
+          "type": "int*",
+          "comment": "address of text in text_data             (ntuple x 1)",
+          "line": 1088
+        },
+        {
+          "name": "tuple_size",
+          "type": "int*",
+          "comment": "number of objects in tuple               (ntuple x 1)",
+          "line": 1089
+        },
+        {
+          "name": "tuple_objtype",
+          "type": "int*",
+          "comment": "array of object types in all tuples      (ntupledata x 1)",
+          "line": 1090
+        },
+        {
+          "name": "tuple_objid",
+          "type": "int*",
+          "comment": "array of object ids in all tuples        (ntupledata x 1)",
+          "line": 1091
+        },
+        {
+          "name": "tuple_objprm",
+          "type": "mjtNum*",
+          "comment": "array of object params in all tuples     (ntupledata x 1)",
+          "line": 1092
+        },
+        {
+          "name": "key_time",
+          "type": "mjtNum*",
+          "comment": "key time                                 (nkey x 1)",
+          "line": 1095
+        },
+        {
+          "name": "key_qpos",
+          "type": "mjtNum*",
+          "comment": "key position                             (nkey x nq)",
+          "line": 1096
+        },
+        {
+          "name": "key_qvel",
+          "type": "mjtNum*",
+          "comment": "key velocity                             (nkey x nv)",
+          "line": 1097
+        },
+        {
+          "name": "key_act",
+          "type": "mjtNum*",
+          "comment": "key activation                           (nkey x na)",
+          "line": 1098
+        },
+        {
+          "name": "key_mpos",
+          "type": "mjtNum*",
+          "comment": "key mocap position                       (nkey x nmocap*3)",
+          "line": 1099
+        },
+        {
+          "name": "key_mquat",
+          "type": "mjtNum*",
+          "comment": "key mocap quaternion                     (nkey x nmocap*4)",
+          "line": 1100
+        },
+        {
+          "name": "key_ctrl",
+          "type": "mjtNum*",
+          "comment": "key control                              (nkey x nu)",
+          "line": 1101
+        },
+        {
+          "name": "name_bodyadr",
+          "type": "int*",
+          "comment": "body name pointers                       (nbody x 1)",
+          "line": 1104
+        },
+        {
+          "name": "name_jntadr",
+          "type": "int*",
+          "comment": "joint name pointers                      (njnt x 1)",
+          "line": 1105
+        },
+        {
+          "name": "name_geomadr",
+          "type": "int*",
+          "comment": "geom name pointers                       (ngeom x 1)",
+          "line": 1106
+        },
+        {
+          "name": "name_siteadr",
+          "type": "int*",
+          "comment": "site name pointers                       (nsite x 1)",
+          "line": 1107
+        },
+        {
+          "name": "name_camadr",
+          "type": "int*",
+          "comment": "camera name pointers                     (ncam x 1)",
+          "line": 1108
+        },
+        {
+          "name": "name_lightadr",
+          "type": "int*",
+          "comment": "light name pointers                      (nlight x 1)",
+          "line": 1109
+        },
+        {
+          "name": "name_flexadr",
+          "type": "int*",
+          "comment": "flex name pointers                       (nflex x 1)",
+          "line": 1110
+        },
+        {
+          "name": "name_meshadr",
+          "type": "int*",
+          "comment": "mesh name pointers                       (nmesh x 1)",
+          "line": 1111
+        },
+        {
+          "name": "name_skinadr",
+          "type": "int*",
+          "comment": "skin name pointers                       (nskin x 1)",
+          "line": 1112
+        },
+        {
+          "name": "name_hfieldadr",
+          "type": "int*",
+          "comment": "hfield name pointers                     (nhfield x 1)",
+          "line": 1113
+        },
+        {
+          "name": "name_texadr",
+          "type": "int*",
+          "comment": "texture name pointers                    (ntex x 1)",
+          "line": 1114
+        },
+        {
+          "name": "name_matadr",
+          "type": "int*",
+          "comment": "material name pointers                   (nmat x 1)",
+          "line": 1115
+        },
+        {
+          "name": "name_pairadr",
+          "type": "int*",
+          "comment": "geom pair name pointers                  (npair x 1)",
+          "line": 1116
+        },
+        {
+          "name": "name_excludeadr",
+          "type": "int*",
+          "comment": "exclude name pointers                    (nexclude x 1)",
+          "line": 1117
+        },
+        {
+          "name": "name_eqadr",
+          "type": "int*",
+          "comment": "equality constraint name pointers        (neq x 1)",
+          "line": 1118
+        },
+        {
+          "name": "name_tendonadr",
+          "type": "int*",
+          "comment": "tendon name pointers                     (ntendon x 1)",
+          "line": 1119
+        },
+        {
+          "name": "name_actuatoradr",
+          "type": "int*",
+          "comment": "actuator name pointers                   (nu x 1)",
+          "line": 1120
+        },
+        {
+          "name": "name_sensoradr",
+          "type": "int*",
+          "comment": "sensor name pointers                     (nsensor x 1)",
+          "line": 1121
+        },
+        {
+          "name": "name_numericadr",
+          "type": "int*",
+          "comment": "numeric name pointers                    (nnumeric x 1)",
+          "line": 1122
+        },
+        {
+          "name": "name_textadr",
+          "type": "int*",
+          "comment": "text name pointers                       (ntext x 1)",
+          "line": 1123
+        },
+        {
+          "name": "name_tupleadr",
+          "type": "int*",
+          "comment": "tuple name pointers                      (ntuple x 1)",
+          "line": 1124
+        },
+        {
+          "name": "name_keyadr",
+          "type": "int*",
+          "comment": "keyframe name pointers                   (nkey x 1)",
+          "line": 1125
+        },
+        {
+          "name": "name_pluginadr",
+          "type": "int*",
+          "comment": "plugin instance name pointers            (nplugin x 1)",
+          "line": 1126
+        },
+        {
+          "name": "names",
+          "type": "char*",
+          "comment": "names of all objects, 0-terminated       (nnames x 1)",
+          "line": 1127
+        },
+        {
+          "name": "names_map",
+          "type": "int*",
+          "comment": "internal hash map of names               (nnames_map x 1)",
+          "line": 1128
+        },
+        {
+          "name": "paths",
+          "type": "char*",
+          "comment": "paths to assets, 0-terminated            (npaths x 1)",
+          "line": 1131
+        }
+      ]
+    },
+    "mjData": {
+      "name": "mjData",
+      "fields": [
+        {
+          "name": "narena",
+          "type": "size_t",
+          "comment": "size of the arena in bytes (inclusive of the stack)",
+          "line": 166
+        },
+        {
+          "name": "nbuffer",
+          "type": "size_t",
+          "comment": "size of main buffer in bytes",
+          "line": 167
+        },
+        {
+          "name": "nplugin",
+          "type": "int",
+          "comment": "number of plugin instances",
+          "line": 168
+        },
+        {
+          "name": "pstack",
+          "type": "size_t",
+          "comment": "first available byte in stack",
+          "line": 171
+        },
+        {
+          "name": "pbase",
+          "type": "size_t",
+          "comment": "value of pstack when mj_markStack was last called",
+          "line": 172
+        },
+        {
+          "name": "parena",
+          "type": "size_t",
+          "comment": "first available byte in arena",
+          "line": 175
+        },
+        {
+          "name": "maxuse_stack",
+          "type": "size_t",
+          "comment": "maximum stack allocation in bytes",
+          "line": 178
+        },
+        {
+          "name": "maxuse_threadstack",
+          "type": "size_t",
+          "array": [
+            "mjMAXTHREAD"
+          ],
+          "comment": "maximum stack allocation per thread in bytes",
+          "line": 179
+        },
+        {
+          "name": "maxuse_arena",
+          "type": "size_t",
+          "comment": "maximum arena allocation in bytes",
+          "line": 180
+        },
+        {
+          "name": "maxuse_con",
+          "type": "int",
+          "comment": "maximum number of contacts",
+          "line": 181
+        },
+        {
+          "name": "maxuse_efc",
+          "type": "int",
+          "comment": "maximum number of scalar constraints",
+          "line": 182
+        },
+        {
+          "name": "solver",
+          "type": "mjSolverStat",
+          "array": [
+            "mjNISLAND*mjNSOLVER"
+          ],
+          "comment": "solver statistics per island, per iteration",
+          "line": 185
+        },
+        {
+          "name": "solver_nisland",
+          "type": "int",
+          "comment": "number of islands processed by solver",
+          "line": 186
+        },
+        {
+          "name": "solver_niter",
+          "type": "int",
+          "array": [
+            "mjNISLAND"
+          ],
+          "comment": "number of solver iterations, per island",
+          "line": 187
+        },
+        {
+          "name": "solver_nnz",
+          "type": "int",
+          "array": [
+            "mjNISLAND"
+          ],
+          "comment": "number of nonzeros in Hessian or efc_AR, per island",
+          "line": 188
+        },
+        {
+          "name": "solver_fwdinv",
+          "type": "mjtNum",
+          "array": [
+            "2"
+          ],
+          "comment": "forward-inverse comparison: qfrc, efc",
+          "line": 189
+        },
+        {
+          "name": "warning",
+          "type": "mjWarningStat",
+          "array": [
+            "mjNWARNING"
+          ],
+          "comment": "warning statistics",
+          "line": 192
+        },
+        {
+          "name": "timer",
+          "type": "mjTimerStat",
+          "array": [
+            "mjNTIMER"
+          ],
+          "comment": "timer statistics",
+          "line": 193
+        },
+        {
+          "name": "ncon",
+          "type": "int",
+          "comment": "number of detected contacts",
+          "line": 196
+        },
+        {
+          "name": "ne",
+          "type": "int",
+          "comment": "number of equality constraints",
+          "line": 197
+        },
+        {
+          "name": "nf",
+          "type": "int",
+          "comment": "number of friction constraints",
+          "line": 198
+        },
+        {
+          "name": "nl",
+          "type": "int",
+          "comment": "number of limit constraints",
+          "line": 199
+        },
+        {
+          "name": "nefc",
+          "type": "int",
+          "comment": "number of constraints",
+          "line": 200
+        },
+        {
+          "name": "nJ",
+          "type": "int",
+          "comment": "number of non-zeros in constraint Jacobian",
+          "line": 201
+        },
+        {
+          "name": "nisland",
+          "type": "int",
+          "comment": "number of detected constraint islands",
+          "line": 202
+        },
+        {
+          "name": "time",
+          "type": "mjtNum",
+          "comment": "simulation time",
+          "line": 205
+        },
+        {
+          "name": "energy",
+          "type": "mjtNum",
+          "array": [
+            "2"
+          ],
+          "comment": "potential, kinetic energy",
+          "line": 206
+        },
+        {
+          "name": "buffer",
+          "type": "void*",
+          "comment": "main buffer; all pointers point in it            (nbuffer bytes)",
+          "line": 211
+        },
+        {
+          "name": "arena",
+          "type": "void*",
+          "comment": "arena+stack buffer                               (narena bytes)",
+          "line": 212
+        },
+        {
+          "name": "qpos",
+          "type": "mjtNum*",
+          "comment": "position                                         (nq x 1)",
+          "line": 217
+        },
+        {
+          "name": "qvel",
+          "type": "mjtNum*",
+          "comment": "velocity                                         (nv x 1)",
+          "line": 218
+        },
+        {
+          "name": "act",
+          "type": "mjtNum*",
+          "comment": "actuator activation                              (na x 1)",
+          "line": 219
+        },
+        {
+          "name": "qacc_warmstart",
+          "type": "mjtNum*",
+          "comment": "acceleration used for warmstart                  (nv x 1)",
+          "line": 220
+        },
+        {
+          "name": "plugin_state",
+          "type": "mjtNum*",
+          "comment": "plugin state                                     (npluginstate x 1)",
+          "line": 221
+        },
+        {
+          "name": "ctrl",
+          "type": "mjtNum*",
+          "comment": "control                                          (nu x 1)",
+          "line": 224
+        },
+        {
+          "name": "qfrc_applied",
+          "type": "mjtNum*",
+          "comment": "applied generalized force                        (nv x 1)",
+          "line": 225
+        },
+        {
+          "name": "xfrc_applied",
+          "type": "mjtNum*",
+          "comment": "applied Cartesian force/torque                   (nbody x 6)",
+          "line": 226
+        },
+        {
+          "name": "eq_active",
+          "type": "mjtByte*",
+          "comment": "enable/disable constraints                       (neq x 1)",
+          "line": 227
+        },
+        {
+          "name": "mocap_pos",
+          "type": "mjtNum*",
+          "comment": "positions of mocap bodies                        (nmocap x 3)",
+          "line": 230
+        },
+        {
+          "name": "mocap_quat",
+          "type": "mjtNum*",
+          "comment": "orientations of mocap bodies                     (nmocap x 4)",
+          "line": 231
+        },
+        {
+          "name": "qacc",
+          "type": "mjtNum*",
+          "comment": "acceleration                                     (nv x 1)",
+          "line": 234
+        },
+        {
+          "name": "act_dot",
+          "type": "mjtNum*",
+          "comment": "time-derivative of actuator activation           (na x 1)",
+          "line": 235
+        },
+        {
+          "name": "userdata",
+          "type": "mjtNum*",
+          "comment": "user data, not touched by engine                 (nuserdata x 1)",
+          "line": 238
+        },
+        {
+          "name": "sensordata",
+          "type": "mjtNum*",
+          "comment": "sensor data array                                (nsensordata x 1)",
+          "line": 241
+        },
+        {
+          "name": "plugin",
+          "type": "int*",
+          "comment": "copy of m->plugin, required for deletion         (nplugin x 1)",
+          "line": 244
+        },
+        {
+          "name": "plugin_data",
+          "type": "uintptr_t*",
+          "comment": "pointer to plugin-managed data structure         (nplugin x 1)",
+          "line": 245
+        },
+        {
+          "name": "xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian position of body frame                 (nbody x 3)",
+          "line": 250
+        },
+        {
+          "name": "xquat",
+          "type": "mjtNum*",
+          "comment": "Cartesian orientation of body frame              (nbody x 4)",
+          "line": 251
+        },
+        {
+          "name": "xmat",
+          "type": "mjtNum*",
+          "comment": "Cartesian orientation of body frame              (nbody x 9)",
+          "line": 252
+        },
+        {
+          "name": "xipos",
+          "type": "mjtNum*",
+          "comment": "Cartesian position of body com                   (nbody x 3)",
+          "line": 253
+        },
+        {
+          "name": "ximat",
+          "type": "mjtNum*",
+          "comment": "Cartesian orientation of body inertia            (nbody x 9)",
+          "line": 254
+        },
+        {
+          "name": "xanchor",
+          "type": "mjtNum*",
+          "comment": "Cartesian position of joint anchor               (njnt x 3)",
+          "line": 255
+        },
+        {
+          "name": "xaxis",
+          "type": "mjtNum*",
+          "comment": "Cartesian joint axis                             (njnt x 3)",
+          "line": 256
+        },
+        {
+          "name": "geom_xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian geom position                          (ngeom x 3)",
+          "line": 257
+        },
+        {
+          "name": "geom_xmat",
+          "type": "mjtNum*",
+          "comment": "Cartesian geom orientation                       (ngeom x 9)",
+          "line": 258
+        },
+        {
+          "name": "site_xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian site position                          (nsite x 3)",
+          "line": 259
+        },
+        {
+          "name": "site_xmat",
+          "type": "mjtNum*",
+          "comment": "Cartesian site orientation                       (nsite x 9)",
+          "line": 260
+        },
+        {
+          "name": "cam_xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian camera position                        (ncam x 3)",
+          "line": 261
+        },
+        {
+          "name": "cam_xmat",
+          "type": "mjtNum*",
+          "comment": "Cartesian camera orientation                     (ncam x 9)",
+          "line": 262
+        },
+        {
+          "name": "light_xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian light position                         (nlight x 3)",
+          "line": 263
+        },
+        {
+          "name": "light_xdir",
+          "type": "mjtNum*",
+          "comment": "Cartesian light direction                        (nlight x 3)",
+          "line": 264
+        },
+        {
+          "name": "subtree_com",
+          "type": "mjtNum*",
+          "comment": "center of mass of each subtree                   (nbody x 3)",
+          "line": 267
+        },
+        {
+          "name": "cdof",
+          "type": "mjtNum*",
+          "comment": "com-based motion axis of each dof (rot:lin)      (nv x 6)",
+          "line": 268
+        },
+        {
+          "name": "cinert",
+          "type": "mjtNum*",
+          "comment": "com-based body inertia and mass                  (nbody x 10)",
+          "line": 269
+        },
+        {
+          "name": "flexvert_xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian flex vertex positions                  (nflexvert x 3)",
+          "line": 272
+        },
+        {
+          "name": "flexelem_aabb",
+          "type": "mjtNum*",
+          "comment": "flex element bounding boxes (center, size)       (nflexelem x 6)",
+          "line": 273
+        },
+        {
+          "name": "flexedge_J_rownnz",
+          "type": "int*",
+          "comment": "number of non-zeros in Jacobian row              (nflexedge x 1)",
+          "line": 274
+        },
+        {
+          "name": "flexedge_J_rowadr",
+          "type": "int*",
+          "comment": "row start address in colind array                (nflexedge x 1)",
+          "line": 275
+        },
+        {
+          "name": "flexedge_J_colind",
+          "type": "int*",
+          "comment": "column indices in sparse Jacobian                (nflexedge x nv)",
+          "line": 276
+        },
+        {
+          "name": "flexedge_J",
+          "type": "mjtNum*",
+          "comment": "flex edge Jacobian                               (nflexedge x nv)",
+          "line": 277
+        },
+        {
+          "name": "flexedge_length",
+          "type": "mjtNum*",
+          "comment": "flex edge lengths                                (nflexedge x 1)",
+          "line": 278
+        },
+        {
+          "name": "ten_wrapadr",
+          "type": "int*",
+          "comment": "start address of tendon's path                   (ntendon x 1)",
+          "line": 281
+        },
+        {
+          "name": "ten_wrapnum",
+          "type": "int*",
+          "comment": "number of wrap points in path                    (ntendon x 1)",
+          "line": 282
+        },
+        {
+          "name": "ten_J_rownnz",
+          "type": "int*",
+          "comment": "number of non-zeros in Jacobian row              (ntendon x 1)",
+          "line": 283
+        },
+        {
+          "name": "ten_J_rowadr",
+          "type": "int*",
+          "comment": "row start address in colind array                (ntendon x 1)",
+          "line": 284
+        },
+        {
+          "name": "ten_J_colind",
+          "type": "int*",
+          "comment": "column indices in sparse Jacobian                (ntendon x nv)",
+          "line": 285
+        },
+        {
+          "name": "ten_J",
+          "type": "mjtNum*",
+          "comment": "tendon Jacobian                                  (ntendon x nv)",
+          "line": 286
+        },
+        {
+          "name": "ten_length",
+          "type": "mjtNum*",
+          "comment": "tendon lengths                                   (ntendon x 1)",
+          "line": 287
+        },
+        {
+          "name": "wrap_obj",
+          "type": "int*",
+          "comment": "geom id; -1: site; -2: pulley                    (nwrap x 2)",
+          "line": 288
+        },
+        {
+          "name": "wrap_xpos",
+          "type": "mjtNum*",
+          "comment": "Cartesian 3D points in all paths                 (nwrap x 6)",
+          "line": 289
+        },
+        {
+          "name": "actuator_length",
+          "type": "mjtNum*",
+          "comment": "actuator lengths                                 (nu x 1)",
+          "line": 292
+        },
+        {
+          "name": "moment_rownnz",
+          "type": "int*",
+          "comment": "number of non-zeros in actuator_moment row       (nu x 1)",
+          "line": 293
+        },
+        {
+          "name": "moment_rowadr",
+          "type": "int*",
+          "comment": "row start address in colind array                (nu x 1)",
+          "line": 294
+        },
+        {
+          "name": "moment_colind",
+          "type": "int*",
+          "comment": "column indices in sparse Jacobian                (nu x nv)",
+          "line": 295
+        },
+        {
+          "name": "actuator_moment",
+          "type": "mjtNum*",
+          "comment": "actuator moments                                 (nu x nv)",
+          "line": 296
+        },
+        {
+          "name": "crb",
+          "type": "mjtNum*",
+          "comment": "com-based composite inertia and mass             (nbody x 10)",
+          "line": 299
+        },
+        {
+          "name": "qM",
+          "type": "mjtNum*",
+          "comment": "total inertia (sparse)                           (nM x 1)",
+          "line": 300
+        },
+        {
+          "name": "qLD",
+          "type": "mjtNum*",
+          "comment": "L'*D*L factorization of M (sparse)               (nM x 1)",
+          "line": 303
+        },
+        {
+          "name": "qLDiagInv",
+          "type": "mjtNum*",
+          "comment": "1/diag(D)                                        (nv x 1)",
+          "line": 304
+        },
+        {
+          "name": "qLDiagSqrtInv",
+          "type": "mjtNum*",
+          "comment": "1/sqrt(diag(D))                                  (nv x 1)",
+          "line": 305
+        },
+        {
+          "name": "bvh_aabb_dyn",
+          "type": "mjtNum*",
+          "comment": "global bounding box (center, size)               (nbvhdynamic x 6)",
+          "line": 308
+        },
+        {
+          "name": "bvh_active",
+          "type": "mjtByte*",
+          "comment": "was bounding volume checked for collision        (nbvh x 1)",
+          "line": 309
+        },
+        {
+          "name": "flexedge_velocity",
+          "type": "mjtNum*",
+          "comment": "flex edge velocities                             (nflexedge x 1)",
+          "line": 314
+        },
+        {
+          "name": "ten_velocity",
+          "type": "mjtNum*",
+          "comment": "tendon velocities                                (ntendon x 1)",
+          "line": 315
+        },
+        {
+          "name": "actuator_velocity",
+          "type": "mjtNum*",
+          "comment": "actuator velocities                              (nu x 1)",
+          "line": 316
+        },
+        {
+          "name": "cvel",
+          "type": "mjtNum*",
+          "comment": "com-based velocity (rot:lin)                     (nbody x 6)",
+          "line": 319
+        },
+        {
+          "name": "cdof_dot",
+          "type": "mjtNum*",
+          "comment": "time-derivative of cdof (rot:lin)                (nv x 6)",
+          "line": 320
+        },
+        {
+          "name": "qfrc_bias",
+          "type": "mjtNum*",
+          "comment": "C(qpos,qvel)                                     (nv x 1)",
+          "line": 323
+        },
+        {
+          "name": "qfrc_spring",
+          "type": "mjtNum*",
+          "comment": "passive spring force                             (nv x 1)",
+          "line": 326
+        },
+        {
+          "name": "qfrc_damper",
+          "type": "mjtNum*",
+          "comment": "passive damper force                             (nv x 1)",
+          "line": 327
+        },
+        {
+          "name": "qfrc_gravcomp",
+          "type": "mjtNum*",
+          "comment": "passive gravity compensation force               (nv x 1)",
+          "line": 328
+        },
+        {
+          "name": "qfrc_fluid",
+          "type": "mjtNum*",
+          "comment": "passive fluid force                              (nv x 1)",
+          "line": 329
+        },
+        {
+          "name": "qfrc_passive",
+          "type": "mjtNum*",
+          "comment": "total passive force                              (nv x 1)",
+          "line": 330
+        },
+        {
+          "name": "subtree_linvel",
+          "type": "mjtNum*",
+          "comment": "linear velocity of subtree com                   (nbody x 3)",
+          "line": 333
+        },
+        {
+          "name": "subtree_angmom",
+          "type": "mjtNum*",
+          "comment": "angular momentum about subtree com               (nbody x 3)",
+          "line": 334
+        },
+        {
+          "name": "qH",
+          "type": "mjtNum*",
+          "comment": "L'*D*L factorization of modified M               (nM x 1)",
+          "line": 337
+        },
+        {
+          "name": "qHDiagInv",
+          "type": "mjtNum*",
+          "comment": "1/diag(D) of modified M                          (nv x 1)",
+          "line": 338
+        },
+        {
+          "name": "B_rownnz",
+          "type": "int*",
+          "comment": "body-dof: non-zeros in each row                  (nbody x 1)",
+          "line": 341
+        },
+        {
+          "name": "B_rowadr",
+          "type": "int*",
+          "comment": "body-dof: address of each row in B_colind        (nbody x 1)",
+          "line": 342
+        },
+        {
+          "name": "B_colind",
+          "type": "int*",
+          "comment": "body-dof: column indices of non-zeros            (nB x 1)",
+          "line": 343
+        },
+        {
+          "name": "C_rownnz",
+          "type": "int*",
+          "comment": "reduced dof-dof: non-zeros in each row           (nv x 1)",
+          "line": 344
+        },
+        {
+          "name": "C_rowadr",
+          "type": "int*",
+          "comment": "reduced dof-dof: address of each row in C_colind (nv x 1)",
+          "line": 345
+        },
+        {
+          "name": "C_colind",
+          "type": "int*",
+          "comment": "reduced dof-dof: column indices of non-zeros     (nC x 1)",
+          "line": 346
+        },
+        {
+          "name": "mapM2C",
+          "type": "int*",
+          "comment": "index mapping from M to C                        (nC x 1)",
+          "line": 347
+        },
+        {
+          "name": "D_rownnz",
+          "type": "int*",
+          "comment": "dof-dof: non-zeros in each row                   (nv x 1)",
+          "line": 348
+        },
+        {
+          "name": "D_rowadr",
+          "type": "int*",
+          "comment": "dof-dof: address of each row in D_colind         (nv x 1)",
+          "line": 349
+        },
+        {
+          "name": "D_colind",
+          "type": "int*",
+          "comment": "dof-dof: column indices of non-zeros             (nD x 1)",
+          "line": 350
+        },
+        {
+          "name": "mapM2D",
+          "type": "int*",
+          "comment": "index mapping from M to D                        (nD x 1)",
+          "line": 351
+        },
+        {
+          "name": "mapD2M",
+          "type": "int*",
+          "comment": "index mapping from D to M                        (nM x 1)",
+          "line": 352
+        },
+        {
+          "name": "qDeriv",
+          "type": "mjtNum*",
+          "comment": "d (passive + actuator - bias) / d qvel           (nD x 1)",
+          "line": 355
+        },
+        {
+          "name": "qLU",
+          "type": "mjtNum*",
+          "comment": "sparse LU of (qM - dt*qDeriv)                    (nD x 1)",
+          "line": 358
+        },
+        {
+          "name": "actuator_force",
+          "type": "mjtNum*",
+          "comment": "actuator force in actuation space                (nu x 1)",
+          "line": 363
+        },
+        {
+          "name": "qfrc_actuator",
+          "type": "mjtNum*",
+          "comment": "actuator force                                   (nv x 1)",
+          "line": 364
+        },
+        {
+          "name": "qfrc_smooth",
+          "type": "mjtNum*",
+          "comment": "net unconstrained force                          (nv x 1)",
+          "line": 367
+        },
+        {
+          "name": "qacc_smooth",
+          "type": "mjtNum*",
+          "comment": "unconstrained acceleration                       (nv x 1)",
+          "line": 368
+        },
+        {
+          "name": "qfrc_constraint",
+          "type": "mjtNum*",
+          "comment": "constraint force                                 (nv x 1)",
+          "line": 371
+        },
+        {
+          "name": "qfrc_inverse",
+          "type": "mjtNum*",
+          "comment": "net external force; should equal:                (nv x 1)",
+          "line": 374
+        },
+        {
+          "name": "cacc",
+          "type": "mjtNum*",
+          "comment": "com-based acceleration                           (nbody x 6)",
+          "line": 378
+        },
+        {
+          "name": "cfrc_int",
+          "type": "mjtNum*",
+          "comment": "com-based interaction force with parent          (nbody x 6)",
+          "line": 379
+        },
+        {
+          "name": "cfrc_ext",
+          "type": "mjtNum*",
+          "comment": "com-based external force on body                 (nbody x 6)",
+          "line": 380
+        },
+        {
+          "name": "contact",
+          "type": "mjContact*",
+          "comment": "array of all detected contacts                   (ncon x 1)",
+          "line": 385
+        },
+        {
+          "name": "efc_type",
+          "type": "int*",
+          "comment": "constraint type (mjtConstraint)                  (nefc x 1)",
+          "line": 388
+        },
+        {
+          "name": "efc_id",
+          "type": "int*",
+          "comment": "id of object of specified type                   (nefc x 1)",
+          "line": 389
+        },
+        {
+          "name": "efc_J_rownnz",
+          "type": "int*",
+          "comment": "number of non-zeros in constraint Jacobian row   (nefc x 1)",
+          "line": 390
+        },
+        {
+          "name": "efc_J_rowadr",
+          "type": "int*",
+          "comment": "row start address in colind array                (nefc x 1)",
+          "line": 391
+        },
+        {
+          "name": "efc_J_rowsuper",
+          "type": "int*",
+          "comment": "number of subsequent rows in supernode           (nefc x 1)",
+          "line": 392
+        },
+        {
+          "name": "efc_J_colind",
+          "type": "int*",
+          "comment": "column indices in constraint Jacobian            (nJ x 1)",
+          "line": 393
+        },
+        {
+          "name": "efc_JT_rownnz",
+          "type": "int*",
+          "comment": "number of non-zeros in constraint Jacobian row T (nv x 1)",
+          "line": 394
+        },
+        {
+          "name": "efc_JT_rowadr",
+          "type": "int*",
+          "comment": "row start address in colind array              T (nv x 1)",
+          "line": 395
+        },
+        {
+          "name": "efc_JT_rowsuper",
+          "type": "int*",
+          "comment": "number of subsequent rows in supernode         T (nv x 1)",
+          "line": 396
+        },
+        {
+          "name": "efc_JT_colind",
+          "type": "int*",
+          "comment": "column indices in constraint Jacobian          T (nJ x 1)",
+          "line": 397
+        },
+        {
+          "name": "efc_J",
+          "type": "mjtNum*",
+          "comment": "constraint Jacobian                              (nJ x 1)",
+          "line": 398
+        },
+        {
+          "name": "efc_JT",
+          "type": "mjtNum*",
+          "comment": "constraint Jacobian transposed                   (nJ x 1)",
+          "line": 399
+        },
+        {
+          "name": "efc_pos",
+          "type": "mjtNum*",
+          "comment": "constraint position (equality, contact)          (nefc x 1)",
+          "line": 400
+        },
+        {
+          "name": "efc_margin",
+          "type": "mjtNum*",
+          "comment": "inclusion margin (contact)                       (nefc x 1)",
+          "line": 401
+        },
+        {
+          "name": "efc_frictionloss",
+          "type": "mjtNum*",
+          "comment": "frictionloss (friction)                          (nefc x 1)",
+          "line": 402
+        },
+        {
+          "name": "efc_diagApprox",
+          "type": "mjtNum*",
+          "comment": "approximation to diagonal of A                   (nefc x 1)",
+          "line": 403
+        },
+        {
+          "name": "efc_KBIP",
+          "type": "mjtNum*",
+          "comment": "stiffness, damping, impedance, imp'              (nefc x 4)",
+          "line": 404
+        },
+        {
+          "name": "efc_D",
+          "type": "mjtNum*",
+          "comment": "constraint mass                                  (nefc x 1)",
+          "line": 405
+        },
+        {
+          "name": "efc_R",
+          "type": "mjtNum*",
+          "comment": "inverse constraint mass                          (nefc x 1)",
+          "line": 406
+        },
+        {
+          "name": "tendon_efcadr",
+          "type": "int*",
+          "comment": "first efc address involving tendon; -1: none     (ntendon x 1)",
+          "line": 407
+        },
+        {
+          "name": "dof_island",
+          "type": "int*",
+          "comment": "island id of this dof; -1: none                  (nv x 1)",
+          "line": 410
+        },
+        {
+          "name": "island_dofnum",
+          "type": "int*",
+          "comment": "number of dofs in island                         (nisland x 1)",
+          "line": 411
+        },
+        {
+          "name": "island_dofadr",
+          "type": "int*",
+          "comment": "start address in island_dofind                   (nisland x 1)",
+          "line": 412
+        },
+        {
+          "name": "island_dofind",
+          "type": "int*",
+          "comment": "island dof indices; -1: none                     (nv x 1)",
+          "line": 413
+        },
+        {
+          "name": "dof_islandind",
+          "type": "int*",
+          "comment": "dof island indices; -1: none                     (nv x 1)",
+          "line": 414
+        },
+        {
+          "name": "efc_island",
+          "type": "int*",
+          "comment": "island id of this constraint                     (nefc x 1)",
+          "line": 415
+        },
+        {
+          "name": "island_efcnum",
+          "type": "int*",
+          "comment": "number of constraints in island                  (nisland x 1)",
+          "line": 416
+        },
+        {
+          "name": "island_efcadr",
+          "type": "int*",
+          "comment": "start address in island_efcind                   (nisland x 1)",
+          "line": 417
+        },
+        {
+          "name": "island_efcind",
+          "type": "int*",
+          "comment": "island constraint indices                        (nefc x 1)",
+          "line": 418
+        },
+        {
+          "name": "efc_AR_rownnz",
+          "type": "int*",
+          "comment": "number of non-zeros in AR                        (nefc x 1)",
+          "line": 421
+        },
+        {
+          "name": "efc_AR_rowadr",
+          "type": "int*",
+          "comment": "row start address in colind array                (nefc x 1)",
+          "line": 422
+        },
+        {
+          "name": "efc_AR_colind",
+          "type": "int*",
+          "comment": "column indices in sparse AR                      (nefc x nefc)",
+          "line": 423
+        },
+        {
+          "name": "efc_AR",
+          "type": "mjtNum*",
+          "comment": "J*inv(M)*J' + R                                  (nefc x nefc)",
+          "line": 424
+        },
+        {
+          "name": "efc_vel",
+          "type": "mjtNum*",
+          "comment": "velocity in constraint space: J*qvel             (nefc x 1)",
+          "line": 429
+        },
+        {
+          "name": "efc_aref",
+          "type": "mjtNum*",
+          "comment": "reference pseudo-acceleration                    (nefc x 1)",
+          "line": 430
+        },
+        {
+          "name": "efc_b",
+          "type": "mjtNum*",
+          "comment": "linear cost term: J*qacc_smooth - aref           (nefc x 1)",
+          "line": 435
+        },
+        {
+          "name": "efc_force",
+          "type": "mjtNum*",
+          "comment": "constraint force in constraint space             (nefc x 1)",
+          "line": 436
+        },
+        {
+          "name": "efc_state",
+          "type": "int*",
+          "comment": "constraint state (mjtConstraintState)            (nefc x 1)",
+          "line": 437
+        },
+        {
+          "name": "threadpool",
+          "type": "uintptr_t",
+          "line": 440
+        }
+      ]
+    }
+  }
+}

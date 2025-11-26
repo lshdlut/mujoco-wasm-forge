@@ -1,0 +1,13 @@
+{
+  "mujocoVersion": "3.3.8-alpha",
+  "emscripten": "4.0.10",
+  "buildTime": "2025-10-31T07:21:18-07:00",
+  "gitSha": "4086261714d7cfbc1745d4c6cb0aa2116df45312",
+  "emsdk_root": "/root/emsdk",
+  "emsdk_node": "/root/emsdk/node/22.16.0_64bit/bin/node",
+  "emsdk_python": "",
+    "flags": ["WASM=1","MODULARIZE=1","EXPORT_ES6=1","ALLOW_MEMORY_GROWTH=1","WASM_BIGINT=1","FORCE_FILESYSTEM=0"],
+    "features": {"qhull": "static","libccd": "static","plugins": false,"render": false,"exceptions": "off","pthreads": false,"filesystem": false,"env": "node,web"},
+  "size": {"wasmBytes": 2732432, "jsBytes": 193862},
+  "hash": {"wasmSha256": "4b0a27acbe4bffa94ff19cea2d4b3851756dfabd20cd4e095e776ad26453100e", "jsSha256": "411a49f3771db0660a376db59b215738349d84e410c952c38615a8d7ff2d520b"}
+}

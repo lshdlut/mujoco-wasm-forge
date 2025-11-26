@@ -1,0 +1,12 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "mujoco-wasm-forge-3.2.5",
+  "documentNamespace": "https://github.com/lshdlut/mujoco-wasm-forge/sbom/b7bbb2b25c7bd6c87683e2f6340978ef9860b9d1",
+  "creationInfo": {"created": "2024-11-04T11:19:46-08:00", "creators": ["Tool: forge workflow (local)"]},
+  "packages": [
+    {"name": "mujoco", "SPDXID": "SPDXRef-Pkg-MuJoCo", "versionInfo": "3.2.5", "downloadLocation": "https://github.com/google-deepmind/mujoco", "sourceInfo": "git@b7bbb2b25c7bd6c87683e2f6340978ef9860b9d1"},
+    {"name": "emscripten", "SPDXID": "SPDXRef-Pkg-Emscripten", "versionInfo": "4.0.10", "downloadLocation": "https://github.com/emscripten-core/emsdk"}
+  ]
+}
