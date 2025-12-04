@@ -40,6 +40,9 @@ EMSCRIPTEN_KEEPALIVE mjData*  mjwf_helper_data_ptr(int h);
 EMSCRIPTEN_KEEPALIVE int         mjwf_helper_errno_last(int h);
 EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last(int h);
 
+// ----- Timing helpers -----
+EMSCRIPTEN_KEEPALIVE void mjwf_enable_timers(void);
+
 #include "mjwf_exports_generated.h"
 
 // ----- Benchmark helpers -----

@@ -102,6 +102,22 @@ static int mjwf_handle_ok(int h) {
   return h > 0 && h < MJWF_MAXH && g_pool[h].m && g_pool[h].d;
 }
 
+#if defined(__EMSCRIPTEN__)
+static mjtNum mjwf_time_now(void) {
+  // emscripten_get_now returns milliseconds; convert to seconds for mjcb_time.
+  return (mjtNum)(emscripten_get_now() * 0.001);
+}
+#else
+static mjtNum mjwf_time_now(void) {
+  return 0;
+}
+#endif
+
+EMSCRIPTEN_KEEPALIVE void mjwf_enable_timers(void) {
+  // Install a default timer callback so that d->timer[...] accumulates stats.
+  mjcb_time = mjwf_time_now;
+}
+
 EMSCRIPTEN_KEEPALIVE int mjwf_helper_errno_last_global(void) {
   return g_last_errno;
 }

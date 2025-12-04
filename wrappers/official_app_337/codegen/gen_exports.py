@@ -78,6 +78,7 @@ AUTO_DTYPE_BY_BASE = {
     "double": "f64",
     "float": "f32",
     "mjtFloat": "f32",
+    "mjtSize": "i32",
     "int": "i32",
     "int32_t": "i32",
     "uint32_t": "i32",

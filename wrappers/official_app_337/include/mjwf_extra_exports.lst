@@ -110,8 +110,11 @@ data_map_dof2idof_ptr
 data_map_efc2iefc_ptr
 data_map_idof2dof_ptr
 data_map_iefc2efc_ptr
+data_maxuse_arena_ptr
 data_maxuse_con_ptr
 data_maxuse_efc_ptr
+data_maxuse_stack_ptr
+data_maxuse_threadstack_ptr
 data_mocap_pos_ptr
 data_mocap_quat_ptr
 data_moment_colind_ptr
@@ -120,6 +123,8 @@ data_moment_rownnz_ptr
 data_nA_ptr
 data_nJ
 data_nJ_ptr
+data_narena_ptr
+data_nbuffer_ptr
 data_ncon
 data_ncon_ptr
 data_ne
@@ -202,6 +207,7 @@ data_xipos_ptr
 data_xmat_ptr
 data_xpos_ptr
 data_xquat_ptr
+enable_timers
 helper_data_ptr
 helper_errmsg_last
 helper_errmsg_last_global

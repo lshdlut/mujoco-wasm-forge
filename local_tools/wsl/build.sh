@@ -130,7 +130,9 @@ build_one() {
   local src_path="${wrapper_dir}/src/mjwf_exports_generated.c"
   mkdir -p "dist/${mjver}/abi"
   node scripts/mujoco_abi/scan.mjs --repo external/mujoco --ref HEAD --out "dist/${mjver}/abi"
-  python3 "${wrapper_dir}/codegen/gen_exports.py" "${spec_path}" "${hdr_path}" "${src_path}"
+  if [[ "$short" != "337" ]]; then
+    python3 "${wrapper_dir}/codegen/gen_exports.py" "${spec_path}" "${hdr_path}" "${src_path}"
+  fi
 
   local f="external/mujoco/src/engine/engine_util_errmem.c"; if [[ -f "$f" ]]; then sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__STDC_VERSION_TIME_H__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__STDC_VERSION_TIME_H__)/' "$f"; sed -i 's/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__)/#if defined(_POSIX_C_SOURCE) || defined(__APPLE__) || defined(__EMSCRIPTEN__)/' "$f"; fi
   if [[ "$short" == "337" || "$short" == "338" ]]; then
