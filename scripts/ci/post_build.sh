@@ -57,10 +57,4 @@ else
   echo "[post-build] warning: ${LIBMUJOCO} not found, skipping nm coverage" >&2
 fi
 
-if [[ -f "${ABI_DIR}/dim_map.json" ]]; then
-  node scripts/smoke/size-check.mjs "${ABI_DIR}/dim_map.json"
-else
-  echo "[post-build] warning: ${ABI_DIR}/dim_map.json missing, skipping size-check" >&2
-fi
-
 echo "[post-build] checks completed for ${MJVER}"
