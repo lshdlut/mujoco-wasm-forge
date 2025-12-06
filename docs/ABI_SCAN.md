@@ -4,29 +4,33 @@ Purpose
 - Generate versioned ABI metadata from upstream MuJoCo headers to support Web/WASM bindings and acceptance probes.
 - Produce JSON artifacts with file+line evidence for CI diffing and audits.
 
-Outputs
-- `functions.json` - `MJAPI`-exported functions (from `mujoco.h`) with groups.
-- `structs.json` - `mjModel`/`mjData` fields with basic shape hints.
-- `enums.json` - public enums under `include/mujoco/`.
-- `mappings.json` - name/id mapping functions, object types, topology field candidates.
-- `diagnostics.json` - error/warning hooks and version/layout symbols.
-- `dim_map.json` - inferred count->array relationships (e.g., `nq -> qpos[nq]`).
-- `extensions.json` - `mjplugin.h`/`mjspec.h` related enums/functions (tagged caution).
-- `probe_spec.json` - minimal probe plan for Web acceptance.
+Outputs (canonical, introspect-driven)
+- `functions_introspect_like.json` – MuJoCo API functions with full type info (from official introspect).
+- `structs_introspect_like.json` – `mjModel` / `mjData` / related structs with field types and extents.
+- `enums_introspect_like.json` – enum declarations and values as seen by introspect.
+- `mjapi.json` – function declaration A-set used for export coverage (derived from introspect).
+- `nm_symbols.json`, `nm_coverage.json` – implementation-side symbol coverage (B-set).
+- `wrapper_exports.json` – final export manifest for WASM (`_mjwf_*` + data ptrs + runtime_keep).
+- `exports_report.md` / `exports_report_funcs.md` – A/B/C export coverage reports.
+- `enums.json` – flattened enums table for JS/TS consumers (generated from `enums_introspect_like.json`).
 
-Run
-- Default (3.3.7):
-  - `pwsh scripts/mujoco_abi/run.ps1`
-- Custom ref:
-  - `pwsh scripts/mujoco_abi/run.ps1 -Ref 3.2.5 -OutDir dist/3.2.5/abi`
-- Custom repo path:
-  - `pwsh scripts/mujoco_abi/run.ps1 -Repo local_tools/mujoco`
+Run (3.3.7 example)
+- Generate introspect-based snapshots (FUNCTIONS / STRUCTS / ENUMS):
+  - `python scripts/mujoco_abi/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi`
+- Build function declaration set (A):
+  - `python scripts/mujoco_abi/build_mjapi_from_introspect.py --out dist/3.3.7/abi/mjapi.json`
+- Build implementation symbol set (B):
+  - `node scripts/mujoco_abi/nm_coverage.mjs build/337/lib/libmujoco.a --out dist/3.3.7/abi/nm_symbols.json`
+- Generate struct exports (data ptrs / dims / derived views):
+  - `python wrappers/official_app_337/codegen/gen_structs.py wrappers/official_app_337/src/mjwf_exports_generated.h wrappers/official_app_337/src/mjwf_exports_generated.c`
+- Generate function wrappers + export manifests:
+  - `python wrappers/official_app_337/codegen/gen_funcs.py`
+- Generate flattened enums table for JS/TS:
+  - `python scripts/mujoco_abi/gen_enums_from_introspect.py`
 
 Notes
-- The scanner reads files via `git show <ref>:<path>` and never checks out or mutates the local clone.
-- Parsing is heuristic-first and intentionally conservative; refine mappings/grouping as needed.
-- Place upstream clone under `local_tools/mujoco` (ignored by VCS) or pass a custom path.
-- Grouping uses `scripts/mujoco_abi/functions_map.json` when present; otherwise falls back to heuristics.
+- All ABI scanning rules (what to expose, how to parse types/arrays/nullable) come from MuJoCo's official introspect codegen; forge only performs Python→JSON translation and wrapper generation.
+- Legacy header-parsing pipeline (`scan.mjs`, `run.ps1`, `functions.json`, `structs.json`, `dim_map.json`) is kept only for historical reference and should not be used for new flows.
 
 Exposure Policy (aligned with official Embind)
 - Favor broad, direct exposure matching upstream Embind naming and coverage.
@@ -38,12 +42,10 @@ Diff
   - `node scripts/mujoco_abi/diff.mjs dist/3.3.6/abi dist/3.3.7/abi`
 - Produces `diff_report.json` summarizing changes in functions/structs/enums.
 
-Wrapper export workflow
-- Auto-generate wrappers: `node scripts/mujoco_abi/autogen_wrappers.mjs --include external/mujoco/include --header wrappers/auto/mjwf_auto_exports.h --source wrappers/auto/mjwf_auto_exports.c` (CMake target `mjwf_auto_wrappers`).
-- Generate ABI metadata: `pwsh scripts/mujoco_abi/run.ps1 -Ref 3.3.7 -OutDir dist/3.3.7/abi`.
-- Generate exports and d.ts: `node scripts/mujoco_abi/gen_exports_from_abi.mjs dist/3.3.7/abi --header wrappers/auto/mjwf_auto_exports.h --header wrappers/official_app_337/include/mjwf_exports.h --version 3.3.7` (outputs `build/exports_3.3.7.{json,lst}`, `dist/3.3.7/abi/wrapper_exports.json`, `types_3.3.7.d.ts`).
-- Build: CMake consumes the generated list (`-sEXPORTED_FUNCTIONS=@build/exports_3.3.7.lst`).
-- Post-build checks ensure official Embind-equivalent surfaces are present; extra exports are allowed.
+Wrapper export overview
+- Struct exports: `gen_structs.py` writes `mjwf_exports_generated.{h,c}` + `mjwf_extra_exports.lst` (flat ptr + dims + derived views).
+- Function exports: `gen_funcs.py` reads `mjapi.json` + `nm_symbols.json`, applies prefix rules, and writes `mjwf_auto_exports.{h,c}` + `wrapper_exports_funcs.json` / `exports_report_funcs.md`.
+- Final export manifest: wrapper exports and runtime helpers are collected into `wrapper_exports.json` and `exports_*.{json,lst}` (used by Emscripten `-sEXPORTED_FUNCTIONS=@...`). Existing CMake targets still drive this step; new codegen uses introspect-based inputs.
 WSL mirroring hints
 - Prefer `pwsh local_tools/wsl/run.ps1 -Sync` to mirror the Windows workspace into `~/dev/mujoco-wasm-forge`; the script now excludes `.git` and purges stale `?root?dev?...` folders automatically.
 - Avoid mixing Windows-native `Copy-Item`/`cp` with absolute WSL paths (e.g. `/root/...`); use `wsl.exe bash -lc 'cp ...'` instead to prevent Windows from materialising question-mark directories.

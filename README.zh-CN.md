@@ -48,16 +48,18 @@ CI 与本地标准构建都会生成：
 - 校验项：类型声明再生成（DTS）以及运行时 smoke / regression / mesh 测试（RUN）
 - 构建产物直接从 `dist/<mjVer>/` 上传
 
-### ABI 驱动流水线（每个版本）
+### ABI 驱动流水线（每个版本，基于 introspect）
 
-1. `node scripts/mujoco_abi/autogen_wrappers.mjs` —— 采集声明、生成自动包装
-2. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a` —— 收集实现符号
-3. `node scripts/mujoco_abi/gen_exports_from_abi.mjs` —— 生成包装、导出清单、TypeScript 声明与报告
-4. CMake 读取生成的导出列表（`-sEXPORTED_FUNCTIONS=@exports_<ver>.lst`）
-5. 存在性检查确保导出满足 official Embind 等效覆盖；允许扩展导出集合
-6. `node scripts/mujoco_abi/nm_coverage.mjs ... --out dist/<ver>/abi/nm_coverage.json` —— 记录实现覆盖率
+当前 ABI 流程完全由 MuJoCo 官方 introspect 表驱动：
 
-详情见 `docs/ABI_SCAN.md`。
+1. `python scripts/mujoco_abi/scan_clang_introspect.py` —— 调用官方 codegen，得到 FUNCTIONS / STRUCTS / ENUMS 的 JSON（写入 `dist/<ver>/abi`）。
+2. `python scripts/mujoco_abi/build_mjapi_from_introspect.py` —— 生成 `mjapi.json`（A 集合函数声明）。
+3. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` —— 收集实现符号（B 集合）。
+4. `python wrappers/official_app_337/codegen/gen_structs.py` —— 生成结构体相关导出 `mjwf_exports_generated.{h,c}` 与 `mjwf_extra_exports.lst`。
+5. `python wrappers/official_app_337/codegen/gen_funcs.py` —— 生成 `_mjwf_*` 函数包装与 `wrapper_exports_funcs.json` / `exports_report_funcs.md`。
+6. `python scripts/mujoco_abi/gen_enums_from_introspect.py` —— 将枚举压平成 `enums.json` 供 JS/TS 使用。
+
+Emscripten 再通过 `-sEXPORTED_FUNCTIONS=@...` 消费生成的导出列表（`wrapper_exports*.json` / `exports_*.lst`）。更多细节见 `docs/ABI_SCAN.md`。
 
 ## 本地构建（推荐流程）
 
@@ -71,11 +73,11 @@ CI 与本地标准构建都会生成：
    默认会同时构建 3.2.5 / 3.3.7 / 3.3.8-alpha；如果只想迭代部分版本，可用 `-Targets '337'` 等参数缩小范围。
    已同步的工作区可根据需要去掉 `-Sync` / `-UseTemp`。
 
-2. **生成 ABI 描述（post_build 前）**
+2. **生成 ABI 描述（post_build 前，新流程）**
    ```powershell
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.8-alpha -OutDir dist/3.3.8-alpha/abi
+   python scripts/mujoco_abi/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
+   python scripts/mujoco_abi/build_mjapi_from_introspect.py --out dist/3.3.7/abi/mjapi.json
+   python scripts/mujoco_abi/gen_enums_from_introspect.py
    ```
 
 3. **在 WSL 内执行 post_build**

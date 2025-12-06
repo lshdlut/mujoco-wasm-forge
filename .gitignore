@@ -14,6 +14,12 @@ external/
 _tools/
 local_tools/
 
+## Python bytecode / caches
+*.pyc
+__pycache__/
+scripts\mujoco_abi\__pycache__
+scripts\mujoco_abi\introspect\__pycache__
+
 ## Tests temp files
 tests/tmp_model.xml
 
@@ -31,7 +37,11 @@ tmp_*
 coverage/**
 scripts/*_local.*
 wrappers/**/mjwf_exports_generated.*
+wrappers/**/mjwf_auto_exports.*
 
 wrappers/auto/*
 !wrappers/auto/mjwf_stubs.c
+
+## Local legacy scratch / migration parking
+del_temp/**
 

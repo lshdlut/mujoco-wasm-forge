@@ -38,46 +38,7 @@ set(MJWF_EXPORTS_JSON "${CMAKE_CURRENT_BINARY_DIR}/exports_${MJVER}.json")
 set(MJWF_EXPORTS_LIST "${CMAKE_CURRENT_BINARY_DIR}/exports_${MJVER}.lst")
 set(MJWF_TYPES_DTS "${CMAKE_CURRENT_BINARY_DIR}/types_${MJVER}.d.ts")
 set(MJWF_ABI_DIR "${MJWF_ROOT}/dist/${MJVER}/abi")
-set(MJWF_STRUCTS_JSON "${MJWF_ABI_DIR}/structs.json")
-set(MJWF_DIM_MAP_JSON "${MJWF_ABI_DIR}/dim_map.json")
 set(MJWF_IMPL_ARTIFACT "${CMAKE_CURRENT_BINARY_DIR}/lib/libmujoco.a")
-
-add_custom_command(
-  OUTPUT ${MJWF_HEADERS_JSON}
-  BYPRODUCTS ${MJWF_HEADERS_JSON}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${MJWF_AUTO_DIR}
-  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/autogen_wrappers.mjs
-          --include ${MJWF_ROOT}/external/mujoco/include
-          --out ${MJWF_HEADERS_JSON}
-  DEPENDS mujoco ${MJWF_ROOT}/scripts/mujoco_abi/autogen_wrappers.mjs
-  COMMENT "Scanning MuJoCo headers (${MJVER})"
-  VERBATIM
-)
-add_custom_target(mjwf_scan_${MJVER} DEPENDS ${MJWF_HEADERS_JSON})
-
-add_custom_command(
-  OUTPUT ${MJWF_STRUCTS_JSON}
-  BYPRODUCTS
-    ${MJWF_STRUCTS_JSON}
-    ${MJWF_DIM_MAP_JSON}
-    ${MJWF_ABI_DIR}/functions.json
-    ${MJWF_ABI_DIR}/enums.json
-    ${MJWF_ABI_DIR}/mappings.json
-    ${MJWF_ABI_DIR}/diagnostics.json
-    ${MJWF_ABI_DIR}/extensions.json
-    ${MJWF_ABI_DIR}/probe_spec.json
-    ${MJWF_ABI_DIR}/gate.json
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${MJWF_ABI_DIR}
-  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/scan.mjs
-          --repo ${MJWF_ROOT}/external/mujoco
-          --ref HEAD
-          --out ${MJWF_ABI_DIR}
-  DEPENDS mujoco ${MJWF_ROOT}/scripts/mujoco_abi/scan.mjs
-  COMMENT "Scanning MuJoCo structs and fields (${MJVER})"
-  VERBATIM
-)
-add_custom_target(mjwf_structs_${MJVER} DEPENDS ${MJWF_STRUCTS_JSON})
-add_dependencies(mjwf_structs_${MJVER} mjwf_scan_${MJVER})
 
 add_custom_command(
   OUTPUT ${MJWF_IMPL_JSON}
@@ -91,52 +52,6 @@ add_custom_command(
 )
 add_custom_target(mjwf_impl_${MJVER} DEPENDS ${MJWF_IMPL_JSON})
 
-add_custom_command(
-  OUTPUT
-    ${MJWF_AUTO_HEADER}
-    ${MJWF_AUTO_SOURCE}
-    ${MJWF_EXPORTS_JSON}
-    ${MJWF_EXPORTS_LIST}
-    ${MJWF_TYPES_DTS}
-    ${MJWF_ABI_DIR}/wrapper_exports.json
-    ${MJWF_ABI_DIR}/exports_report.md
-  BYPRODUCTS
-    ${MJWF_AUTO_HEADER}
-    ${MJWF_AUTO_SOURCE}
-    ${MJWF_EXPORTS_JSON}
-    ${MJWF_EXPORTS_LIST}
-    ${MJWF_TYPES_DTS}
-    ${MJWF_ABI_DIR}/wrapper_exports.json
-    ${MJWF_ABI_DIR}/exports_report.md
-  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
-          --names-json ${MJWF_HEADERS_JSON}
-          --impl-json ${MJWF_IMPL_JSON}
-          --header ${MJWF_AUTO_HEADER}
-          --source ${MJWF_AUTO_SOURCE}
-          --version ${MJVER}
-          --out ${CMAKE_CURRENT_BINARY_DIR}
-          --abi ${MJWF_ABI_DIR}
-          --extra ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_extra_exports.lst
-  DEPENDS
-          ${MJWF_HEADERS_JSON}
-          ${MJWF_IMPL_JSON}
-          ${CMAKE_CURRENT_SOURCE_DIR}/include/mjwf_extra_exports.lst
-          ${MJWF_ROOT}/scripts/mujoco_abi/gen_exports_from_abi.mjs
-  COMMENT "Generating wrapper aliases and export manifests (${MJVER})"
-  VERBATIM
-)
-add_custom_target(mjwf_exports_${MJVER}
-  DEPENDS
-    ${MJWF_AUTO_HEADER}
-    ${MJWF_AUTO_SOURCE}
-    ${MJWF_EXPORTS_JSON}
-    ${MJWF_EXPORTS_LIST}
-    ${MJWF_TYPES_DTS}
-    ${MJWF_ABI_DIR}/wrapper_exports.json
-    ${MJWF_ABI_DIR}/exports_report.md
-)
-add_dependencies(mjwf_exports_${MJVER} mjwf_scan_${MJVER} mjwf_structs_${MJVER} mjwf_impl_${MJVER})
-set_source_files_properties(${MJWF_AUTO_HEADER} ${MJWF_AUTO_SOURCE} PROPERTIES GENERATED TRUE)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   set(MJWF_OPT_FLAG "-Oz")

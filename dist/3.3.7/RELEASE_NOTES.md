@@ -1,7 +1,7 @@
 
 Build with Emscripten 4.0.10. Artifacts:
-- mujoco.js (378056 bytes)
-- mujoco.wasm (2784606 bytes)
+- mujoco.js (490837 bytes)
+- mujoco.wasm (6001340 bytes)
 
 Quality gates:
 - [GATE:SYM] skipped

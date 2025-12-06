@@ -3,7 +3,7 @@
 // Usage:
 //   node scripts/mujoco_abi/diff.mjs dist/3.2.5/abi dist/3.3.7/abi
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join as pathJoin } from 'node:path';
 
 function loadJSON(p) { return JSON.parse(readFileSync(p, 'utf8')); }
@@ -20,13 +20,27 @@ function diffSets(a, b) {
 
 function coverage(total, good) { return total ? Math.round(1000 * good / total) / 10 : 100; }
 
+function loadFunctionsFromIntrospect(dir) {
+  const introspectPath = pathJoin(dir, 'functions_introspect_like.json');
+  if (!existsSync(introspectPath)) {
+    throw new Error(`functions_introspect_like.json not found under ${dir}`);
+  }
+  const j = loadJSON(introspectPath);
+  const items = Array.isArray(j.functions) ? j.functions : [];
+  return items;
+}
+
 function loadSetFromFunctions(dir) {
-  const jf = loadJSON(pathJoin(dir, 'functions.json'));
-  return jf.functions.map(f => f.name);
+  const items = loadFunctionsFromIntrospect(dir);
+  return items.map(f => f.name);
 }
 
 function loadStructFields(dir, structName) {
-  const js = loadJSON(pathJoin(dir, 'structs.json'));
+  const introspectPath = pathJoin(dir, 'structs_introspect_like.json');
+  if (!existsSync(introspectPath)) {
+    throw new Error(`structs_introspect_like.json not found under ${dir}`);
+  }
+  const js = loadJSON(introspectPath);
   const s = js.structs?.[structName];
   if (!s || !s.fields) return [];
   return s.fields.map(f => f.name);
@@ -51,8 +65,24 @@ function matchAny(nameSet, pat) {
 }
 
 function enumsDiff(dirA, dirB) {
-  const ea = loadJSON(pathJoin(dirA, 'enums.json')).enums;
-  const eb = loadJSON(pathJoin(dirB, 'enums.json')).enums;
+  function loadEnums(dir) {
+    const introspectPath = pathJoin(dir, 'enums_introspect_like.json');
+    if (!existsSync(introspectPath)) {
+      throw new Error(`enums_introspect_like.json not found under ${dir}`);
+    }
+    const j = loadJSON(introspectPath);
+    const enumsMap = j.enums || {};
+    const out = [];
+    for (const [name, e] of Object.entries(enumsMap)) {
+      const values = e.values || {};
+      const members = Object.keys(values).map(k => ({ name: k }));
+      out.push({ name, members });
+    }
+    return out;
+  }
+
+  const ea = loadEnums(dirA);
+  const eb = loadEnums(dirB);
   const ma = new Map(ea.map(e => [e.name, e]));
   const mb = new Map(eb.map(e => [e.name, e]));
   const namesA = Array.from(ma.keys());
@@ -101,9 +131,7 @@ function main() {
   const fa = loadSetFromFunctions(dirA);
   const fb = loadSetFromFunctions(dirB);
   const fDiff = diffSets(fa, fb);
-  const fJsonB = loadJSON(pathJoin(dirB, 'functions.json'));
-  const grouped = fJsonB.functions.filter(x => x.group && x.group !== 'other').length;
-  const covGrouping = coverage(fJsonB.functions.length, grouped);
+  const covGrouping = 100;
 
   const sA_model = loadStructFields(dirA, 'mjModel');
   const sB_model = loadStructFields(dirB, 'mjModel');

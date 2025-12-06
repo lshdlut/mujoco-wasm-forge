@@ -92,16 +92,18 @@ Single workflow: `.github/workflows/forge.yml`
 - Checks: Type surface regeneration (DTS) and runtime smoke/regression/mesh (RUN)
 - Artifacts uploaded directly from `dist/<mjVer>/`
 
-### ABI-driven pipeline (per build)
+### ABI-driven pipeline (per build, introspect-based)
 
-1. `node scripts/mujoco_abi/autogen_wrappers.mjs` – collect declarations and emit wrappers
-2. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a` – collect implementation symbols
-3. `node scripts/mujoco_abi/gen_exports_from_abi.mjs` – emit wrappers, exports list, TypeScript stubs, reports
-4. CMake consumes the generated list (`-sEXPORTED_FUNCTIONS=@exports_<ver>.lst`)
-5. Presence checks ensure Embind-equivalent surfaces are exported; extra exports are allowed
-6. `node scripts/mujoco_abi/nm_coverage.mjs ... --out dist/<ver>/abi/nm_coverage.json` – record implementation coverage
+The current pipeline is driven entirely by MuJoCo's official introspect tables:
 
-See `docs/ABI_SCAN.md` for details.
+1. `python scripts/mujoco_abi/scan_clang_introspect.py` – run MuJoCo's codegen to obtain FUNCTIONS / STRUCTS / ENUMS (JSON under `dist/<ver>/abi`).
+2. `python scripts/mujoco_abi/build_mjapi_from_introspect.py` – build `mjapi.json` (A-set declarations).
+3. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` – collect implementation symbols (B-set).
+4. `python wrappers/official_app_337/codegen/gen_structs.py` – generate struct-related exports `mjwf_exports_generated.{h,c}` and `mjwf_extra_exports.lst`.
+5. `python wrappers/official_app_337/codegen/gen_funcs.py` – generate `_mjwf_*` function wrappers and `wrapper_exports_funcs.json` / `exports_report_funcs.md`.
+6. `python scripts/mujoco_abi/gen_enums_from_introspect.py` – flatten enums to `enums.json` for JS/TS consumers.
+
+Emscripten then consumes the generated export lists (`wrapper_exports*.json` / `exports_*.lst`) via `-sEXPORTED_FUNCTIONS=@...`. See `docs/ABI_SCAN.md` for more details.
 
 ## Building locally (canonical flow)
 
@@ -115,11 +117,11 @@ Preferred environment: WSL Ubuntu 22.04 (or Docker) mirroring the GitHub Actions
    The helper builds 3.2.5, 3.3.7, and 3.3.8-alpha by default; override with `-Targets '337'` or similar when iterating.
    For incremental builds (already mirrored), drop `-Sync` and `-UseTemp` if not needed.
 
-2. Generate ABI descriptors (must run before post_build):
+2. Generate ABI descriptors (must run before post_build, new introspect flow):
    ```powershell
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.2.5 -OutDir dist/3.2.5/abi
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.7 -OutDir dist/3.3.7/abi
-   pwsh scripts/mujoco_abi/run.ps1 -Repo external/mujoco -Ref 3.3.8-alpha -OutDir dist/3.3.8-alpha/abi
+   python scripts/mujoco_abi/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
+   python scripts/mujoco_abi/build_mjapi_from_introspect.py --out dist/3.3.7/abi/mjapi.json
+   python scripts/mujoco_abi/gen_enums_from_introspect.py
    ```
 
 3. Run post-build checks inside WSL (after `build.sh`):

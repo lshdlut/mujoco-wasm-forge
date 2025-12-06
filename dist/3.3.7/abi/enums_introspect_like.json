@@ -1,9 +1,7 @@
 {
-  "generatedAt": "2025-12-06T04:51:39.581919+00:00",
-  "source": "C:\\Users\\63427\\OneDrive - The University of Tokyo\\sim\\Git_Repo\\mujoco-wasm-forge\\dist\\3.3.7\\abi\\enums_introspect_like.json",
-  "count": 62,
   "enums": {
     "mjtAlignFree": {
+      "declname": "enum mjtAlignFree_",
       "name": "mjtAlignFree",
       "values": {
         "mjALIGNFREE_AUTO": 2,
@@ -12,6 +10,7 @@
       }
     },
     "mjtBias": {
+      "declname": "enum mjtBias_",
       "name": "mjtBias",
       "values": {
         "mjBIAS_AFFINE": 1,
@@ -21,6 +20,7 @@
       }
     },
     "mjtBuiltin": {
+      "declname": "enum mjtBuiltin_",
       "name": "mjtBuiltin",
       "values": {
         "mjBUILTIN_CHECKER": 2,
@@ -30,6 +30,7 @@
       }
     },
     "mjtButton": {
+      "declname": "enum mjtButton_",
       "name": "mjtButton",
       "values": {
         "mjBUTTON_LEFT": 1,
@@ -39,6 +40,7 @@
       }
     },
     "mjtCamLight": {
+      "declname": "enum mjtCamLight_",
       "name": "mjtCamLight",
       "values": {
         "mjCAMLIGHT_FIXED": 0,
@@ -49,6 +51,7 @@
       }
     },
     "mjtCamera": {
+      "declname": "enum mjtCamera_",
       "name": "mjtCamera",
       "values": {
         "mjCAMERA_FIXED": 2,
@@ -58,6 +61,7 @@
       }
     },
     "mjtCatBit": {
+      "declname": "enum mjtCatBit_",
       "name": "mjtCatBit",
       "values": {
         "mjCAT_ALL": 7,
@@ -67,6 +71,7 @@
       }
     },
     "mjtColorSpace": {
+      "declname": "enum mjtColorSpace_",
       "name": "mjtColorSpace",
       "values": {
         "mjCOLORSPACE_AUTO": 0,
@@ -75,6 +80,7 @@
       }
     },
     "mjtConDataField": {
+      "declname": "enum mjtConDataField_",
       "name": "mjtConDataField",
       "values": {
         "mjCONDATA_DIST": 3,
@@ -88,6 +94,7 @@
       }
     },
     "mjtCone": {
+      "declname": "enum mjtCone_",
       "name": "mjtCone",
       "values": {
         "mjCONE_ELLIPTIC": 1,
@@ -95,6 +102,7 @@
       }
     },
     "mjtConstraint": {
+      "declname": "enum mjtConstraint_",
       "name": "mjtConstraint",
       "values": {
         "mjCNSTR_CONTACT_ELLIPTIC": 7,
@@ -108,6 +116,7 @@
       }
     },
     "mjtConstraintState": {
+      "declname": "enum mjtConstraintState_",
       "name": "mjtConstraintState",
       "values": {
         "mjCNSTRSTATE_CONE": 4,
@@ -118,6 +127,7 @@
       }
     },
     "mjtDataType": {
+      "declname": "enum mjtDataType_",
       "name": "mjtDataType",
       "values": {
         "mjDATATYPE_AXIS": 2,
@@ -127,6 +137,7 @@
       }
     },
     "mjtDepthMap": {
+      "declname": "enum mjtDepthMap_",
       "name": "mjtDepthMap",
       "values": {
         "mjDEPTH_ZEROFAR": 1,
@@ -134,6 +145,7 @@
       }
     },
     "mjtDisableBit": {
+      "declname": "enum mjtDisableBit_",
       "name": "mjtDisableBit",
       "values": {
         "mjDSBL_ACTUATION": 2048,
@@ -159,6 +171,7 @@
       }
     },
     "mjtDyn": {
+      "declname": "enum mjtDyn_",
       "name": "mjtDyn",
       "values": {
         "mjDYN_FILTER": 2,
@@ -170,6 +183,7 @@
       }
     },
     "mjtEnableBit": {
+      "declname": "enum mjtEnableBit_",
       "name": "mjtEnableBit",
       "values": {
         "mjENBL_ENERGY": 2,
@@ -181,6 +195,7 @@
       }
     },
     "mjtEq": {
+      "declname": "enum mjtEq_",
       "name": "mjtEq",
       "values": {
         "mjEQ_CONNECT": 0,
@@ -192,6 +207,7 @@
       }
     },
     "mjtEvent": {
+      "declname": "enum mjtEvent_",
       "name": "mjtEvent",
       "values": {
         "mjEVENT_FILESDROP": 8,
@@ -206,6 +222,7 @@
       }
     },
     "mjtFlexSelf": {
+      "declname": "enum mjtFlexSelf_",
       "name": "mjtFlexSelf",
       "values": {
         "mjFLEXSELF_AUTO": 4,
@@ -216,6 +233,7 @@
       }
     },
     "mjtFont": {
+      "declname": "enum mjtFont_",
       "name": "mjtFont",
       "values": {
         "mjFONT_BIG": 2,
@@ -224,6 +242,7 @@
       }
     },
     "mjtFontScale": {
+      "declname": "enum mjtFontScale_",
       "name": "mjtFontScale",
       "values": {
         "mjFONTSCALE_100": 100,
@@ -235,6 +254,7 @@
       }
     },
     "mjtFrame": {
+      "declname": "enum mjtFrame_",
       "name": "mjtFrame",
       "values": {
         "mjFRAME_BODY": 1,
@@ -249,6 +269,7 @@
       }
     },
     "mjtFramebuffer": {
+      "declname": "enum mjtFramebuffer_",
       "name": "mjtFramebuffer",
       "values": {
         "mjFB_OFFSCREEN": 1,
@@ -256,6 +277,7 @@
       }
     },
     "mjtGain": {
+      "declname": "enum mjtGain_",
       "name": "mjtGain",
       "values": {
         "mjGAIN_AFFINE": 1,
@@ -265,6 +287,7 @@
       }
     },
     "mjtGeom": {
+      "declname": "enum mjtGeom_",
       "name": "mjtGeom",
       "values": {
         "mjGEOM_ARROW": 100,
@@ -290,6 +313,7 @@
       }
     },
     "mjtGeomInertia": {
+      "declname": "enum mjtGeomInertia_",
       "name": "mjtGeomInertia",
       "values": {
         "mjINERTIA_SHELL": 1,
@@ -297,6 +321,7 @@
       }
     },
     "mjtGridPos": {
+      "declname": "enum mjtGridPos_",
       "name": "mjtGridPos",
       "values": {
         "mjGRID_BOTTOM": 5,
@@ -310,6 +335,7 @@
       }
     },
     "mjtInertiaFromGeom": {
+      "declname": "enum mjtInertiaFromGeom_",
       "name": "mjtInertiaFromGeom",
       "values": {
         "mjINERTIAFROMGEOM_AUTO": 2,
@@ -318,6 +344,7 @@
       }
     },
     "mjtIntegrator": {
+      "declname": "enum mjtIntegrator_",
       "name": "mjtIntegrator",
       "values": {
         "mjINT_EULER": 0,
@@ -327,6 +354,7 @@
       }
     },
     "mjtItem": {
+      "declname": "enum mjtItem_",
       "name": "mjtItem",
       "values": {
         "mjITEM_BUTTON": 2,
@@ -349,6 +377,7 @@
       }
     },
     "mjtJacobian": {
+      "declname": "enum mjtJacobian_",
       "name": "mjtJacobian",
       "values": {
         "mjJAC_AUTO": 2,
@@ -357,6 +386,7 @@
       }
     },
     "mjtJoint": {
+      "declname": "enum mjtJoint_",
       "name": "mjtJoint",
       "values": {
         "mjJNT_BALL": 1,
@@ -366,6 +396,7 @@
       }
     },
     "mjtLRMode": {
+      "declname": "enum mjtLRMode_",
       "name": "mjtLRMode",
       "values": {
         "mjLRMODE_ALL": 3,
@@ -375,6 +406,7 @@
       }
     },
     "mjtLabel": {
+      "declname": "enum mjtLabel_",
       "name": "mjtLabel",
       "values": {
         "mjLABEL_ACTUATOR": 8,
@@ -398,6 +430,7 @@
       }
     },
     "mjtLightType": {
+      "declname": "enum mjtLightType_",
       "name": "mjtLightType",
       "values": {
         "mjLIGHT_DIRECTIONAL": 1,
@@ -407,6 +440,7 @@
       }
     },
     "mjtLimited": {
+      "declname": "enum mjtLimited_",
       "name": "mjtLimited",
       "values": {
         "mjLIMITED_AUTO": 2,
@@ -415,6 +449,7 @@
       }
     },
     "mjtMark": {
+      "declname": "enum mjtMark_",
       "name": "mjtMark",
       "values": {
         "mjMARK_CROSS": 2,
@@ -424,6 +459,7 @@
       }
     },
     "mjtMeshBuiltin": {
+      "declname": "enum mjtMeshBuiltin_",
       "name": "mjtMeshBuiltin",
       "values": {
         "mjMESH_BUILTIN_CONE": 3,
@@ -437,6 +473,7 @@
       }
     },
     "mjtMeshInertia": {
+      "declname": "enum mjtMeshInertia_",
       "name": "mjtMeshInertia",
       "values": {
         "mjMESH_INERTIA_CONVEX": 0,
@@ -446,6 +483,7 @@
       }
     },
     "mjtMouse": {
+      "declname": "enum mjtMouse_",
       "name": "mjtMouse",
       "values": {
         "mjMOUSE_MOVE_H": 4,
@@ -459,6 +497,7 @@
       }
     },
     "mjtObj": {
+      "declname": "enum mjtObj_",
       "name": "mjtObj",
       "values": {
         "mjNOBJECT": 26,
@@ -494,6 +533,7 @@
       }
     },
     "mjtOrientation": {
+      "declname": "enum mjtOrientation_",
       "name": "mjtOrientation",
       "values": {
         "mjORIENTATION_AXISANGLE": 1,
@@ -504,6 +544,7 @@
       }
     },
     "mjtPertBit": {
+      "declname": "enum mjtPertBit_",
       "name": "mjtPertBit",
       "values": {
         "mjPERT_ROTATE": 2,
@@ -511,6 +552,7 @@
       }
     },
     "mjtPluginCapabilityBit": {
+      "declname": "enum mjtPluginCapabilityBit_",
       "name": "mjtPluginCapabilityBit",
       "values": {
         "mjPLUGIN_ACTUATOR": 1,
@@ -520,6 +562,7 @@
       }
     },
     "mjtRndFlag": {
+      "declname": "enum mjtRndFlag_",
       "name": "mjtRndFlag",
       "values": {
         "mjNRNDFLAG": 10,
@@ -536,6 +579,7 @@
       }
     },
     "mjtSDFType": {
+      "declname": "enum mjtSDFType_",
       "name": "mjtSDFType",
       "values": {
         "mjSDFTYPE_COLLISION": 3,
@@ -545,6 +589,7 @@
       }
     },
     "mjtSameFrame": {
+      "declname": "enum mjtSameFrame_",
       "name": "mjtSameFrame",
       "values": {
         "mjSAMEFRAME_BODY": 1,
@@ -555,6 +600,7 @@
       }
     },
     "mjtSection": {
+      "declname": "enum mjtSection_",
       "name": "mjtSection",
       "values": {
         "mjSECT_CLOSED": 0,
@@ -563,6 +609,7 @@
       }
     },
     "mjtSensor": {
+      "declname": "enum mjtSensor_",
       "name": "mjtSensor",
       "values": {
         "mjSENS_ACCELEROMETER": 1,
@@ -617,6 +664,7 @@
       }
     },
     "mjtSolver": {
+      "declname": "enum mjtSolver_",
       "name": "mjtSolver",
       "values": {
         "mjSOL_CG": 1,
@@ -625,6 +673,7 @@
       }
     },
     "mjtStage": {
+      "declname": "enum mjtStage_",
       "name": "mjtStage",
       "values": {
         "mjSTAGE_ACC": 3,
@@ -634,6 +683,7 @@
       }
     },
     "mjtState": {
+      "declname": "enum mjtState_",
       "name": "mjtState",
       "values": {
         "mjNSTATE": 13,
@@ -657,6 +707,7 @@
       }
     },
     "mjtStereo": {
+      "declname": "enum mjtStereo_",
       "name": "mjtStereo",
       "values": {
         "mjSTEREO_NONE": 0,
@@ -665,6 +716,7 @@
       }
     },
     "mjtTaskStatus": {
+      "declname": "enum mjtTaskStatus_",
       "name": "mjtTaskStatus",
       "values": {
         "mjTASK_COMPLETED": 2,
@@ -673,6 +725,7 @@
       }
     },
     "mjtTexture": {
+      "declname": "enum mjtTexture_",
       "name": "mjtTexture",
       "values": {
         "mjTEXTURE_2D": 0,
@@ -681,6 +734,7 @@
       }
     },
     "mjtTextureRole": {
+      "declname": "enum mjtTextureRole_",
       "name": "mjtTextureRole",
       "values": {
         "mjNTEXROLE": 10,
@@ -697,6 +751,7 @@
       }
     },
     "mjtTimer": {
+      "declname": "enum mjtTimer_",
       "name": "mjtTimer",
       "values": {
         "mjNTIMER": 15,
@@ -718,6 +773,7 @@
       }
     },
     "mjtTrn": {
+      "declname": "enum mjtTrn_",
       "name": "mjtTrn",
       "values": {
         "mjTRN_BODY": 5,
@@ -730,6 +786,7 @@
       }
     },
     "mjtVisFlag": {
+      "declname": "enum mjtVisFlag_",
       "name": "mjtVisFlag",
       "values": {
         "mjNVISFLAG": 31,
@@ -767,6 +824,7 @@
       }
     },
     "mjtWarning": {
+      "declname": "enum mjtWarning_",
       "name": "mjtWarning",
       "values": {
         "mjNWARNING": 8,
@@ -781,6 +839,7 @@
       }
     },
     "mjtWrap": {
+      "declname": "enum mjtWrap_",
       "name": "mjtWrap",
       "values": {
         "mjWRAP_CYLINDER": 5,
@@ -791,5 +850,8 @@
         "mjWRAP_SPHERE": 4
       }
     }
+  },
+  "meta": {
+    "source": "scripts/mujoco_abi/introspect (vendored from external/mujoco)"
   }
 }

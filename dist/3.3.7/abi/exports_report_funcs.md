@@ -1,0 +1,162 @@
+# MuJoCo WASM Function Export Report (ver 3.3.7)
+
+## Special Rules
+- Prefix whitelist: export only `mj_`, `mju_`, `mjs_`, `mjd_` symbols; rendering/UI/thread helpers (mjv_/mjr_/mjui_/mjthread_) are excluded.
+- Variadic: introspect treats varargs functions as fixed signatures, so gen_funcs.py does not synthesise *_v adapters; mju_error/mju_warning are exported with their introspect-declared parameter lists.
+- Runtime helpers: `_malloc`, `_free`, `_realloc` are kept via runtime_keep and not wrapped as mjwf_*.
+
+## A, B, C Overview
+- A: declarations from dist/<ver>/abi/mjapi.json (introspect).
+- B: implemented symbols from dist/<ver>/abi/nm_symbols.json (llvm-nm -g --defined-only).
+- C: A ∩ B after applying prefix whitelist and any future exclusions, emitted as mjwf_* wrappers.
+- Hard gate: (A ∩ B) - C must be empty.
+
+## Totals
+- A: 490
+- B: 3209
+- C (functions only): 412
+- Prefix breakdown: mj=148, mju=126, mjs=134, mjd=4
+
+## Special Exclusions (by name → reason)
+- mjc_distance -> non_core_prefix
+- mjc_getSDF -> non_core_prefix
+- mjc_gradient -> non_core_prefix
+- mjp_defaultPlugin -> non_core_prefix
+- mjp_defaultResourceProvider -> non_core_prefix
+- mjp_getPlugin -> non_core_prefix
+- mjp_getPluginAtSlot -> non_core_prefix
+- mjp_getResourceProvider -> non_core_prefix
+- mjp_getResourceProviderAtSlot -> non_core_prefix
+- mjp_pluginCount -> non_core_prefix
+- mjp_registerPlugin -> non_core_prefix
+- mjp_registerResourceProvider -> non_core_prefix
+- mjp_resourceProviderCount -> non_core_prefix
+- mjr_addAux -> non_core_prefix
+- mjr_blitAux -> non_core_prefix
+- mjr_blitBuffer -> non_core_prefix
+- mjr_changeFont -> non_core_prefix
+- mjr_defaultContext -> non_core_prefix
+- mjr_drawPixels -> non_core_prefix
+- mjr_figure -> non_core_prefix
+- mjr_findRect -> non_core_prefix
+- mjr_finish -> non_core_prefix
+- mjr_freeContext -> non_core_prefix
+- mjr_getError -> non_core_prefix
+- mjr_label -> non_core_prefix
+- mjr_makeContext -> non_core_prefix
+- mjr_maxViewport -> non_core_prefix
+- mjr_overlay -> non_core_prefix
+- mjr_readPixels -> non_core_prefix
+- mjr_rectangle -> non_core_prefix
+- mjr_render -> non_core_prefix
+- mjr_resizeOffscreen -> non_core_prefix
+- mjr_restoreBuffer -> non_core_prefix
+- mjr_setAux -> non_core_prefix
+- mjr_setBuffer -> non_core_prefix
+- mjr_text -> non_core_prefix
+- mjr_uploadHField -> non_core_prefix
+- mjr_uploadMesh -> non_core_prefix
+- mjr_uploadTexture -> non_core_prefix
+- mjui_add -> non_core_prefix
+- mjui_addToSection -> non_core_prefix
+- mjui_event -> non_core_prefix
+- mjui_render -> non_core_prefix
+- mjui_resize -> non_core_prefix
+- mjui_themeColor -> non_core_prefix
+- mjui_themeSpacing -> non_core_prefix
+- mjui_update -> non_core_prefix
+- mjv_addGeoms -> non_core_prefix
+- mjv_alignToCamera -> non_core_prefix
+- mjv_applyPerturbForce -> non_core_prefix
+- mjv_applyPerturbPose -> non_core_prefix
+- mjv_averageCamera -> non_core_prefix
+- mjv_cameraInModel -> non_core_prefix
+- mjv_cameraInRoom -> non_core_prefix
+- mjv_connector -> non_core_prefix
+- mjv_copyData -> non_core_prefix
+- mjv_copyModel -> non_core_prefix
+- mjv_defaultCamera -> non_core_prefix
+- mjv_defaultFigure -> non_core_prefix
+- mjv_defaultFreeCamera -> non_core_prefix
+- mjv_defaultOption -> non_core_prefix
+- mjv_defaultPerturb -> non_core_prefix
+- mjv_defaultScene -> non_core_prefix
+- mjv_freeScene -> non_core_prefix
+- mjv_frustumHeight -> non_core_prefix
+- mjv_initGeom -> non_core_prefix
+- mjv_initPerturb -> non_core_prefix
+- mjv_makeLights -> non_core_prefix
+- mjv_makeScene -> non_core_prefix
+- mjv_model2room -> non_core_prefix
+- mjv_moveCamera -> non_core_prefix
+- mjv_moveModel -> non_core_prefix
+- mjv_movePerturb -> non_core_prefix
+- mjv_room2model -> non_core_prefix
+- mjv_select -> non_core_prefix
+- mjv_updateCamera -> non_core_prefix
+- mjv_updateScene -> non_core_prefix
+- mjv_updateSkin -> non_core_prefix
+
+## Set Differences (for auditing)
+- A - B (declared only): 0
+- none
+- B - A (implemented only): 2719
+- MJCF
+- RK4_A
+- RK4_B
+- TFAuto_map
+- Z10PolygonCmpRK11MeshPolygonS1_
+- Z10mjuu_dist3PKdS0_
+- Z11CompileMeshP7mjCMeshPK6mjVFS_RSt13exception_ptrRNSt3__25mutexEPNS6_12basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEE
+- Z11mjCopyErrorPcPKci
+- Z11mjuu_getextNSt3__217basic_string_viewIcNS_11char_traitsIcEEEE
+- Z11mjuu_matadriii
+- Z11mjuu_mulmatPdPKdS1_
+- Z11mjuu_setvecPddd
+- Z11mjuu_setvecPdddd
+- Z11mjuu_setvecPddddd
+- Z11mjuu_setvecPfddd
+- Z11mjuu_setvecPfdddd
+- Z11mjuu_z2quatPdPKd
+- Z12ComputeBasisI9Stencil2DEvPdPKdPKiS5_S5_d
+- Z12ComputeBasisI9Stencil3DEvPdPKdPKiS5_S5_d
+- Z12MetricTensorI9Stencil2DEvPdiddPA9_Kd
+- Z12MetricTensorI9Stencil3DEvPdiddPA9_Kd
+- Z12mjuu_definedd
+- Z12mjuu_mulRMRTPdPKdS1_
+- Z12mjuu_mulquatPdPKdS1_
+- Z12mjuu_normvecPdi
+- Z12mjuu_normvecPfi
+- Z12mjuu_zerovecPdi
+- Z12mjuu_zerovecPfi
+- Z13mjuu_addtovecPdPKdi
+- Z13mjuu_crossvecPdPKdS1_
+- Z13mjuu_localposPdPKdS1_S1_
+- Z13mjuu_quat2matPdPKd
+- Z13mjuu_scalevecPdPKddi
+- Z13mjuu_stripextNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z13mjuu_visccoefPddPKdd
+- Z14ComputeBendingI11StencilFlapEvPdS1_PKidd
+- Z14mjuu_isabspathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14mjuu_localaxisPdPKdS1_
+- Z14mjuu_localquatPdPKdS1_
+- Z14mjuu_mulvecmatPdPKdS1_
+- Z14mjuu_offcenterPddPKd
+- Z14mjuu_strippathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14sensorDatatype10mjtSensor_
+- Z15mjuu_dirnamelenPKc
+- Z15mjuu_frame2quatPdPKdS1_S1_
+- Z15mjuu_frameaccumPdS_PKdS1_
+- Z15mjuu_makenormalIdEdPdPKT_S3_S3_
+- Z15mjuu_makenormalIfEdPdPKT_S3_S3_
+- Z15mjuu_mulvecmatTPdPKdS1_
+- Z15mjuu_rotVecQuatPdPKdS1_
+- ... (+2669 more)
+- (A ∩ B) - C (should be zero): 0
+- none
+
+## Baseline Comparison (wrapper_exports.json)
+- Baseline-only (present in snapshot, missing now): 0
+- none
+- Current-only (new in this run vs baseline): 0
+- none
