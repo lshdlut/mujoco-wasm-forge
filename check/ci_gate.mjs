@@ -1,5 +1,5 @@
 // ABI Gate checker
-// Usage: node scripts/mujoco_abi/ci_gate.mjs dist/<ver>/abi [--threshold 95]
+// Usage: node check/ci_gate.mjs dist/<ver>/abi [--threshold 95]
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join as pathJoin } from 'node:path';
@@ -21,7 +21,7 @@ function loadFunctionsFromIntrospect(dir) {
 
 function main() {
   const dir = process.argv[2];
-  if (!dir) { console.error('Usage: node scripts/mujoco_abi/ci_gate.mjs dist/<ver>/abi [--threshold 95]'); process.exit(2); }
+  if (!dir) { console.error('Usage: node check/ci_gate.mjs dist/<ver>/abi [--threshold 95]'); process.exit(2); }
   const thrIdx = process.argv.indexOf('--threshold');
   const threshold = thrIdx > 0 ? parseFloat(process.argv[thrIdx+1]) : 95;
 

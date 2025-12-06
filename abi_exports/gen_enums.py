@@ -4,8 +4,8 @@ Generate enums.json for forge ABI from official introspect output.
 
 Inputs (337-specific defaults, under dist/<ver>/abi):
   - enums_introspect_like.json
-      Produced from scripts/mujoco_abi/introspect/enums.py; contains the full
-      MuJoCo enum table as seen by the official Python bindings.
+      Produced by introspect/forge/scan_clang_introspect.py; contains the full
+      MuJoCo enum table as seen by the official introspect pipeline.
 
 Outputs:
   - enums.json
@@ -41,7 +41,8 @@ from typing import Any, Dict, Optional
 
 
 def _repo_root() -> Path:
-  return Path(__file__).resolve().parents[2]
+  # .../abi_exports -> repo root at parents[1]
+  return Path(__file__).resolve().parents[1]
 
 
 def load_enums_introspect(path: Path) -> Dict[str, Any]:
@@ -107,4 +108,3 @@ def main(argv: Optional[list[str]] = None) -> int:
 
 if __name__ == "__main__":
   raise SystemExit(main())
-

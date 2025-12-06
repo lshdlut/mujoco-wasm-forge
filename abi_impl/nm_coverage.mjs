@@ -4,7 +4,7 @@
  * Enumerate symbols implemented in libmujoco.a (B-set) using llvm-nm.
  *
  * Usage:
- *   node scripts/mujoco_abi/nm_coverage.mjs <libmujoco.a> --out build/mujoco_impl.json
+ *   node abi_impl/nm_coverage.mjs <libmujoco.a> --out build/mujoco_impl.json
  *
  * The script never exits with failure; errors are captured in the JSON payload.
  */
@@ -15,7 +15,7 @@ import { resolve as pathResolve, dirname } from 'node:path';
 
 function parseArgs(argv) {
   if (argv.length < 3) {
-    console.error('Usage: node scripts/mujoco_abi/nm_coverage.mjs <libmujoco.a> [--out report.json]');
+    console.error('Usage: node abi_impl/nm_coverage.mjs <libmujoco.a> [--out report.json]');
     process.exit(2);
   }
   const opts = {

@@ -17,7 +17,7 @@ We do NOT reimplement any scanning rules. Instead we:
 
 Usage (from repo root):
 
-  python -m scripts.mujoco_abi.scan_clang_introspect \\
+  python introspect/forge/scan_clang_introspect.py \\
       --header external/mujoco/include/mujoco/mujoco.h \\
       --out-dir dist/3.3.7/abi \\
       [--clang clang]
@@ -35,22 +35,24 @@ from typing import Any, Dict, List, Mapping
 
 
 def _ensure_local_introspect_on_path() -> Path:
-    """Expose scripts/mujoco_abi/introspect as top-level `introspect` package.
+    """Expose introspect.official as the top-level `introspect` package.
 
-    We take a verbatim copy of MuJoCo's official introspect package under
-    scripts/mujoco_abi/introspect so that all scanning logic lives inside this
-    repo and is driven from the ABI toolchain, without importing from
-    external/ or local_tools/ at runtime.
+    We keep an unmodified copy of MuJoCo's official introspect package under
+    `introspect/official`. The shim in `introspect/__init__.py` re-exports
+    those modules so that imports like `from introspect import ast_nodes`
+    continue to behave exactly as upstream code expects.
     """
     repo_root = Path(__file__).resolve().parents[2]
-    py_root = repo_root / "scripts" / "mujoco_abi"
-    pkg_root = py_root / "introspect"
+    py_root = repo_root  # repo root; `introspect` lives directly under here
+    pkg_root = py_root / "introspect" / "official"
     if not pkg_root.is_dir():
-        raise RuntimeError(f"introspect package not found under {py_root}")
+        raise RuntimeError(f"introspect.official package not found under {py_root}")
     if str(py_root) not in sys.path:
         sys.path.insert(0, str(py_root))
     import importlib  # noqa: WPS433
 
+    # This will resolve to the shim in introspect/__init__.py, which in turn
+    # exposes the official modules.
     importlib.import_module("introspect")
     return py_root
 
@@ -148,19 +150,40 @@ def _functions_to_json(functions: Mapping[str, Any]) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for name, f in functions.items():
         params = []
-        for p in getattr(f, "parameters", ()):
+        param_decls: List[str] = []
+        param_names: List[str] = []
+        for idx, p in enumerate(getattr(f, "parameters", ())
+        ):
+            pname = getattr(p, "name", None) or f"p{idx}"
+            ptype = getattr(p, "type", None)
+            # Keep the rich AST view for downstream consumers.
             params.append(
                 {
-                    "name": getattr(p, "name", None),
+                    "name": pname,
                     "nullable": bool(getattr(p, "nullable", False)),
-                    "type": _type_repr(getattr(p, "type", None)),
+                    "type": _type_repr(ptype),
                 }
             )
+            # Additionally, capture the C-like declarator string using the
+            # official AST printer. This lets gen_funcs.py consume only the
+            # JSON output without having to re-import introspect.
+            decl = ptype.decl(pname) if ptype is not None else pname
+            param_decls.append(str(decl))
+            param_names.append(str(pname))
+
+        return_type_obj = getattr(f, "return_type", None)
+        return_decl = (
+            return_type_obj.decl() if return_type_obj is not None else "void"
+        )
+
         out.append(
             {
                 "name": name,
-                "return_type": _type_repr(getattr(f, "return_type", None)),
+                "return_type": _type_repr(return_type_obj),
+                "return_decl": str(return_decl),
                 "params": params,
+                "param_decls": param_decls,
+                "param_names": param_names,
                 "doc": getattr(f, "doc", None),
             }
         )
@@ -237,17 +260,17 @@ def main() -> None:
 
     # 运行官方三个 generate_* 模块，拿到 FUNCTIONS / STRUCTS / ENUMS 的 Python 源码
     funcs_src = _run_generator_module(
-        "introspect.codegen.generate_functions",
+        "introspect.official.codegen.generate_functions",
         ["--header_path", str(header), "--json_path", str(ast_json_path)],
         py_root,
     )
     structs_src = _run_generator_module(
-        "introspect.codegen.generate_structs",
+        "introspect.official.codegen.generate_structs",
         ["--json_path", str(ast_json_path)],
         py_root,
     )
     enums_src = _run_generator_module(
-        "introspect.codegen.generate_enums",
+        "introspect.official.codegen.generate_enums",
         ["--json_path", str(ast_json_path)],
         py_root,
     )

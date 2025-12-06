@@ -62,7 +62,7 @@ For each `<ver>`, forge produces (at minimum):
     - `extensions.json` – plugin-related symbols.  
     - `probe_spec.json` – minimal ABI probe plan for Web.  
     - `gate.json` – ABI gate thresholds and status.  
-    - `mjapi.json` – header-based symbol inventory used for coverage checks.  
+    - `functions_introspect_like.json` – introspect-based symbol inventory used for coverage checks.  
     - `nm_symbols.json`, `nm_coverage.json` – implementation-side symbol coverage.  
     - `wrapper_exports.json` – wrapper-driven export manifest (required/optional/runtime_keep sets).  
     - `exports_check.json`, `exports_report.md` – export coverage reports.

@@ -40,7 +40,7 @@ if [[ ! -f "$DIST_JS" || ! -f "$DIST_WASM" ]]; then
   exit 1
 fi
 
-node scripts/mujoco_abi/check_exports.mjs \
+node check/check_exports.mjs \
   --abi "${ABI_DIR}" \
   --wasm "${DIST_WASM}" \
   --expected "${ABI_DIR}/wrapper_exports.json"
@@ -50,7 +50,7 @@ if [[ "${MJVER}" == "3.3.7" ]]; then
 fi
 
 if [[ -f "$LIBMUJOCO" ]]; then
-  node scripts/mujoco_abi/nm_coverage.mjs \
+  node abi_impl/nm_coverage.mjs \
     "${LIBMUJOCO}" \
     --out "${ABI_DIR}/nm_coverage.json"
 else

@@ -96,12 +96,11 @@ Single workflow: `.github/workflows/forge.yml`
 
 The current pipeline is driven entirely by MuJoCo's official introspect tables:
 
-1. `python scripts/mujoco_abi/scan_clang_introspect.py` – run MuJoCo's codegen to obtain FUNCTIONS / STRUCTS / ENUMS (JSON under `dist/<ver>/abi`).
-2. `python scripts/mujoco_abi/build_mjapi_from_introspect.py` – build `mjapi.json` (A-set declarations).
-3. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` – collect implementation symbols (B-set).
-4. `python wrappers/official_app_337/codegen/gen_structs.py` – generate struct-related exports `mjwf_exports_generated.{h,c}` and `mjwf_extra_exports.lst`.
-5. `python wrappers/official_app_337/codegen/gen_funcs.py` – generate `_mjwf_*` function wrappers and `wrapper_exports_funcs.json` / `exports_report_funcs.md`.
-6. `python scripts/mujoco_abi/gen_enums_from_introspect.py` – flatten enums to `enums.json` for JS/TS consumers.
+1. `python introspect/forge/scan_clang_introspect.py` – run MuJoCo's codegen to obtain FUNCTIONS / STRUCTS / ENUMS (JSON under `dist/<ver>/abi`).
+2. `node abi_impl/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` – collect implementation symbols (B-set).
+3. `python abi_exports/gen_structs.py` – generate struct-related exports `mjwf_abi_structs.{h,c}` and `mjwf_abi_structs.lst` from `structs_introspect_like.json`.
+4. `python abi_exports/gen_funcs.py` – generate `_mjwf_*` function wrappers (`mjwf_abi_funcs.{h,c}`) and `wrapper_exports_funcs.json` / `exports_report_funcs.md` from `functions_introspect_like.json` + `nm_symbols.json`.
+5. `python abi_exports/gen_enums.py` – flatten enums to `enums.json` for JS/TS consumers.
 
 Emscripten then consumes the generated export lists (`wrapper_exports*.json` / `exports_*.lst`) via `-sEXPORTED_FUNCTIONS=@...`. See `docs/ABI_SCAN.md` for more details.
 
@@ -119,17 +118,16 @@ Preferred environment: WSL Ubuntu 22.04 (or Docker) mirroring the GitHub Actions
 
 2. Generate ABI descriptors (must run before post_build, new introspect flow):
    ```powershell
-   python scripts/mujoco_abi/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
-   python scripts/mujoco_abi/build_mjapi_from_introspect.py --out dist/3.3.7/abi/mjapi.json
-   python scripts/mujoco_abi/gen_enums_from_introspect.py
+  python introspect/forge/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
+  python abi_exports/gen_enums.py
    ```
 
 3. Run post-build checks inside WSL (after `build.sh`):
    ```bash
    source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
-   ./scripts/ci/post_build.sh --version 3.2.5 --short 325
-   ./scripts/ci/post_build.sh --version 3.3.7 --short 337
-   ./scripts/ci/post_build.sh --version 3.3.8-alpha --short 338
+   ./check/post_build.sh --version 3.2.5 --short 325
+   ./check/post_build.sh --version 3.3.7 --short 337
+   ./check/post_build.sh --version 3.3.8-alpha --short 338
    ```
 
 Notes:

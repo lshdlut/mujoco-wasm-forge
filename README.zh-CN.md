@@ -52,12 +52,11 @@ CI 与本地标准构建都会生成：
 
 当前 ABI 流程完全由 MuJoCo 官方 introspect 表驱动：
 
-1. `python scripts/mujoco_abi/scan_clang_introspect.py` —— 调用官方 codegen，得到 FUNCTIONS / STRUCTS / ENUMS 的 JSON（写入 `dist/<ver>/abi`）。
-2. `python scripts/mujoco_abi/build_mjapi_from_introspect.py` —— 生成 `mjapi.json`（A 集合函数声明）。
-3. `node scripts/mujoco_abi/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` —— 收集实现符号（B 集合）。
-4. `python wrappers/official_app_337/codegen/gen_structs.py` —— 生成结构体相关导出 `mjwf_exports_generated.{h,c}` 与 `mjwf_extra_exports.lst`。
-5. `python wrappers/official_app_337/codegen/gen_funcs.py` —— 生成 `_mjwf_*` 函数包装与 `wrapper_exports_funcs.json` / `exports_report_funcs.md`。
-6. `python scripts/mujoco_abi/gen_enums_from_introspect.py` —— 将枚举压平成 `enums.json` 供 JS/TS 使用。
+1. `python introspect/forge/scan_clang_introspect.py` —— 调用官方 codegen，得到 FUNCTIONS / STRUCTS / ENUMS 的 JSON（写入 `dist/<ver>/abi`）。
+2. `node abi_impl/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` —— 收集实现符号（B 集合）。
+3. `python abi_exports/gen_structs.py` —— 从 `structs_introspect_like.json` 生成结构体相关导出 `mjwf_abi_structs.{h,c}` 与 `mjwf_abi_structs.lst`。
+4. `python abi_exports/gen_funcs.py` —— 从 `functions_introspect_like.json` + `nm_symbols.json` 生成 `_mjwf_*` 函数包装（`mjwf_abi_funcs.{h,c}`）与 `wrapper_exports_funcs.json` / `exports_report_funcs.md`。
+5. `python abi_exports/gen_enums.py` —— 将枚举压平成 `enums.json` 供 JS/TS 使用。
 
 Emscripten 再通过 `-sEXPORTED_FUNCTIONS=@...` 消费生成的导出列表（`wrapper_exports*.json` / `exports_*.lst`）。更多细节见 `docs/ABI_SCAN.md`。
 
@@ -75,17 +74,16 @@ Emscripten 再通过 `-sEXPORTED_FUNCTIONS=@...` 消费生成的导出列表（`
 
 2. **生成 ABI 描述（post_build 前，新流程）**
    ```powershell
-   python scripts/mujoco_abi/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
-   python scripts/mujoco_abi/build_mjapi_from_introspect.py --out dist/3.3.7/abi/mjapi.json
-   python scripts/mujoco_abi/gen_enums_from_introspect.py
+  python introspect/forge/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
+  python abi_exports/gen_enums.py
    ```
 
 3. **在 WSL 内执行 post_build**
    ```bash
    source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
-   ./scripts/ci/post_build.sh --version 3.2.5 --short 325
-   ./scripts/ci/post_build.sh --version 3.3.7 --short 337
-   ./scripts/ci/post_build.sh --version 3.3.8-alpha --short 338
+   ./check/post_build.sh --version 3.2.5 --short 325
+   ./check/post_build.sh --version 3.3.7 --short 337
+   ./check/post_build.sh --version 3.3.8-alpha --short 338
    ```
 
 提示：

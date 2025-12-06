@@ -30,9 +30,9 @@ if (NOT NODE_EXECUTABLE)
 endif()
 
 get_filename_component(MJWF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
-set(MJWF_AUTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../auto")
-set(MJWF_AUTO_HEADER "${MJWF_AUTO_DIR}/mjwf_auto_exports.h")
-set(MJWF_AUTO_SOURCE "${MJWF_AUTO_DIR}/mjwf_auto_exports.c")
+set(MJWF_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(MJWF_AUTO_HEADER "${MJWF_APP_DIR}/mjwf_abi_funcs.h")
+set(MJWF_AUTO_SOURCE "${MJWF_APP_DIR}/mjwf_abi_funcs.c")
 set(MJWF_IMPL_JSON "${CMAKE_CURRENT_BINARY_DIR}/nm_${MJVER}.json")
 set(MJWF_ABI_DIR "${MJWF_ROOT}/dist/${MJVER}/abi")
 set(MJWF_IMPL_ARTIFACT "${CMAKE_CURRENT_BINARY_DIR}/lib/libmujoco.a")
@@ -40,10 +40,10 @@ set(MJWF_IMPL_ARTIFACT "${CMAKE_CURRENT_BINARY_DIR}/lib/libmujoco.a")
 add_custom_command(
   OUTPUT ${MJWF_IMPL_JSON}
   BYPRODUCTS ${MJWF_IMPL_JSON}
-  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/scripts/mujoco_abi/nm_coverage.mjs
+  COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/abi_impl/nm_coverage.mjs
           ${MJWF_IMPL_ARTIFACT}
           --out ${MJWF_IMPL_JSON}
-  DEPENDS mujoco ${MJWF_ROOT}/scripts/mujoco_abi/nm_coverage.mjs
+  DEPENDS mujoco ${MJWF_ROOT}/abi_impl/nm_coverage.mjs
   COMMENT "Collecting implemented MuJoCo symbols (${MJVER})"
   VERBATIM
 )
@@ -77,11 +77,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 
   add_executable(mujoco_wasm337
     ${MJWF_AUTO_SOURCE}
-    ${MJWF_AUTO_DIR}/mjwf_stubs.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_handles.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_entrypoints.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_exports_generated.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/mjwf_compat_minimal.c
+    ${MJWF_APP_DIR}/mjwf_stubs.c
+    ${MJWF_APP_DIR}/mjwf_handles.c
+    ${MJWF_APP_DIR}/mjwf_abi_structs.c
   )
 
   add_dependencies(mujoco_wasm337 mujoco)

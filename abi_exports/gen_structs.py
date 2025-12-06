@@ -15,14 +15,12 @@ Design goals:
   - Do not reintroduce YAML/spec-driven “counts/auto/derived/names/extras” layers.
 
 This script generates only:
-  - wrappers/official_app_337/src/mjwf_exports_generated.h
-  - wrappers/official_app_337/src/mjwf_exports_generated.c
-  - wrappers/official_app_337/src/mjwf_extra_exports.lst
+  - app/mjwf_abi_structs.h
+  - app/mjwf_abi_structs.c
+  - app/mjwf_abi_structs.lst
 
 Usage (from repo root):
-  python wrappers/official_app_337/codegen/gen_structs.py \\
-      wrappers/official_app_337/src/mjwf_exports_generated.h \\
-      wrappers/official_app_337/src/mjwf_exports_generated.c
+  python abi_exports/gen_structs.py app/mjwf_abi_structs.h app/mjwf_abi_structs.c
 """
 
 from __future__ import annotations
@@ -40,7 +38,7 @@ from typing import Dict, List, Optional
 
 HDR_PREAMBLE = """\
 // AUTO-GENERATED. Do not edit by hand.
-// Source: wrappers/official_app_337/codegen/gen_structs.py
+// Source: abi_exports/gen_structs.py
 #pragma once
 #include <stdint.h>
 #if defined(__EMSCRIPTEN__)
@@ -64,7 +62,7 @@ HDR_POST = """
 
 SRC_PREAMBLE = """\
 // AUTO-GENERATED. Do not edit by hand.
-// Source: wrappers/official_app_337/codegen/gen_structs.py
+// Source: abi_exports/gen_structs.py
 #include <mujoco/mujoco.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -210,8 +208,8 @@ class DerivedExport:
 
 
 def _repo_root() -> Path:
-    # .../wrappers/official_app_337/codegen -> repo_root at parents[3]
-    return Path(__file__).resolve().parents[3]
+    # .../abi_exports -> repo_root at parents[1]
+    return Path(__file__).resolve().parents[1]
 
 
 def load_structs_introspect(path: Path) -> Dict[str, List[FieldInfo]]:
@@ -751,7 +749,7 @@ def main(argv: List[str]) -> int:
     for drv in derived_exports:
         extra_names.append(f"{drv.base_name}_ptr")
 
-    extra_path = out_h.parent / "mjwf_extra_exports.lst"
+    extra_path = out_h.parent / "mjwf_abi_structs.lst"
     with extra_path.open("w", encoding="utf-8") as fe:
         for name in sorted(set(extra_names)):
             fe.write(f"{name}\n")

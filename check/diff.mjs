@@ -1,7 +1,7 @@
 // MuJoCo ABI diff tool
 // Compare two ABI directories and generate a machine + human readable report
 // Usage:
-//   node scripts/mujoco_abi/diff.mjs dist/3.2.5/abi dist/3.3.7/abi
+//   node check/diff.mjs dist/3.2.5/abi dist/3.3.7/abi
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join as pathJoin } from 'node:path';
@@ -125,7 +125,7 @@ function markdownSummary(report) {
 function main() {
   const [,, dirA, dirB] = process.argv;
   if (!dirA || !dirB) {
-    console.error('Usage: node scripts/mujoco_abi/diff.mjs <abiA> <abiB>');
+    console.error('Usage: node check/diff.mjs <abiA> <abiB>');
     process.exit(2);
   }
   const fa = loadSetFromFunctions(dirA);
