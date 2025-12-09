@@ -21,15 +21,14 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(MJWF_PROFILE "default" CACHE STRING "MuJoCo WASM wrapper profile (default|fast|official|fast_official)")
 set_property(CACHE MJWF_PROFILE PROPERTY STRINGS default fast official fast_official)
 
-# Expect MuJoCo sources cloned to ../../external/mujoco
-add_subdirectory("${CMAKE_SOURCE_DIR}/../../external/mujoco" official_build EXCLUDE_FROM_ALL)
+# Resolve repo root from the app directory and pull in MuJoCo sources.
+get_filename_component(MJWF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+add_subdirectory("${MJWF_ROOT}/external/mujoco" official_build EXCLUDE_FROM_ALL)
 
 find_program(NODE_EXECUTABLE node)
 if (NOT NODE_EXECUTABLE)
   message(FATAL_ERROR "node executable not found; required for wrapper generation")
 endif()
-
-get_filename_component(MJWF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 set(MJWF_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(MJWF_AUTO_HEADER "${MJWF_APP_DIR}/mjwf_abi_funcs.h")
 set(MJWF_AUTO_SOURCE "${MJWF_APP_DIR}/mjwf_abi_funcs.c")
@@ -108,7 +107,11 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   )
 endif()
 
-# Native comparison harness (for regression vs. official native)
-add_executable(mujoco_compare337 "native_compare.cpp")
-target_link_libraries(mujoco_compare337 PRIVATE mujoco)
+# Native comparison harness (for regression vs. official native).
+# The source is optional in this refactored layout; skip the target when
+# native_compare.cpp is not present.
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/native_compare.cpp")
+  add_executable(mujoco_compare337 "native_compare.cpp")
+  target_link_libraries(mujoco_compare337 PRIVATE mujoco)
+endif()
 

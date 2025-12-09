@@ -12,6 +12,7 @@ original package.
 """
 
 from importlib import import_module as _import_module
+import sys as _sys
 
 # Re-export official submodules with the same names as upstream.
 official_ast_nodes = _import_module(".official.ast_nodes", __name__)
@@ -30,6 +31,15 @@ structs = official_structs
 # `from introspect import codegen`.
 codegen = _import_module(".official.codegen", __name__)
 
+# Ensure relative imports like `from .ast_nodes import ...` work when
+# generated code treats `introspect` as a package root. We alias the
+# official modules under the corresponding `introspect.*` names.
+_sys.modules[__name__ + ".ast_nodes"] = official_ast_nodes
+_sys.modules[__name__ + ".type_parsing"] = official_type_parsing
+_sys.modules[__name__ + ".enums"] = official_enums
+_sys.modules[__name__ + ".functions"] = official_functions
+_sys.modules[__name__ + ".structs"] = official_structs
+
 __all__ = [
     "ast_nodes",
     "type_parsing",
@@ -38,4 +48,3 @@ __all__ = [
     "structs",
     "codegen",
 ]
-

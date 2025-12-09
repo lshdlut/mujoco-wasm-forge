@@ -178,6 +178,7 @@ class PointerExport:
     field: str             # top-level field name
     ctype: str             # e.g. "double*"
     base_name: str         # e.g. "model_qpos"
+    is_scalar: bool        # True if field is a scalar ValueType
 
 
 @dataclass
@@ -284,6 +285,7 @@ def collect_pointer_exports(structs: Dict[str, List[FieldInfo]]) -> List[Pointer
                                 field=f.name,
                                 ctype=ctype,
                                 base_name=base_name,
+                                is_scalar=False,
                             )
                         )
                         continue
@@ -295,6 +297,7 @@ def collect_pointer_exports(structs: Dict[str, List[FieldInfo]]) -> List[Pointer
                         field=f.name,
                         ctype=ctype,
                         base_name=base_name,
+                        is_scalar=False,
                     )
                 )
                 continue
@@ -325,6 +328,7 @@ def collect_pointer_exports(structs: Dict[str, List[FieldInfo]]) -> List[Pointer
                     field=f.name,
                     ctype=ctype,
                     base_name=base_name,
+                    is_scalar=True,
                 )
             )
     return exports
@@ -376,13 +380,14 @@ def _array_type_extents(t: Dict[str, object]) -> List[object]:
 
 
 def _load_introspect_ast():
-    """Import vendored introspect.ast_nodes with a stable path."""
+    """Import vendored introspect.ast_nodes from the local introspect package."""
     import sys as _sys
 
     repo_root = _repo_root()
-    abi_dir = repo_root / "scripts" / "mujoco_abi"
-    if str(abi_dir) not in _sys.path:
-        _sys.path.insert(0, str(abi_dir))
+    root_str = str(repo_root)
+    if root_str not in _sys.path:
+        _sys.path.insert(0, root_str)
+
     from introspect import ast_nodes as ia  # type: ignore
 
     return ia
@@ -520,11 +525,18 @@ def collect_derived_exports(structs: Dict[str, List[FieldInfo]]) -> List[Derived
             for sf in subfields:
                 if not sf.name:
                     continue
+                # Skip pointer-typed fields: those are covered by pointer
+                # exports on the owning struct and do not have a well-defined
+                # flattened view here.
+                if sf.type.get("kind") == "PointerType":
+                    continue
+
                 dtype = _dtype_for_type(sf.type)
                 if dtype is not None:
                     basetype = BASETYPE_BY_DTYPE[dtype]
-                    if sf.array_extent:
-                        width_parts = [str(e) for e in sf.array_extent]
+                    extents = sf.array_extent or _array_type_extents(sf.type)
+                    if extents:
+                        width_parts = [str(e) for e in extents]
                         width_expr = "*".join(width_parts)
                     else:
                         width_expr = "1"
@@ -589,14 +601,21 @@ def generate_derived_decl(de: DerivedExport) -> str:
 
 def generate_pointer_impl(pe: PointerExport) -> str:
     owner = "m" if pe.struct == "mjModel" else "d"
+    other = "d" if owner == "m" else "m"
+    # Scalar fields expose a 1-element pointer view; pointer/array fields
+    # return the underlying C pointer directly.
+    if pe.is_scalar:
+        ptr_expr = f"&{owner}->{pe.field}"
+    else:
+        ptr_expr = f"{owner}->{pe.field}"
     lines = [
         f"EMSCRIPTEN_KEEPALIVE {pe.ctype} mjwf_{pe.base_name}_ptr(int h) {{",
         "  if (!mjwf_helper_valid(h)) return NULL;",
         "  mjModel* m = _mjwf_model_of(h);",
         "  mjData* d  = _mjwf_data_of(h);",
-        f"  (void){'d' if owner == 'm' else 'm'};",
+        f"  (void){other};",
         f"  if (!{owner}) return NULL;",
-        f"  return ({pe.ctype})({owner}->{pe.field});",
+        f"  return ({pe.ctype})({ptr_expr});",
         "}",
         "",
     ]
@@ -621,23 +640,39 @@ def generate_dim_impl(de: DimExport) -> str:
 
 
 def generate_derived_impl(de: DerivedExport) -> str:
-    """Generate a flattened view: copy elements into a static buffer and return a ptr."""
+    """Expose a direct pointer view into the underlying C struct data.
+
+    For nested structs (mjModel.opt / vis / stat, mjData.contact / solver /
+    timer / warning) we deliberately avoid snapshot buffers here and instead
+    return a pointer into the true mjModel/mjData memory so that JS-side
+    code can read and write with minimal overhead.
+    """
     ctype = CTYPE_BY_DTYPE[de.dtype]
-    basetype = de.basetype
     owner = "m" if de.owner_struct == "mjModel" else "d"
     other = "d" if owner == "m" else "m"
-    width_expr = de.width_expr or "1"
-    count_expr = de.count_expr or "1"
-
-    # Base pointer: single struct uses &owner->field, arrays use owner->field.
+    # Base expression: single structs use owner->field, arrays use owner->field
+    # as well (pointer-to-struct). We then take the address of the first
+    # element's subfield so that the layout is a flat C array that JS can
+    # wrap with a TypedArray.
     if de.base_is_pointer:
-        base_access = f"{owner}->{de.base_field}"
+        # Pointer to struct array: owner->field is already a {target_struct}*.
+        base_expr = f"{owner}->{de.base_field}"
+        # First element in the array.
+        first_obj = f"{base_expr}[0]"
     else:
-        base_access = f"&{owner}->{de.base_field}"
+        # Single nested struct stored by value on the owning struct.
+        first_obj = f"{owner}->{de.base_field}"
 
-    zero_value = "0"
-    if basetype in ("double", "float"):
-        zero_value = "0.0"
+    # Subfield path may already contain dots (for anonymous structs etc.).
+    # For scalar fields we take &first_obj.subfield; for array fields we
+    # take &first_obj.subfield[0]. We use width_expr to distinguish between
+    # scalar ("1") and array cases.
+    if de.width_expr == "1":
+        field_expr = f"{first_obj}.{de.subfield}"
+    else:
+        field_expr = f"{first_obj}.{de.subfield}[0]"
+
+    ptr_expr = f"&({field_expr})"
 
     lines: List[str] = [
         f"EMSCRIPTEN_KEEPALIVE {ctype} mjwf_{de.base_name}_ptr(int h) {{",
@@ -646,50 +681,10 @@ def generate_derived_impl(de: DerivedExport) -> str:
         "  mjData* d  = _mjwf_data_of(h);",
         f"  (void){other};",
         f"  if (!{owner}) return NULL;",
-        f"  const {de.target_struct}* base = {base_access};",
-        "  if (!base) return NULL;",
-        f"  const int stride = (int)({width_expr});",
-        "  if (stride <= 0) return NULL;",
-        f"  int n = (int)({count_expr});",
-        "  if (n < 0) n = 0;",
-        "  int need = n * stride;",
-        "  if (need <= 0) return NULL;",
-        f"  static {basetype}* buf = NULL;",
-        "  static int cap = 0;",
-        "  if (cap < need) {",
-        "    if (buf) free(buf);",
-        f"    buf = ({basetype}*)malloc(sizeof({basetype}) * need);",
-        "    cap = buf ? need : 0;",
-        "  }",
-        "  if (!buf) return NULL;",
-        "  for (int i = 0; i < n; ++i) {",
-        f"    const {de.target_struct}* s = base + i;",
-        "    int off = i * stride;",
+        f"  return ({ctype})({ptr_expr});",
+        "}",
+        "",
     ]
-
-    # Access subfield: expand scalars or 1D arrays in a single pass.
-    if de.width_expr == "1":
-        lines.append(f"    buf[off] = ({basetype})s->{de.subfield};")
-    else:
-        lines.extend(
-            [
-                "    for (int j = 0; j < stride; ++j) {",
-                f"      buf[off + j] = ({basetype})s->{de.subfield}[j];",
-                "    }",
-            ]
-        )
-
-    lines.extend(
-        [
-            "  }",
-            "  for (int k = n * stride; k < need; ++k) {",
-            f"    buf[k] = {zero_value};",
-            "  }",
-            f"  return ({ctype})buf;",
-            "}",
-            "",
-        ]
-    )
 
     return "\n".join(lines)
 

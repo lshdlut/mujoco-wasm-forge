@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "ref": "HEAD",
+    "source_repo": "https://github.com/google-deepmind/mujoco",
+    "generated_at": "2025-11-06T09:35:43.340Z"
+  },
+  "diagnostics": {
+    "error_warning": [
+      {
+        "name": "mju_user_error",
+        "exists": true,
+        "file": "include/mujoco/mujoco.h",
+        "line": 45
+      },
+      {
+        "name": "mju_user_warning",
+        "exists": true,
+        "file": "include/mujoco/mujoco.h",
+        "line": 46
+      },
+      {
+        "name": "mju_error",
+        "exists": true,
+        "file": "include/mujoco/mujoco.h",
+        "line": 248
+      }
+    ],
+    "versioning": [
+      {
+        "name": "mj_versionString",
+        "exists": true,
+        "file": "include/mujoco/mujoco.h",
+        "line": 606
+      },
+      {
+        "name": "mj_versionNumber",
+        "exists": false
+      },
+      {
+        "name": "mj_layoutHash",
+        "exists": false
+      }
+    ],
+    "requires": {
+      "stage_order": {
+        "forward": [
+          "forward.position",
+          "forward.velocity",
+          "forward.actuation",
+          "forward.acceleration",
+          "forward.constraint"
+        ],
+        "inverse": [
+          "inverse.position",
+          "inverse.velocity",
+          "inverse.constraint"
+        ],
+        "step": [
+          "integrate",
+          "forward.position",
+          "forward.velocity",
+          "forward.actuation",
+          "forward.acceleration",
+          "forward.constraint"
+        ]
+      },
+      "stage_functions": {
+        "fwd_position": "mj_fwdPosition",
+        "fwd_velocity": "mj_fwdVelocity",
+        "fwd_actuation": "mj_fwdActuation",
+        "fwd_acceleration": "mj_fwdAcceleration",
+        "fwd_constraint": "mj_fwdConstraint",
+        "inv_position": "mj_invPosition",
+        "inv_velocity": "mj_invVelocity",
+        "inv_constraint": "mj_invConstraint"
+      },
+      "fields": [
+        {
+          "pattern": "/^.*\\bx(pos|quat|mat)\\b/",
+          "stage": "forward.position"
+        },
+        {
+          "pattern": "/^geom_(pos|quat|xpos|xmat|aabb)/",
+          "stage": "forward.position"
+        },
+        {
+          "pattern": "/^site_(xpos|xmat)/",
+          "stage": "forward.position"
+        },
+        {
+          "pattern": "/^cam_(xpos|xmat)/",
+          "stage": "forward.position"
+        },
+        {
+          "pattern": "/^light_(xpos|xdir)/",
+          "stage": "forward.position"
+        },
+        {
+          "pattern": "/^(cvel|cdof|qfrc_bias)\\b/",
+          "stage": "forward.velocity"
+        },
+        {
+          "pattern": "/^ten_velocity|tendon_velocity/",
+          "stage": "forward.velocity"
+        },
+        {
+          "pattern": "/^qfrc_actuator|actuator_force/",
+          "stage": "forward.actuation"
+        },
+        {
+          "pattern": "/^qacc(_.*)?$/",
+          "stage": "forward.acceleration"
+        },
+        {
+          "pattern": "/^efc_|^nefc$|^contact|^ten_J|^solver/",
+          "stage": "forward.constraint"
+        },
+        {
+          "pattern": "/^sensordata|^nSENSOR/i",
+          "stage": "forward.position"
+        }
+      ]
+    }
+  }
+}
