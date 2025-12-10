@@ -26,21 +26,7 @@ jobs:
       - id: collect
         run: |
           set -euxo pipefail
-          versions=$(python3 - <<'PY' | tr -d '\n'
-            import json
-            from pathlib import Path
-            from textwrap import dedent
-
-            script = dedent("""
-                dist = Path('dist')
-                if not dist.exists():
-                    print(json.dumps([]))
-                else:
-                    versions = sorted(p.name for p in dist.iterdir() if p.is_dir())
-                    print(json.dumps(versions))
-            """)
-            exec(script)
-          PY
+          versions=$(python3 -c "import json, pathlib; dist=pathlib.Path('dist'); versions=[] if not dist.exists() else sorted(p.name for p in dist.iterdir() if p.is_dir()); print(json.dumps(versions))" | tr -d '\n')
           )
           if [ "$versions" = "[]" ]; then
             echo "has_versions=false" >> "$GITHUB_OUTPUT"
