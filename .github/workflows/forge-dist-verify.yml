@@ -27,16 +27,16 @@ jobs:
         run: |
           set -euxo pipefail
           versions=$(python3 - <<'PY' | tr -d '\n'
-            import json
-            from pathlib import Path
+import json
+from pathlib import Path
 
-            dist = Path('dist')
-            if not dist.exists():
-                print(json.dumps([]))
-            else:
-                versions = sorted(p.name for p in dist.iterdir() if p.is_dir())
-                print(json.dumps(versions))
-          PY
+dist = Path('dist')
+if not dist.exists():
+    print(json.dumps([]))
+else:
+    versions = sorted(p.name for p in dist.iterdir() if p.is_dir())
+    print(json.dumps(versions))
+PY
           )
           if [ "$versions" = "[]" ]; then
             echo "has_versions=false" >> "$GITHUB_OUTPUT"
