@@ -1,143 +1,47 @@
 # mujoco-wasm-forge
 
-English | 中文说明
+中文 | [English](README.md)
 
-mujoco-wasm-forge 是一套可复现的构建流程，用来把 MuJoCo 发布版打包成 WebAssembly 产物。  
-流程会扫描上游头文件、生成包装与导出列表、同时构建 WASM 与原生对照程序、执行 smoke/regression 检查，并输出带元数据的版本化产物。GitHub Actions 与本地脚本共享同一条流水线。
+## 概览
 
-- **输入**：MuJoCo 标签（当前覆盖 3.2.5、3.3.7、3.3.8-alpha）  
-- **输出**：`dist/<version>/{mujoco.js, mujoco.wasm[, mujoco.wasm.map], version.json, sbom.spdx.json}`  
-- **工具链**：emsdk 4.0.10（含 Node 20），与 CI 保持一致  
-- **范围**：仅包含仿真内核；可视化 / UI 系列刻意排除
+mujoco-wasm-forge 是生成 MuJoCo WASM 包并验证其导出的流水线。若要为某个版本构建，先在仓库根目录运行 `run-forge.sh --version <mjver>`。这个脚本会准备好 `dist/<ver>`，依次走完 introspect、ABI、导出、Emscripten 构建以及门控检查。`dist_version.py` 与 `check/dist_paths.mjs` 会告诉其他脚本当前生效的是哪一套 `dist/<ver>`，让整个流水线在不同版本间切换时无需额外改动。
 
-### 官方 WASM（official Embind）
+## 自动化运行脚本
 
-Google DeepMind 维护的官方 MuJoCo WebAssembly 绑定使用 Embind（见 [issue #2585](https://github.com/google-deepmind/mujoco/issues/2585#issuecomment-3473495118) 以及 [commit 40862617](https://github.com/google-deepmind/mujoco/commit/4086261714d7cfbc1745d4c6cb0aa2116df45312)）。  
-本仓库在命名方式与暴露策略上对齐官方 Embind：尽量直接暴露公开 API、优先提供结构体字段的指针视图，同时仍然输出多版本构建。
+根目录下的 `run-forge.sh` 会接管从 introspect、ABI 生成、`emcmake` 构建、`check/post_build.sh` 到可选的 smoke/mesh/gates 测试的全部步骤，并且只需传入 `--version`（可选 `--short` 与 `--with-checks`）。它会设置 `MJVER`/`DIST_VERSION`、维护 `dist/<ver>`，让开发者或 CI 通过一次 `./run-forge.sh --version 3.3.7 --with-checks`（或目标 MuJoCo 版本）就能在本地或流水线里复刻完整的、版本无关流程。
 
-仓库镜像：https://github.com/lshdlut/mujoco-wasm-forge
+## 版本切换
 
-## 暴露策略（ABI 摘要）
+切换目标 MuJoCo 版本只需运行 `./run-forge.sh --version <mjver>`，该脚本会拉取或检出对应的 `external/mujoco` 版本，依次执行 introspect、ABI、导出、构建并将结果写入 `dist/<ver>`。`dist_version.py`、`check/dist_paths.mjs` 与 `check/tests/*.mjs` 都会基于 `MJVER`/`DIST_VERSION` 或已存在的 `dist/<ver>` 读取版本，因而后续的校验逻辑直接消费同一目录。需要快速复核时，在现有 dist 下执行 `node check/tests/*.mjs` 即可，它们会自动使用当前版本。
 
-- 与官方 Embind 对齐：尽可能完整暴露 MuJoCo C API，并为 `mjModel` / `mjData` 等结构体提供指针视图，方便 JavaScript 侧读写。
-- 仍然排除可视化 / UI 家族（`mjv` / `mjr` / `mjui`）；聚焦仿真内核。
-- 变参函数优先导出 `*_v` 版本；缺少 `_v` 实现的变参函数暂不发布。
-- 详细导出报告位于 `dist/<ver>/abi/`。
+### 设计思想
 
-## 产物
+- **自动化主导** – introspect、ABI 生成以及导出检查工具自动产出 JSON/源代码，确保每个阶段只消费上一个阶段的权威产物，无需人工干预。
+- **版本无依赖** – 切换到任何 MuJoCo 版本只需设置 `MJVER`/`DIST_VERSION`（或在 `dist/` 下准备对应目录），所有脚本会自动对齐该目录。
+- **扁平导出（A ∩ B = C）** – `abi_exports/gen_funcs.py` 同时输出 A（introspect 声明）、B（`nm_symbols.json` 实现）和 C（wrapper）集合，`exports.lst` 作为 `-sEXPORTED_FUNCTIONS=@dist/<ver>/abi/exports.lst` 的输入，给链接器提供完整的可控导出列表。
+- **ABI 门控** – `check/post_build.sh`、`check/check_exports.mjs` 与 smoke/mesh/gates 脚本统一读取上述导出清单，以 A/B/C 差异及时发现接口变更。
 
-CI 与本地标准构建都会生成：
+## 流程
 
-- `dist/<mjVer>/mujoco.wasm` —— WebAssembly 二进制
-- `dist/<mjVer>/mujoco.js` —— ES Module 工厂 (`createMuJoCo`)
-- `dist/<mjVer>/mujoco.wasm.map` —— 可选 source map
-- `dist/<mjVer>/version.json` —— 元数据（MuJoCo 版本、emsdk、构建哈希、尺寸等）
-- `dist/<mjVer>/sbom.spdx.json` —— SPDX SBOM
+- **构建** – 在 WSL 中使用 Node ≥20 和 emsdk 4.0.10，通过 `emcmake`/`em++` 将 MuJoCo 与自动生成的封装、`MJWF_PROFILE` 配置链接，传入 `-sEXPORTED_FUNCTIONS=@dist/<ver>/abi/exports.lst`，输出 `dist/<ver>/mujoco.js` 与 `.wasm`。
+- **Introspect** – `introspect/forge/scan_clang_introspect.py` 为 `external/mujoco/include/mujoco/mujoco.h` 生成 clang AST，调用官方 introspect codegen 生成 `FUNCTIONS/STRUCTS/ENUMS`，并将结果写成 JSON 存入 `dist/<ver>/abi/`。
+- **ABI 实现** – `abi_exports/gen_structs.py` 依据 `structs_introspect_like.json` 产出 `mjwf_abi_structs.*` 与 `mjwf_abi_structs.lst`。`abi_exports/gen_funcs.py` 把 introspect 声明、`nm_symbols.json`、额外导出整合成 `mjwf_abi_funcs.*`、`wrapper_exports_funcs.json` 与 `exports.lst`。
+- **ABI 导出** – `check/post_build.sh` 验证 `wrapper_exports.json`、`exports_check.json` 和可选 `nm_coverage.json` 与本地构建一致，并让 `check_exports.mjs` 使用该 manifest，保障导出符号符合 A/B/C 关系。
+- **App 层** – `app/` 中含自动生成包装、`mjwf_handles.c`、`mjwf_stubs.c`，CMake 将它们与 MuJoCo 源码编译成 `_wasm/mujoco_wasm.js`，导出 `mjwf_*` API。
+- **校验** – `check/tests` 下的 `smoke.mjs`、`mesh-smoke.mjs`、`gates.mjs` 统一调用 `distDir()`/`distVersion()`，CI 在构建后运行这些脚本，验证导出、smoke/mesh 运行及质量门与 `exports.lst`、nm 扫描保持一致。
 
-## 快速上手（Node ESM）
-
-用法与英文版示例一致，可直接引入 `dist/<version>/mujoco.js` 并通过 `Module.cwrap` 访问导出的函数/指针。
-
-## CI 与可重复性
-
-唯一工作流：`.github/workflows/forge.yml`
-
-- 构建矩阵覆盖 3.2.5 / 3.3.7 / 3.3.8-alpha
-- 工具链固定为 emsdk 4.0.10 + Node 20
-- 3.3.7 与 3.3.8-alpha 使用两阶段 `emcmake` 并强制 qhull 静态链接（Emscripten 限制）
-- 校验项：类型声明再生成（DTS）以及运行时 smoke / regression / mesh 测试（RUN）
-- 构建产物直接从 `dist/<mjVer>/` 上传
-
-### ABI 驱动流水线（每个版本，基于 introspect）
-
-当前 ABI 流程完全由 MuJoCo 官方 introspect 表驱动：
-
-1. `python introspect/forge/scan_clang_introspect.py` —— 调用官方 codegen，得到 FUNCTIONS / STRUCTS / ENUMS 的 JSON（写入 `dist/<ver>/abi`）。
-2. `node abi_impl/nm_coverage.mjs build/<short>/lib/libmujoco.a --out dist/<ver>/abi/nm_symbols.json` —— 收集实现符号（B 集合）。
-3. `python abi_exports/gen_structs.py` —— 从 `structs_introspect_like.json` 生成结构体相关导出 `mjwf_abi_structs.{h,c}` 与 `mjwf_abi_structs.lst`。
-4. `python abi_exports/gen_funcs.py` —— 从 `functions_introspect_like.json` + `nm_symbols.json` 生成 `_mjwf_*` 函数包装（`mjwf_abi_funcs.{h,c}`）与 `wrapper_exports_funcs.json` / `exports_report_funcs.md`。
-5. `python abi_exports/gen_enums.py` —— 将枚举压平成 `enums.json` 供 JS/TS 使用。
-
-Emscripten 再通过 `-sEXPORTED_FUNCTIONS=@...` 消费生成的导出列表（`wrapper_exports*.json` / `exports_*.lst`）。更多细节见 `docs/ABI_SCAN.md`。
-
-## 本地构建（推荐流程）
-
-建议在 WSL Ubuntu 22.04（或 Docker）中执行，步骤与 CI 一致。
-
-1. **同步并构建（Windows 侧）**
-   ```powershell
-   pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass `
-     -File local_tools/wsl/run.ps1 -Sync -Clean -Meta -PinNode20 -UseTemp -Jobs 6
-   ```
-   默认会同时构建 3.2.5 / 3.3.7 / 3.3.8-alpha；如果只想迭代部分版本，可用 `-Targets '337'` 等参数缩小范围。
-   已同步的工作区可根据需要去掉 `-Sync` / `-UseTemp`。
-
-2. **生成 ABI 描述（post_build 前，新流程）**
-   ```powershell
-  python introspect/forge/scan_clang_introspect.py --header external/mujoco/include/mujoco/mujoco.h --out-dir dist/3.3.7/abi
-  python abi_exports/gen_enums.py
-   ```
-
-3. **在 WSL 内执行 post_build**
-   ```bash
-   source /root/emsdk/emsdk_env.sh >/dev/null 2>&1
-   ./check/post_build.sh --version 3.2.5 --short 325
-   ./check/post_build.sh --version 3.3.7 --short 337
-   ./check/post_build.sh --version 3.3.8-alpha --short 338
-   ```
-
-提示：
-
-- 在 WSL ext4 目录（例如 `~/dev/mujoco-wasm-forge`）或 `/tmp`（`-UseTemp`）下构建，避免 `/mnt/c/...` 与 OneDrive 带来的 I/O 问题。
-- 建议从干净工作区（`-UseTemp` 或全新 clone）开始，以确保与 CI 一致。
-- 默认并行度为 6，可通过 `-Jobs` 重写。
-- `-Sync` 会自动排除 `.git` 并清理异常目录，更适合同步 Windows 工作副本。
-
-## 在其他项目中使用
-
-- 构建后仅需拷贝 `dist/<mjVer>/`；无需携带 `build/` 或 `external/`。
-- 直接加载 `dist/<mjVer>/mujoco.{js,wasm}`；3.3.7 已包含静态 qhull。
-- 若启用 `-Meta`/`META=1`，会额外生成版本信息与 SBOM。
-### ����ʱ�������ο�
-
-- ����ڶ��δ���ڵĵ������ݣ���ʹ�� `stackSave + stackAlloc + stackRestore` ����ջ��ռ䡣
-- ��Ҫ�ֲ�ͬ����ʹ�õ� scratch (���� `mj_contactForce` �� 6×`mjtNum` ����) ���� `_malloc` ��ȡ���ڴ棬Ȼ��ͨ�� `_free` �ͷ�
-
-���� `mjtNum` �� `double`���Ա� 8 �ֽڣ�
-
-```ts
-const scratchBytes = 6 * 8;
-const scratchPtr = Module._malloc(scratchBytes);
-Module._mjwf_mj_contactForce(modelPtr, dataPtr, contactIndex, scratchPtr);
-const forces = Module.HEAPF64.subarray(scratchPtr / 8, scratchPtr / 8 + 6);
-// ... ʹ�� forces ...
-Module._free(scratchPtr);
-```
-
-Forge ģ���Ѿ��� `_malloc/_free/_realloc` ��ջ API �������嵥�����嶼���� Embind �����ĳ����÷�ģʽ��
-
-
-## 版本约定
-
-- 稳定标签：`forge-<mujocoVersion>-r<rev>`（如 `forge-3.3.7-r2`）
-- 预发行：`forge-<mujocoVersion>-rc.<n>`
-- 产物不可变；若需修正，增量 bump `-rN`
-
-## 其他说明
+## 备注
 
 - 前端示例（进行中）：https://github.com/lshdlut/mujoco-wasm-play
 
 ## 致谢
 
-项目受到多份早期 MuJoCo→WASM 实验的启发，它们验证了可行性并总结了大量坑点：
+本项目受到早期 MuJoCo→WASM 试验的启发，感谢他们验证可行性并总结经验：
 
 - [stillonearth/MuJoCo-WASM](https://github.com/stillonearth/MuJoCo-WASM)
 - [zalo/mujoco_wasm](https://github.com/zalo/mujoco_wasm)
 - [hashb/mujoco_web](https://github.com/hashb/mujoco_web)
 
-虽然 mujoco-wasm-forge 已经演化为独立工具链，仍对这些先行者心怀感谢。
+## 源起
 
-## Provenance
-
-仓库部分脚本和文档在生成阶段使用了生成式 AI，最终内容均由维护者审校。
-
+仓库部分脚本和文档在生成阶段使用了生成式 AI，并由维护者复核。
