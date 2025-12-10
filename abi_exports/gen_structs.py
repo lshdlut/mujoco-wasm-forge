@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate struct-related WASM exports for official_app_337.
+Generate struct-related WASM exports for the current dist/<ver>/abi tree.
 
 Design goals:
   - Depend only on MuJoCo's official introspection output
-      dist/3.3.7/abi/structs_introspect_like.json
+      dist/<ver>/abi/structs_introspect_like.json
     and stop using the legacy scan.mjs structs.json / dim_map.json.
   - Keep rules explicit and simple, with minimal ad-hoc whitelists:
       * For all mjModel / mjData pointer or array fields export plain ptrs:
@@ -25,11 +25,14 @@ Usage (from repo root):
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
+
+from dist_version import abi_dir as resolve_abi_dir, dist_version as detect_dist_version
 
 
 # ---------------------------------------------------------------------------
@@ -689,17 +692,23 @@ def generate_derived_impl(de: DerivedExport) -> str:
     return "\n".join(lines)
 
 
-def main(argv: List[str]) -> int:
-    if len(argv) != 3:
-        print("Usage: gen_structs.py <out.h> <out.c>", file=sys.stderr)
-        return 2
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--abi",
+        type=Path,
+        help="Optional path to dist/<ver>/abi (defaults to the first dist entry).",
+    )
+    parser.add_argument("out_h", type=Path, help="Output path for mjwf_abi_structs.h.")
+    parser.add_argument("out_c", type=Path, help="Output path for mjwf_abi_structs.c.")
+    args = parser.parse_args(argv)
 
-    out_h = Path(argv[1]).resolve()
-    out_c = Path(argv[2]).resolve()
+    out_h = args.out_h.resolve()
+    out_c = args.out_c.resolve()
 
-    repo_root = _repo_root()
-    # official_app_337 is tied to MuJoCo 3.3.7; keep the path explicit here.
-    abi_structs = repo_root / "dist" / "3.3.7" / "abi" / "structs_introspect_like.json"
+    target_version = detect_dist_version()
+    abi_dir = args.abi or resolve_abi_dir(target_version)
+    abi_structs = (abi_dir / "structs_introspect_like.json").resolve()
     if not abi_structs.is_file():
         raise SystemExit(f"structs_introspect_like.json not found at {abi_structs}")
 

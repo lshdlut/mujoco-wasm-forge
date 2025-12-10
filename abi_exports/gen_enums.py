@@ -2,7 +2,7 @@
 """
 Generate enums.json for forge ABI from official introspect output.
 
-Inputs (337-specific defaults, under dist/<ver>/abi):
+Inputs (defaults from dist/<ver>/abi):
   - enums_introspect_like.json
       Produced by introspect/forge/scan_clang_introspect.py; contains the full
       MuJoCo enum table as seen by the official introspect pipeline.
@@ -38,6 +38,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+from dist_version import abi_dir as resolve_abi_dir, dist_version as detect_dist_version
 
 
 def _repo_root() -> Path:
@@ -89,7 +91,8 @@ def main(argv: Optional[list[str]] = None) -> int:
 
   repo_root = _repo_root()
 
-  abi_dir = args.abi or (repo_root / "dist" / "3.3.7" / "abi")
+  target_version = detect_dist_version()
+  abi_dir = args.abi or resolve_abi_dir(target_version)
   infile = args.infile or (abi_dir / "enums_introspect_like.json")
   outfile = args.outfile or (abi_dir / "enums.json")
 

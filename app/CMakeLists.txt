@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(mujoco_official_337_wasm)
+project(mujoco_official_wasm)
 
 # Only require EMSDK when targeting Emscripten
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
@@ -74,18 +74,18 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     set(MJWF_LTO_FLAG "-flto")
   endif()
 
-  add_executable(mujoco_wasm337
+  add_executable(mujoco_wasm
     ${MJWF_AUTO_SOURCE}
     ${MJWF_APP_DIR}/mjwf_stubs.c
     ${MJWF_APP_DIR}/mjwf_handles.c
     ${MJWF_APP_DIR}/mjwf_abi_structs.c
   )
 
-  add_dependencies(mujoco_wasm337 mujoco)
-  target_include_directories(mujoco_wasm337 PRIVATE ${MJWF_AUTO_DIR})
-  target_link_libraries(mujoco_wasm337 PRIVATE mujoco)
-  target_compile_options(mujoco_wasm337 PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
-  target_link_options(mujoco_wasm337 PRIVATE
+  add_dependencies(mujoco_wasm mujoco)
+  target_include_directories(mujoco_wasm PRIVATE ${MJWF_AUTO_DIR})
+  target_link_libraries(mujoco_wasm PRIVATE mujoco)
+  target_compile_options(mujoco_wasm PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
+  target_link_options(mujoco_wasm PRIVATE
     "-sWASM=1"
     "-sSTACK_SIZE=5242880"
     "-sINITIAL_MEMORY=134217728"
@@ -111,7 +111,7 @@ endif()
 # The source is optional in this refactored layout; skip the target when
 # native_compare.cpp is not present.
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/native_compare.cpp")
-  add_executable(mujoco_compare337 "native_compare.cpp")
-  target_link_libraries(mujoco_compare337 PRIVATE mujoco)
+  add_executable(mujoco_compare "native_compare.cpp")
+  target_link_libraries(mujoco_compare PRIVATE mujoco)
 endif()
 

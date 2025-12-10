@@ -1,7 +1,7 @@
 // MuJoCo ABI diff tool
 // Compare two ABI directories and generate a machine + human readable report
 // Usage:
-//   node check/diff.mjs dist/3.2.5/abi dist/3.3.7/abi
+//   node check/diff.mjs <abiDirA> <abiDirB>
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join as pathJoin } from 'node:path';

@@ -5,7 +5,6 @@
   "version": "0.0.0",
   "scripts": {
     "build:forge": "node build/build-forge.mjs",
-    "test:smoke-325": "node check/tests/smoke-325.mjs",
-    "spec:exports-337": "node scripts/ci/check_official_exports.mjs --dist dist/3.3.7"
+    "test:smoke-325": "node check/tests/smoke-325.mjs"
   }
 }

@@ -1,4 +1,4 @@
-// Handle pool and lifecycle helpers for MuJoCo WASM 3.3.7
+// Handle pool and lifecycle helpers for MuJoCo WASM
 // Generated exports cover raw field access; this file only manages handles.
 
 #include <mujoco/mujoco.h>

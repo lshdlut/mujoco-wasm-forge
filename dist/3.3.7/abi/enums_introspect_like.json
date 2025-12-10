@@ -853,7 +853,7 @@
   },
   "meta": {
     "ast_json": "dist/3.3.7/abi/mujoco_ast.json",
-    "clang": "/root/emsdk/upstream/bin/clang",
-    "header": "/root/dev/mujoco-wasm-forge/external/mujoco/include/mujoco/mujoco.h"
+    "clang": "clang",
+    "header": "/mnt/c/Users/63427/OneDrive - The University of Tokyo/sim/Git_Repo/mujoco-wasm-forge/external/mujoco/include/mujoco/mujoco.h"
   }
 }

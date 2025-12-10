@@ -19,7 +19,7 @@ Usage (from repo root):
 
   python introspect/forge/scan_clang_introspect.py \\
       --header external/mujoco/include/mujoco/mujoco.h \\
-      --out-dir dist/3.3.7/abi \\
+      --out-dir dist/<ver>/abi \\
       [--clang clang]
 """
 
