@@ -541,6 +541,9 @@ def _sanitize_meta(dist_dir: Path) -> None:
         text,
     )
     text = re.sub(r'/mnt/c/[^"]*/external/mujoco/', '/external/mujoco/', text)
+    text = re.sub(r',\s*"visibility":\s*"default"', "", text)
+    text = re.sub(r'"visibility":\s*"default"\s*,', "", text)
+    text = re.sub(r'"visibility":\s*"default"', "", text)
     ast_path.write_text(text, encoding="utf-8")
 
 
