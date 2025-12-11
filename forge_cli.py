@@ -487,7 +487,7 @@ def _sanitize_meta(dist_dir: Path) -> None:
         normalized.append(line)
     report.write_text("\n".join(normalized) + "\n", encoding="utf-8")
 
-  # Normalize JSON generatedAt fields in mjapi.json and wrapper_exports.json
+  # Normalize JSON generatedAt fields and non-semantic metadata in key JSON files.
   for name in ("mjapi.json", "wrapper_exports.json", "wrapper_exports_funcs.json"):
     f = abi_dir / name
     if not f.is_file():
@@ -498,6 +498,10 @@ def _sanitize_meta(dist_dir: Path) -> None:
         '"generatedAt": "NORMALIZED_TIME"',
         text,
     )
+    # Strip non-semantic visibility metadata differences.
+    text = re.sub(r',\s*"visibility":\s*"default"', "", text)
+    text = re.sub(r'"visibility":\s*"default"\s*,', "", text)
+    text = re.sub(r'"visibility":\s*"default"', "", text)
     f.write_text(text, encoding="utf-8")
 
   # Normalize introspect metadata paths that depend on the checkout location.
@@ -520,6 +524,9 @@ def _sanitize_meta(dist_dir: Path) -> None:
         '"header": "NORMALIZED_HEADER"',
         text,
     )
+    text = re.sub(r',\s*"visibility":\s*"default"', "", text)
+    text = re.sub(r'"visibility":\s*"default"\s*,', "", text)
+    text = re.sub(r'"visibility":\s*"default"', "", text)
     f.write_text(text, encoding="utf-8")
 
   # Normalize clang AST node ids in mujoco_ast.json which are inherently
