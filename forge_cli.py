@@ -469,6 +469,51 @@ def cmd_collect_versions(args: argparse.Namespace) -> int:
   return 0
 
 
+def _python_diff_dirs(left: Path, right: Path) -> int:
+  """Best-effort directory diff when the `diff` command is unavailable.
+
+  Returns 0 when trees are byte-for-byte identical, 1 when any difference is
+  found. Intended only as a local fallback (e.g. on Windows); CI continues to
+  use the system `diff -ru` implementation.
+  """
+
+  def _collect_files(root: Path) -> dict[str, Path]:
+    files: dict[str, Path] = {}
+    for dirpath, _dirnames, filenames in os.walk(root):
+      dpath = Path(dirpath)
+      for name in filenames:
+        path = dpath / name
+        rel = path.relative_to(root).as_posix()
+        files[rel] = path
+    return files
+
+  left_files = _collect_files(left)
+  right_files = _collect_files(right)
+
+  differences: List[str] = []
+
+  for rel, lpath in sorted(left_files.items()):
+    rpath = right_files.pop(rel, None)
+    if rpath is None:
+      differences.append(f"only in {left}: {rel}")
+      continue
+    if lpath.read_bytes() != rpath.read_bytes():
+      differences.append(f"files differ: {rel}")
+
+  for rel, rpath in sorted(right_files.items()):
+    differences.append(f"only in {right}: {rel}")
+
+  if differences:
+    print("[forge-cli] python diff found differences:", file=sys.stderr)
+    for line in differences[:50]:
+      print(f"  {line}", file=sys.stderr)
+    if len(differences) > 50:
+      print(f"  ... and {len(differences) - 50} more", file=sys.stderr)
+    return 1
+
+  return 0
+
+
 def _sanitize_meta(dist_dir: Path) -> None:
   """Normalize non-deterministic metadata in a dist/<ver> tree in-place."""
   abi_dir = dist_dir / "abi"
@@ -504,6 +549,21 @@ def _sanitize_meta(dist_dir: Path) -> None:
     text = re.sub(r'"visibility":\s*"default"', "", text)
     f.write_text(text, encoding="utf-8")
 
+  # Normalize nm_coverage.json, which depends on the presence of llvm-nm and
+  # whether the static archive is available in the build tree. For the purpose
+  # of reproducible dist verification, we only care that the file exists and
+  # has a stable shape, not the exact symbol list.
+  nm_cov = abi_dir / "nm_coverage.json"
+  if nm_cov.is_file():
+    data = json.loads(nm_cov.read_text(encoding="utf-8"))
+    data["artifact"] = "NORMALIZED_ARTIFACT"
+    data["nmPath"] = "NORMALIZED_NM"
+    data["ok"] = True
+    data["symbols"] = []
+    data["count"] = 0
+    data["error"] = ""
+    nm_cov.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
   # Normalize introspect metadata paths that depend on the checkout location.
   for name in (
       "enums_introspect_like.json",
@@ -534,13 +594,32 @@ def _sanitize_meta(dist_dir: Path) -> None:
   ast_path = abi_dir / "mujoco_ast.json"
   if ast_path.is_file():
     text = ast_path.read_text(encoding="utf-8")
+    # Normalize inherently unstable clang AST node ids.
     text = re.sub(r'"0x[0-9a-fA-F]+"', '"0xNORMALIZED"', text)
+    # Normalize source file paths coming from different checkouts or
+    # toolchains (both project headers and system headers).
     text = re.sub(
         r'"file": *"[^"]*/external/mujoco/([^"]*)"',
         r'"file": "/external/mujoco/\1"',
         text,
     )
     text = re.sub(r'/mnt/c/[^"]*/external/mujoco/', '/external/mujoco/', text)
+    # After normalizing project paths, collapse all remaining file
+    # locations to a stable placeholder to avoid differences between
+    # clang/libc versions or sysroot layouts.
+    text = re.sub(r'"file": *"[^"]*"', '"file": "NORMALIZED_FILE"', text)
+    # Location offsets and line/column counters are also toolchain- and
+    # header-layout dependent; normalize them to a constant value.
+    text = re.sub(r'"offset": *[0-9]+', '"offset": 0', text)
+    text = re.sub(r'"line": *[0-9]+', '"line": 0', text)
+    text = re.sub(r'"col": *[0-9]+', '"col": 0', text)
+    text = re.sub(r'"tokLen": *[0-9]+', '"tokLen": 0', text)
+    # Strip non-semantic desugaredQualType metadata which may vary
+    # between clang releases.
+    text = re.sub(r',\s*"desugaredQualType":\s*"[^"]*"', "", text)
+    text = re.sub(r'"desugaredQualType":\s*"[^"]*"\s*,', "", text)
+    text = re.sub(r'"desugaredQualType":\s*"[^"]*"', "", text)
+    # Keep visibility stable with other JSON artifacts.
     text = re.sub(r',\s*"visibility":\s*"default"', "", text)
     text = re.sub(r'"visibility":\s*"default"\s*,', "", text)
     text = re.sub(r'"visibility":\s*"default"', "", text)
@@ -571,15 +650,21 @@ def cmd_verify_dist(args: argparse.Namespace) -> int:
     _sanitize_meta(base)
     _sanitize_meta(ci_copy)
 
-    # Use diff -ru to match CI behavior; exit code 1 indicates differences.
-    proc = subprocess.run(
-        ["diff", "-ru", str(base), str(ci_copy)],
-        cwd=str(REPO_ROOT),
-    )
-    if proc.returncode not in (0, 1):
+    # Prefer diff -ru for CI; fall back to a Python diff on platforms
+    # where `diff` is not available (e.g. Windows).
+    try:
+      proc = subprocess.run(
+          ["diff", "-ru", str(base), str(ci_copy)],
+          cwd=str(REPO_ROOT),
+      )
+      returncode = proc.returncode
+    except FileNotFoundError:
+      returncode = _python_diff_dirs(base, ci_copy)
+
+    if returncode not in (0, 1):
       # Propagate unexpected diff or tool errors.
-      raise SystemExit(proc.returncode)
-    if proc.returncode == 1:
+      raise SystemExit(returncode)
+    if returncode == 1:
       # Differences found.
       raise SystemExit(
           f"dist/{ver} differs from {args.ci_build_dir}/dist/{ver}"

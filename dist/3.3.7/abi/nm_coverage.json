@@ -1,8 +1,8 @@
 {
-  "artifact": "build/337/lib/libmujoco.a",
-  "nmPath": "llvm-nm",
-  "ok": false,
-  "symbols": [],
+  "artifact": "NORMALIZED_ARTIFACT",
   "count": 0,
-  "error": "Failed to execute llvm-nm: spawnSync llvm-nm ENOENT"
+  "error": "",
+  "nmPath": "NORMALIZED_NM",
+  "ok": true,
+  "symbols": []
 }

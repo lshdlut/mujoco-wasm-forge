@@ -1,8 +1,8 @@
 {
   "meta": {
-    "ast_json": "/mnt/c/Users/63427/OneDrive - The University of Tokyo/sim/Git_Repo/mujoco-wasm-forge/dist/3.3.7/abi/mujoco_ast.json",
+    "ast_json": "NORMALIZED_AST_JSON",
     "clang": "clang",
-    "header": "/mnt/c/Users/63427/OneDrive - The University of Tokyo/sim/Git_Repo/mujoco-wasm-forge/external/mujoco/include/mujoco/mujoco.h"
+    "header": "NORMALIZED_HEADER"
   },
   "structs": {
     "mjCache": {
