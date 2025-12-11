@@ -21,8 +21,9 @@ The JSON input can be generated via:
 import json
 from typing import Any, Mapping, Sequence
 
-from absl import app
-from absl import flags
+# Use a local minimal absl shim unconditionally to avoid depending on absl-py
+# in CI environments while keeping the upstream API surface.
+from introspect.absl_shim import app, flags  # type: ignore[import]
 
 from introspect import ast_nodes
 from introspect import type_parsing
