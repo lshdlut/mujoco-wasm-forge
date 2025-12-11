@@ -91,82 +91,6 @@ def _compute_short(version: str, override: str | None) -> str:
   return digits or "337"
 
 
-def _ensure_qhull_patch_file(cmake_dir: Path) -> None:
-  """Ensure qhull-support-emscripten.patch exists under the given cmake dir."""
-  patch_path = cmake_dir / "qhull-support-emscripten.patch"
-  content = _QHULL_EMSCRIPTEN_PATCH
-
-  if patch_path.is_file():
-    existing = patch_path.read_text(encoding="utf-8")
-    if existing == content:
-      return
-  patch_path.write_text(content, encoding="utf-8")
-
-
-def _patch_mujoco_qhull_emscripten(mujoco_dir: Path) -> None:
-  """Patch MuJoCo's CMake deps so qhull is Emscripten-friendly.
-
-  This mirrors the qhull PATCH_COMMAND wiring used in the official MuJoCo
-  repository instead of post-hoc patching qhull from the build tree.
-  """
-  cmake_dir = mujoco_dir / "cmake"
-  deps_path = cmake_dir / "MujocoDependencies.cmake"
-  if not deps_path.is_file():
-    return
-
-  # Always ensure the patch file is present; this is safe and idempotent.
-  _ensure_qhull_patch_file(cmake_dir)
-
-  text = deps_path.read_text(encoding="utf-8")
-  if "QHULL_PATCH_COMMAND" in text and "qhull-support-emscripten.patch" in text:
-    # Already wired to use the patch; nothing else to do.
-    return
-
-  # Use the canonical qhull + tinyxml2 block from the local mujoco-official
-  # snapshot so that we have a single well-tested configuration.
-  canonical_path = (
-      REPO_ROOT
-      / "local_tools"
-      / "mujoco-official"
-      / "cmake"
-      / "MujocoDependencies.cmake"
-  )
-  try:
-    canonical = canonical_path.read_text(encoding="utf-8")
-  except FileNotFoundError:
-    # Best-effort: without the canonical template we keep the original deps.
-    return
-
-  start_marker = "set(QHULL_ENABLE_TESTING OFF)"
-  end_marker = "target_link_options(tinyxml2 PRIVATE"
-
-  start_idx = canonical.find(start_marker)
-  end_idx = canonical.find(end_marker, start_idx if start_idx != -1 else 0)
-  if start_idx == -1 or end_idx == -1:
-    return
-  # Include the full tinyxml2 options line.
-  end_newline_idx = canonical.find("\n", end_idx)
-  if end_newline_idx == -1:
-    return
-  end_newline_idx += 1
-
-  qhull_block = canonical[start_idx:end_newline_idx]
-
-  # Replace the original qhull + tinyxml2 block with the canonical one.
-  start_idx_cur = text.find(start_marker)
-  end_idx_cur = text.find(end_marker, start_idx_cur if start_idx_cur != -1 else 0)
-  if start_idx_cur == -1 or end_idx_cur == -1:
-    return
-  end_newline_idx_cur = text.find("\n", end_idx_cur)
-  if end_newline_idx_cur == -1:
-    return
-  end_newline_idx_cur += 1
-
-  new_text = text[:start_idx_cur] + qhull_block + text[end_newline_idx_cur:]
-  deps_path.write_text(new_text, encoding="utf-8")
-  print("[forge-cli] patched MuJoCo qhull deps for Emscripten", file=sys.stderr)
-
-
 def _prepare_mujoco(version: str) -> None:
   """Clone or update external/mujoco for the requested version."""
   mujoco_dir = REPO_ROOT / "external" / "mujoco"
@@ -212,7 +136,6 @@ def _prepare_mujoco(version: str) -> None:
       ["git", "-C", str(mujoco_dir), "checkout", "--detach", "FETCH_HEAD"],
       check=True,
   )
-  _patch_mujoco_qhull_emscripten(mujoco_dir)
 
 
 def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
@@ -265,6 +188,65 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   build_dir.mkdir(parents=True, exist_ok=True)
   dist_dir.mkdir(parents=True, exist_ok=True)
 
+  def _apply_qhull_emscripten_patch(build_root: Path) -> bool:
+    """Apply the qhull Emscripten patch in the fetched qhull git checkout.
+
+    This follows the documented two-stage emcmake flow: let CMake populate
+    _deps/qhull-src once, then patch its CMakeLists via git apply and retry
+    configuration on a clean build tree.
+    """
+    qhull_src = build_root / "_deps" / "qhull-src"
+    if not qhull_src.is_dir():
+      return False
+
+    patch_path = qhull_src / "qhull-support-emscripten.patch"
+    if not patch_path.is_file():
+      patch_path.write_text(_QHULL_EMSCRIPTEN_PATCH, encoding="utf-8")
+
+    # Only apply the patch if it would succeed; this keeps the helper idempotent.
+    try:
+      subprocess.run(
+          ["git", "apply", "--check", str(patch_path)],
+          cwd=str(qhull_src),
+          stdout=subprocess.DEVNULL,
+          stderr=subprocess.DEVNULL,
+          check=True,
+      )
+    except subprocess.CalledProcessError:
+      return False
+
+    subprocess.run(
+        ["git", "apply", str(patch_path)],
+        cwd=str(qhull_src),
+        check=True,
+    )
+    print("[forge-cli] applied qhull Emscripten patch in _deps/qhull-src", file=sys.stderr)
+    return True
+
+  def _reset_qhull_state(build_root: Path) -> None:
+    """Reset CMake state while preserving fetched dependencies in _deps/."""
+    for child in build_root.iterdir():
+      if child.name == "_deps":
+        continue
+      if child.is_dir():
+        shutil.rmtree(child)
+      else:
+        child.unlink()
+
+    deps_dir = build_root / "_deps"
+    if not deps_dir.is_dir():
+      return
+    for dep_child in deps_dir.iterdir():
+      if dep_child.name in ("qhull-build", "qhull-subbuild"):
+        shutil.rmtree(dep_child)
+      elif dep_child.name == "qhull-src":
+        cache = dep_child / "CMakeCache.txt"
+        if cache.is_file():
+          cache.unlink()
+        cmake_files = dep_child / "CMakeFiles"
+        if cmake_files.is_dir():
+          shutil.rmtree(cmake_files)
+
   app_dir = REPO_ROOT / "app"
   # Mirror run-forge.sh: source emsdk env when available and use emcmake to
   # configure, then build. Prefer the EMSDK environment variable (used in CI)
@@ -299,12 +281,27 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       + emsdk_env_snippet +
       f"cmake --build '{build_dir}' -- -j \"$(nproc)\""
   )
-  subprocess.run(
-      ["bash", "-lc", configure_cmd],
-      cwd=str(REPO_ROOT),
-      env=dict(env),
-      check=True,
-  )
+
+  def _run_configure(check: bool) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["bash", "-lc", configure_cmd],
+        cwd=str(REPO_ROOT),
+        env=dict(env),
+        check=check,
+    )
+
+  # First configure pass: may fail on qhull SHARED libraries under Emscripten
+  # but will populate _deps/qhull-src so we can patch it. Only if this pass
+  # fails do we fall back to patching qhull and reconfiguring.
+  proc = _run_configure(check=False)
+  if proc.returncode != 0:
+    patched = _apply_qhull_emscripten_patch(build_dir)
+    if not patched:
+      # The failure was not the known qhull dynamic-linking issue; propagate.
+      proc.check_returncode()
+    _reset_qhull_state(build_dir)
+    _run_configure(check=True)
+
   subprocess.run(
       ["bash", "-lc", build_cmd],
       check=True,
