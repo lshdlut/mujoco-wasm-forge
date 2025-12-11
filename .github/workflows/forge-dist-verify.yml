@@ -75,10 +75,9 @@ jobs:
         working-directory: ci-build
         env:
           EMSDK_VERSION: ${{ env.EMSDK_VERSION }}
-          META: '1'
-          RUN_TESTS: '0'
         run: |
-          npm run build:forge -- ${{ matrix.ver }}
+          set -euxo pipefail
+          bash run-forge.sh --version ${{ matrix.ver }}
 
       - name: Verify dist matches reproducible build
         run: |

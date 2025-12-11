@@ -14,7 +14,7 @@ EOF
 }
 
 MJVER=""
-SHORT="337"
+SHORT=""
 WITH_CHECKS=0
 
 while [[ $# -gt 0 ]]; do
@@ -32,6 +32,11 @@ REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 DIST_DIR="$REPO_ROOT/dist/$MJVER"
 ABI_DIR="$DIST_DIR/abi"
 BUILD_DIR="$REPO_ROOT/build/forge"
+
+if [[ -z "$SHORT" ]]; then
+  digits="$(echo "$MJVER" | tr -dc '0-9')"
+  SHORT="${digits:-337}"
+fi
 
 export MJVER
 export DIST_VERSION="$MJVER"
