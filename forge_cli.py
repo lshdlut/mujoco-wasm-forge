@@ -623,7 +623,17 @@ def _sanitize_meta(dist_dir: Path) -> None:
     text = re.sub(r',\s*"visibility":\s*"default"', "", text)
     text = re.sub(r'"visibility":\s*"default"\s*,', "", text)
     text = re.sub(r'"visibility":\s*"default"', "", text)
-    ast_path.write_text(text, encoding="utf-8")
+    # Finally, canonicalize the JSON structure so that whitespace and key
+    # ordering differences from different toolchains do not affect the diff.
+    try:
+      ast_obj = json.loads(text)
+    except json.JSONDecodeError:
+      # Fall back to the regex-normalized text if parsing fails for any
+      # reason; this preserves behavior rather than masking an error.
+      ast_path.write_text(text, encoding="utf-8")
+    else:
+      canonical = json.dumps(ast_obj, sort_keys=True, separators=(",", ":"))
+      ast_path.write_text(canonical + "\n", encoding="utf-8")
 
 
 def cmd_verify_dist(args: argparse.Namespace) -> int:
