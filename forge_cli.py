@@ -157,19 +157,33 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   def _patch_qhull(build_root: Path) -> bool:
     """Patch qhull CMakeLists to avoid SHARED libraries under Emscripten.
 
-    This is a minimal, local equivalent of the upstream qhull Emscripten
-    support patch: we keep qhull as a normal CMake dependency, but in the
-    build tree we replace SHARED libraries with STATIC ones and force
-    BUILD_SHARED_LIBS to OFF so that the Emscripten toolchain never attempts
-    dynamic linking.
+    This mirrors the upstream qhull Emscripten support patch used in the
+    official MuJoCo repository: we keep qhull as a normal CMake dependency,
+    but wrap the SHARED libraries in `if (NOT EMSCRIPTEN)` and avoid
+    manipulating them when targeting Emscripten.
     """
     qhull_cmake = build_root / "_deps" / "qhull-src" / "CMakeLists.txt"
     if not qhull_cmake.is_file():
       return False
     text = qhull_cmake.read_text(encoding="utf-8")
-    updated = text.replace("SHARED", "STATIC")
-    if "BUILD_SHARED_LIBS OFF CACHE BOOL" not in updated:
-      updated = 'set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)\n' + updated
+    updated = text
+
+    # 1) Guard SHARED libraries behind `if (NOT EMSCRIPTEN)`.
+    if "if (NOT EMSCRIPTEN)" not in updated:
+      marker = "endif ()\n\nadd_library(${qhull_SHAREDR} SHARED"
+      replacement = "endif ()\n\nif (NOT EMSCRIPTEN)\nadd_library(${qhull_SHAREDR} SHARED"
+      updated = updated.replace(marker, replacement)
+
+      end_marker = "endif(UNIX)\n\n# ---------------------------------------\n# Define static libraries qhullstatic (non-reentrant) and qhullstatic_r (reentrant)\n# ---------------------------------------"
+      end_replacement = "endif(UNIX)\nendif (NOT EMSCRIPTEN)\n\n# ---------------------------------------\n# Define static libraries qhullstatic (non-reentrant) and qhullstatic_r (reentrant)\n# ---------------------------------------"
+      updated = updated.replace(end_marker, end_replacement)
+
+    # 2) Avoid EXCLUDE_FROM_ALL tweaks for shared libs under EMSCRIPTEN.
+    updated = updated.replace(
+        "if(NOT ${BUILD_SHARED_LIBS})",
+        "if(NOT ${BUILD_SHARED_LIBS} AND NOT EMSCRIPTEN)",
+    )
+
     if updated == text:
       return False
     qhull_cmake.write_text(updated, encoding="utf-8")
