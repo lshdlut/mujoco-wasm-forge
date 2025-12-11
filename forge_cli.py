@@ -154,6 +154,20 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   build_dir.mkdir(parents=True, exist_ok=True)
   dist_dir.mkdir(parents=True, exist_ok=True)
 
+  def _patch_qhull(build_root: Path) -> None:
+    """Patch qhull CMakeLists to avoid SHARED libraries under Emscripten."""
+    qhull_cmake = build_root / "_deps" / "qhull-src" / "CMakeLists.txt"
+    if not qhull_cmake.is_file():
+      return
+    text = qhull_cmake.read_text(encoding="utf-8")
+    updated = text.replace("SHARED", "STATIC")
+    if "BUILD_SHARED_LIBS" not in updated:
+      updated = (
+          'set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)\n' + updated
+      )
+    if updated != text:
+      qhull_cmake.write_text(updated, encoding="utf-8")
+
   app_dir = REPO_ROOT / "app"
   # Mirror run-forge.sh: source emsdk env when available and use emcmake to
   # configure, then build. Prefer the EMSDK environment variable (used in CI)
@@ -165,7 +179,7 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       '  . "$HOME/emsdk/emsdk_env.sh"; '
       'fi; '
   )
-  cmake_cmd = (
+  configure_cmd = (
       "set -euo pipefail; "
       + emsdk_env_snippet +
       f"emcmake cmake "
@@ -183,10 +197,30 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       "-DMJWF_PROFILE=default "
       f"-DMJVER='{version}'"
   )
-  build_cmd = f"cmake --build '{build_dir}' -- -j \"$(nproc)\""
+  build_cmd = (
+      "set -euo pipefail; "
+      + emsdk_env_snippet +
+      f"cmake --build '{build_dir}' -- -j \"$(nproc)\""
+  )
+
+  # First configure pass: may fail on qhull SHARED libraries under Emscripten
+  # but will populate _deps/qhull-src so we can patch it.
+  proc = subprocess.run(
+      ["bash", "-lc", configure_cmd],
+      cwd=str(REPO_ROOT),
+      env=dict(env),
+  )
+  if proc.returncode != 0:
+    _patch_qhull(build_dir)
+    subprocess.run(
+        ["bash", "-lc", configure_cmd],
+        check=True,
+        cwd=str(REPO_ROOT),
+        env=dict(env),
+    )
 
   subprocess.run(
-      ["bash", "-lc", f"{cmake_cmd}; {build_cmd}"],
+      ["bash", "-lc", build_cmd],
       check=True,
       cwd=str(REPO_ROOT),
       env=dict(env),
