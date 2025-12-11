@@ -160,11 +160,15 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
     if not qhull_cmake.is_file():
       return
     text = qhull_cmake.read_text(encoding="utf-8")
+    # Replace all SHARED libraries with STATIC ones. This is safe for the
+    # Emscripten build where dynamic linking is not supported and avoids
+    # CMake aborting when encountering SHARED on that platform.
     updated = text.replace("SHARED", "STATIC")
-    if "BUILD_SHARED_LIBS" not in updated:
-      updated = (
-          'set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)\n' + updated
-      )
+    # Force qhull's view of BUILD_SHARED_LIBS to OFF regardless of the
+    # default coming from the toolchain or previous cache values.
+    updated = (
+        'set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)\n' + updated
+    )
     if updated != text:
       qhull_cmake.write_text(updated, encoding="utf-8")
 
@@ -211,7 +215,16 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       env=dict(env),
   )
   if proc.returncode != 0:
+    # Patch qhull in-place in the populated _deps tree, then wipe the CMake
+    # state for a clean reconfigure while preserving downloaded dependencies.
     _patch_qhull(build_dir)
+    for child in build_dir.iterdir():
+      if child.name == "_deps":
+        continue
+      if child.is_dir():
+        shutil.rmtree(child)
+      else:
+        child.unlink()
     subprocess.run(
         ["bash", "-lc", configure_cmd],
         check=True,
