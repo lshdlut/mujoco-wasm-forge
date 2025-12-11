@@ -155,65 +155,39 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   dist_dir.mkdir(parents=True, exist_ok=True)
 
   def _patch_qhull(build_root: Path) -> bool:
-    """Apply the upstream qhull Emscripten support patch in the build tree.
+    """Patch qhull CMakeLists to avoid SHARED libraries under Emscripten.
 
-    This mirrors the `qhull-support-emscripten.patch` used in the official
-    MuJoCo repository: we keep qhull as a normal CMake dependency, but guard
-    SHARED libraries behind `if (NOT EMSCRIPTEN)` and avoid manipulating them
-    when targeting Emscripten.
+    This follows the locally documented two-stage emcmake flow: once the
+    qhull sources have been fetched into the build tree we:
+      * replace SHARED libraries with STATIC ones, and
+      * force BUILD_SHARED_LIBS to OFF in the qhull project,
+    then re-run CMake configuration on a clean build tree.
     """
-    qhull_src = build_root / "_deps" / "qhull-src"
-    qhull_cmake = qhull_src / "CMakeLists.txt"
-    if not qhull_cmake.is_file() or not (qhull_src / ".git").is_dir():
+    qhull_cmake = build_root / "_deps" / "qhull-src" / "CMakeLists.txt"
+    if not qhull_cmake.is_file():
       return False
 
-    # If the patch has already been applied, do nothing.
     text = qhull_cmake.read_text(encoding="utf-8")
-    if "qhull-support-emscripten" in text or "if (NOT EMSCRIPTEN)" in text:
+    updated = text
+
+    # Replace all SHARED libraries with STATIC ones. This is sufficient for
+    # Emscripten, which does not support dynamic linking, and avoids CMake
+    # aborting when encountering SHARED libraries on that platform.
+    updated = updated.replace("SHARED", "STATIC")
+
+    # Ensure qhull's view of BUILD_SHARED_LIBS is forced to OFF regardless of
+    # any defaults or cache values from the toolchain.
+    if "set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)" not in updated:
+      updated = (
+          'set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)\n' + updated
+      )
+
+    if updated == text:
       return False
 
-    patch = """diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0423820..c5295c1 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -360,6 +360,7 @@ if (NOT DEFINED CMAKE_BUILD_WITH_INSTALL_RPATH)
-     set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
- endif ()
- 
-+if (NOT EMSCRIPTEN)
- add_library(${qhull_SHAREDR} SHARED 
-         ${libqhullr_SOURCES}
-         src/libqhull_r/qhull_r-exports.def)
-@@ -420,7 +421,7 @@ set_target_properties(${qhull_SHAREDP} PROPERTIES
- if(UNIX)
-     target_link_libraries(${qhull_SHAREDP} m)
- endif(UNIX)
--
-+endif (NOT EMSCRIPTEN)
- # ---------------------------------------
- # Define static libraries qhullstatic (non-reentrant) and qhullstatic_r (reentrant)
- # ---------------------------------------
-@@ -475,7 +476,7 @@ if(NOT ${BUILD_STATIC_LIBS})
-     set_target_properties(${qhull_STATICR} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-     set_target_properties(${qhull_CPP} PROPERTIES EXCLUDE_FROM_ALL TRUE)
- endif()
--if(NOT ${BUILD_SHARED_LIBS})
-+if(NOT ${BUILD_SHARED_LIBS} AND NOT EMSCRIPTEN)
-     set_target_properties(${qhull_SHARED} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-     set_target_properties(${qhull_SHAREDR} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-     set_target_properties(${qhull_SHAREDP} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-"""
-    patch_path = qhull_src / "qhull-support-emscripten.patch"
-    patch_path.write_text(patch, encoding="utf-8")
-
-    proc = subprocess.run(
-        ["git", "apply", str(patch_path)],
-        cwd=str(qhull_src),
-        env=dict(env),
-        capture_output=True,
-        text=True,
-    )
-    return proc.returncode == 0
+    qhull_cmake.write_text(updated, encoding="utf-8")
+    print("[forge-cli] patched qhull CMakeLists for Emscripten fallback", file=sys.stderr)
+    return True
 
   def _reset_qhull_state(build_root: Path) -> None:
     """Reset CMake state while preserving fetched dependencies in _deps/."""
