@@ -23,6 +23,9 @@ set_property(CACHE MJWF_PROFILE PROPERTY STRINGS default fast official fast_offi
 
 # Resolve repo root from the app directory and pull in MuJoCo sources.
 get_filename_component(MJWF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+if (NOT MJWF_EXPORTS_LIST AND DEFINED ENV{MJWF_EXPORTS_LIST})
+  set(MJWF_EXPORTS_LIST "$ENV{MJWF_EXPORTS_LIST}")
+endif()
 add_subdirectory("${MJWF_ROOT}/external/mujoco" official_build EXCLUDE_FROM_ALL)
 
 find_program(NODE_EXECUTABLE node)

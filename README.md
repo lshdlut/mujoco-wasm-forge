@@ -4,15 +4,15 @@ English | [简体中文](README.zh-CN.md)
 
 ## Overview
 
-mujoco-wasm-forge is a toolchain for producing MuJoCo WebAssembly builds and keeping their exports under control. To build a specific MuJoCo release, run `run-forge.sh --version <mjver>` from the repo root. The script prepares `dist/<ver>`, runs the introspect/ABI/export steps, then launches the Emscripten build and gate checks for that version. Helpers such as `dist_version.py` and `check/dist_paths.mjs` let every script discover the active `dist/<ver>` so the rest of the pipeline simply consumes the right artifacts.
+mujoco-wasm-forge is a toolchain for producing MuJoCo WebAssembly builds and keeping their exports under control. To build a specific MuJoCo release, run `python forge_cli.py build --version <mjver>` from the repo root. The CLI prepares `dist/<ver>`, runs the introspect/ABI/export steps, then launches the Emscripten build and gate checks for that version. Helpers such as `dist_version.py` and `check/dist_paths.mjs` let every script discover the active `dist/<ver>` so the rest of the pipeline simply consumes the right artifacts.
 
-## Automated run script
+## Automated run entrypoint
 
-`run-forge.sh` sequences every stage of the pipeline for the requested version (`introspect` → ABI generation → `emcmake` build → `check/post_build.sh`). It sets `MJVER`/`DIST_VERSION`, populates `dist/<ver>`, and optionally runs the smoke, mesh-smoke, and gates tests when invoked with `--with-checks`. Calling `./run-forge.sh --version 3.3.7 --with-checks` (or whichever MuJoCo ref you are targeting) lets developers and CI targets reproduce the full, version-agnostic flow without touching any of the underlying scripts.
+`forge_cli.py` sequences every stage of the pipeline for the requested version (`prepare` → `introspect` → ABI generation → `emcmake` build → `check/post_build.sh`), and can optionally run the smoke, mesh-smoke, and gates tests when invoked with `--with-checks`. Calling `python forge_cli.py build --version 3.3.7 --with-checks` (or whichever MuJoCo ref you are targeting) lets developers and CI targets reproduce the full, version-agnostic flow without touching any of the underlying scripts.
 
 ## Version switching
 
-Changing the target MuJoCo build is driven by `run-forge.sh --version <mjver>`. That script fetches or checks out the requested ref inside `external/mujoco`, rebuilds the introspect/ABI/export artifacts, and drops the generated WASM bundle and metadata under `dist/<ver>`. `dist_version.py`, `check/dist_paths.mjs`, and the scripts under `check/tests/` all read the active version from `MJVER`/`DIST_VERSION` or the populated `dist` folder, so every downstream gate just points at the same directory. For ad-hoc verification you can run `node check/tests/*.mjs` after a build and they will pick up whatever version lives in `dist/<ver>`.
+Changing the target MuJoCo build is driven by `python forge_cli.py build --version <mjver>`. The build command fetches or checks out the requested ref inside `external/mujoco`, rebuilds the introspect/ABI/export artifacts, and drops the generated WASM bundle and metadata under `dist/<ver>`. `dist_version.py`, `check/dist_paths.mjs`, and the scripts under `check/tests/` all read the active version from `MJVER`/`DIST_VERSION` or the populated `dist` folder, so every downstream gate just points at the same directory. For ad-hoc verification you can run `node check/tests/*.mjs` after a build and they will pick up whatever version lives in `dist/<ver>`.
 
 ### Design pillars
 

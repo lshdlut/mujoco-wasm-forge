@@ -4,15 +4,15 @@
 
 ## 概览
 
-mujoco-wasm-forge 是生成 MuJoCo WASM 包并验证其导出的流水线。若要为某个版本构建，先在仓库根目录运行 `run-forge.sh --version <mjver>`。这个脚本会准备好 `dist/<ver>`，依次走完 introspect、ABI、导出、Emscripten 构建以及门控检查。`dist_version.py` 与 `check/dist_paths.mjs` 会告诉其他脚本当前生效的是哪一套 `dist/<ver>`，让整个流水线在不同版本间切换时无需额外改动。
+mujoco-wasm-forge 是生成 MuJoCo WASM 包并验证其导出的流水线。若要为某个版本构建，推荐在仓库根目录运行 `python forge_cli.py build --version <mjver>`。该 CLI 会准备好 `dist/<ver>`，依次走完 introspect、ABI、导出、Emscripten 构建以及门控检查。`dist_version.py` 与 `check/dist_paths.mjs` 会告诉其他脚本当前生效的是哪一套 `dist/<ver>`，让整个流水线在不同版本间切换时无需额外改动。
 
-## 自动化运行脚本
+## 自动化运行入口
 
-根目录下的 `run-forge.sh` 会接管从 introspect、ABI 生成、`emcmake` 构建、`check/post_build.sh` 到可选的 smoke/mesh/gates 测试的全部步骤，并且只需传入 `--version`（可选 `--short` 与 `--with-checks`）。它会设置 `MJVER`/`DIST_VERSION`、维护 `dist/<ver>`，让开发者或 CI 通过一次 `./run-forge.sh --version 3.3.7 --with-checks`（或目标 MuJoCo 版本）就能在本地或流水线里复刻完整的、版本无关流程。
+根目录下的 `forge_cli.py` 会接管从 prepare、introspect、ABI 生成、`emcmake` 构建、`check/post_build.sh` 到可选 smoke/mesh/gates 测试的全部步骤，并且只需传入 `--version`（可选 `--short` 与 `--with-checks`）。通过 `python forge_cli.py build --version 3.3.7 --with-checks`（或目标 MuJoCo 版本）即可在本地或 CI 中复刻完整的、版本无关流程。
 
 ## 版本切换
 
-切换目标 MuJoCo 版本只需运行 `./run-forge.sh --version <mjver>`，该脚本会拉取或检出对应的 `external/mujoco` 版本，依次执行 introspect、ABI、导出、构建并将结果写入 `dist/<ver>`。`dist_version.py`、`check/dist_paths.mjs` 与 `check/tests/*.mjs` 都会基于 `MJVER`/`DIST_VERSION` 或已存在的 `dist/<ver>` 读取版本，因而后续的校验逻辑直接消费同一目录。需要快速复核时，在现有 dist 下执行 `node check/tests/*.mjs` 即可，它们会自动使用当前版本。
+切换目标 MuJoCo 版本只需运行 `python forge_cli.py build --version <mjver>`。该命令会拉取或检出对应的 `external/mujoco` 版本，依次执行 introspect、ABI、导出、构建并将结果写入 `dist/<ver>`。`dist_version.py`、`check/dist_paths.mjs` 与 `check/tests/*.mjs` 都会基于 `MJVER`/`DIST_VERSION` 或已存在的 `dist/<ver>` 读取版本，因而后续的校验逻辑直接消费同一目录。需要快速复核时，在现有 dist 下执行 `node check/tests/*.mjs` 即可，它们会自动使用当前版本。
 
 ### 设计思想
 

@@ -26,13 +26,7 @@ jobs:
       - id: collect
         run: |
           set -euxo pipefail
-          versions=$(python3 -c "import json, pathlib; dist=pathlib.Path('dist'); versions=[] if not dist.exists() else sorted(p.name for p in dist.iterdir() if p.is_dir()); print(json.dumps(versions))" | tr -d '\n')
-          if [ "$versions" = "[]" ]; then
-            echo "has_versions=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_versions=true" >> "$GITHUB_OUTPUT"
-          fi
-          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+          python3 forge_cli.py collect-versions --github-output >> "$GITHUB_OUTPUT"
 
   verify-dist:
     needs: collect-dist-versions
@@ -77,28 +71,9 @@ jobs:
           EMSDK_VERSION: ${{ env.EMSDK_VERSION }}
         run: |
           set -euxo pipefail
-          bash run-forge.sh --version ${{ matrix.ver }}
+          python3 forge_cli.py build --version ${{ matrix.ver }}
 
       - name: Verify dist matches reproducible build
         run: |
           set -euxo pipefail
-          BASE="dist/${{ matrix.ver }}"
-          CI_COPY="ci-build/dist/${{ matrix.ver }}"
-          test -d "$BASE"
-          test -d "$CI_COPY"
-          sanitize_meta() {
-            local dir="$1"
-            # Normalize human-readable timestamp in exports_report.md
-            if [ -f "$dir/abi/exports_report.md" ]; then
-              sed -i 's/^Generated at: .*/Generated at: NORMALIZED_TIME/' "$dir/abi/exports_report.md" || true
-            fi
-            # Normalize JSON generatedAt fields in mjapi.json and wrapper_exports.json
-            for f in "$dir/abi/mjapi.json" "$dir/abi/wrapper_exports.json"; do
-              if [ -f "$f" ]; then
-                sed -i 's/"generatedAt": *"[^"]*"/"generatedAt": "NORMALIZED_TIME"/' "$f" || true
-              fi
-            done
-          }
-          sanitize_meta "$BASE"
-          sanitize_meta "$CI_COPY"
-          diff -ru "$BASE" "$CI_COPY"
+          python3 forge_cli.py verify-dist --version "${{ matrix.ver }}"
