@@ -48,7 +48,7 @@ prepare_mujoco() {
     rm -rf "$REPO_ROOT/external/mujoco"
     git clone --depth 1 https://github.com/google-deepmind/mujoco "$REPO_ROOT/external/mujoco"
   fi
-  git -C "$REPO_ROOT/external/mujoco" checkout --detach "$MJVER"
+  git -C "$REPO_ROOT/external/mujoco" checkout --detach -- "$MJVER"
 }
 
 run_introspect() {
