@@ -154,18 +154,50 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   build_dir.mkdir(parents=True, exist_ok=True)
   dist_dir.mkdir(parents=True, exist_ok=True)
 
-  def _patch_qhull(build_root: Path) -> None:
-    """Patch qhull CMakeLists to avoid SHARED libraries under Emscripten."""
+  def _patch_qhull(build_root: Path) -> bool:
+    """Patch qhull CMakeLists to avoid SHARED libraries under Emscripten.
+
+    This is a minimal, local equivalent of the upstream qhull Emscripten
+    support patch: we keep qhull as a normal CMake dependency, but in the
+    build tree we replace SHARED libraries with STATIC ones and force
+    BUILD_SHARED_LIBS to OFF so that the Emscripten toolchain never attempts
+    dynamic linking.
+    """
     qhull_cmake = build_root / "_deps" / "qhull-src" / "CMakeLists.txt"
     if not qhull_cmake.is_file():
-      return
+      return False
     text = qhull_cmake.read_text(encoding="utf-8")
-    # Replace all SHARED libraries with STATIC ones. This is sufficient for
-    # Emscripten, which does not support dynamic linking, and avoids CMake
-    # aborting when encountering SHARED libraries on that platform.
     updated = text.replace("SHARED", "STATIC")
-    if updated != text:
-      qhull_cmake.write_text(updated, encoding="utf-8")
+    if "BUILD_SHARED_LIBS OFF CACHE BOOL" not in updated:
+      updated = 'set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)\n' + updated
+    if updated == text:
+      return False
+    qhull_cmake.write_text(updated, encoding="utf-8")
+    return True
+
+  def _reset_qhull_state(build_root: Path) -> None:
+    """Reset CMake state while preserving fetched dependencies in _deps/."""
+    for child in build_root.iterdir():
+      if child.name == "_deps":
+        continue
+      if child.is_dir():
+        shutil.rmtree(child)
+      else:
+        child.unlink()
+
+    deps_dir = build_root / "_deps"
+    if not deps_dir.is_dir():
+      return
+    for dep_child in deps_dir.iterdir():
+      if dep_child.name in ("qhull-build", "qhull-subbuild"):
+        shutil.rmtree(dep_child)
+      elif dep_child.name == "qhull-src":
+        cache = dep_child / "CMakeCache.txt"
+        if cache.is_file():
+          cache.unlink()
+        cmake_files = dep_child / "CMakeFiles"
+        if cmake_files.is_dir():
+          shutil.rmtree(cmake_files)
 
   app_dir = REPO_ROOT / "app"
   # Mirror run-forge.sh: source emsdk env when available and use emcmake to
@@ -202,45 +234,25 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       f"cmake --build '{build_dir}' -- -j \"$(nproc)\""
   )
 
-  # First configure pass: may fail on qhull SHARED libraries under Emscripten
-  # but will populate _deps/qhull-src so we can patch it.
-  proc = subprocess.run(
-      ["bash", "-lc", configure_cmd],
-      cwd=str(REPO_ROOT),
-      env=dict(env),
-  )
-  if proc.returncode != 0:
-    # Patch qhull in-place in the populated _deps tree, then wipe the CMake
-    # state for a clean reconfigure while preserving downloaded dependencies.
-    _patch_qhull(build_dir)
-    # Remove top-level CMake state but keep the fetched dependencies in _deps.
-    for child in build_dir.iterdir():
-      if child.name == "_deps":
-        continue
-      if child.is_dir():
-        shutil.rmtree(child)
-      else:
-        child.unlink()
-    # Also wipe qhull's own sub-build trees so that CMake does not see stale
-    # targets when re-running with the patched CMakeLists.txt.
-    deps_dir = build_dir / "_deps"
-    if deps_dir.is_dir():
-      for dep_child in deps_dir.iterdir():
-        if dep_child.name in ("qhull-build", "qhull-subbuild"):
-          shutil.rmtree(dep_child)
-        elif dep_child.name == "qhull-src":
-          cache = dep_child / "CMakeCache.txt"
-          if cache.is_file():
-            cache.unlink()
-          cmake_files = dep_child / "CMakeFiles"
-          if cmake_files.is_dir():
-            shutil.rmtree(cmake_files)
-    subprocess.run(
+  def _run_configure(check: bool) -> subprocess.CompletedProcess:
+    return subprocess.run(
         ["bash", "-lc", configure_cmd],
-        check=True,
         cwd=str(REPO_ROOT),
         env=dict(env),
+        check=check,
     )
+
+  # First configure pass: may fail on qhull SHARED libraries under Emscripten
+  # but will populate _deps/qhull-src so we can patch it. Only if this pass
+  # fails do we fall back to patching qhull and reconfiguring.
+  proc = _run_configure(check=False)
+  if proc.returncode != 0:
+    patched = _patch_qhull(build_dir)
+    if not patched:
+      # The failure was not the known qhull dynamic-linking issue; propagate.
+      proc.check_returncode()
+    _reset_qhull_state(build_dir)
+    _run_configure(check=True)
 
   subprocess.run(
       ["bash", "-lc", build_cmd],
