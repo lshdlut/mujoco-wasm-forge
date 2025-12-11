@@ -64,6 +64,57 @@ index 0423820..c5295c1 100644
 """
 
 
+_MUJOCO_QHULL_TINYXML_BLOCK = """set(QHULL_ENABLE_TESTING OFF)
+# Patch changes in https://github.com/qhull/qhull/pull/173.patch
+set(QHULL_PATCH_COMMAND
+  git apply --reject --whitespace=fix ${mujoco_SOURCE_DIR}/cmake/qhull-support-emscripten.patch
+)
+
+findorfetch(
+  USE_SYSTEM_PACKAGE
+  OFF
+  PACKAGE_NAME
+  qhull
+  LIBRARY_NAME
+  qhull
+  GIT_REPO
+  https://github.com/qhull/qhull.git
+  GIT_TAG
+  ${MUJOCO_DEP_VERSION_qhull}
+  TARGETS
+  qhull
+  EXCLUDE_FROM_ALL
+  PATCH_COMMAND ${QHULL_PATCH_COMMAND}
+)
+# MuJoCo includes a file from libqhull_r which is not exported by the qhull include directories.
+# Add it to the target.
+target_include_directories(
+  qhullstatic_r INTERFACE $<BUILD_INTERFACE:${qhull_SOURCE_DIR}/src/libqhull_r>
+)
+target_compile_options(qhullstatic_r PRIVATE ${MUJOCO_MACOS_COMPILE_OPTIONS})
+target_link_options(qhullstatic_r PRIVATE ${MUJOCO_MACOS_LINK_OPTIONS})
+
+set(tinyxml2_BUILD_TESTING OFF)
+findorfetch(
+  USE_SYSTEM_PACKAGE
+  OFF
+  PACKAGE_NAME
+  tinyxml2
+  LIBRARY_NAME
+  tinyxml2
+  GIT_REPO
+  https://github.com/leethomason/tinyxml2.git
+  GIT_TAG
+  ${MUJOCO_DEP_VERSION_tinyxml2}
+  TARGETS
+  tinyxml2
+  EXCLUDE_FROM_ALL
+)
+target_compile_options(tinyxml2 PRIVATE ${MUJOCO_MACOS_COMPILE_OPTIONS})
+target_link_options(tinyxml2 PRIVATE ${MUJOCO_MACOS_LINK_OPTIONS})
+"""
+
+
 def _collect_dist_versions() -> List[str]:
   """Return sorted dist versions based on directories under dist/."""
   return list_dist_versions()
@@ -89,6 +140,51 @@ def _compute_short(version: str, override: str | None) -> str:
     return override
   digits = "".join(ch for ch in version if ch.isdigit())
   return digits or "337"
+
+
+def _patch_mujoco_qhull_emscripten(mujoco_dir: Path) -> None:
+  """Patch MuJoCo's CMake deps so qhull is Emscripten-friendly.
+
+  This mirrors the upstream qhull PATCH_COMMAND wiring used by MuJoCo so that
+  qhull is patched as part of FetchContent population, rather than via ad-hoc
+  edits to the build tree.
+  """
+  cmake_dir = mujoco_dir / "cmake"
+  deps_path = cmake_dir / "MujocoDependencies.cmake"
+  if not deps_path.is_file():
+    return
+
+  # Ensure the qhull-support-emscripten patch file exists in the MuJoCo source
+  # tree; this path is referenced from QHULL_PATCH_COMMAND.
+  patch_path = cmake_dir / "qhull-support-emscripten.patch"
+  patch_text = _QHULL_EMSCRIPTEN_PATCH
+  if not patch_path.is_file() or patch_path.read_text(encoding="utf-8") != patch_text:
+    patch_path.write_text(patch_text, encoding="utf-8")
+
+  text = deps_path.read_text(encoding="utf-8")
+  if "QHULL_PATCH_COMMAND" in text and "qhull-support-emscripten.patch" in text:
+    # Already wired to use the patch; nothing else to do.
+    return
+
+  start_marker = "set(QHULL_ENABLE_TESTING OFF)"
+  end_marker = "target_link_options(tinyxml2 PRIVATE"
+
+  start_idx = text.find(start_marker)
+  if start_idx == -1:
+    return
+  end_idx = text.find(end_marker, start_idx)
+  if end_idx == -1:
+    return
+  end_newline_idx = text.find("\n", end_idx)
+  if end_newline_idx == -1:
+    end_newline_idx = len(text)
+  else:
+    end_newline_idx += 1
+
+  new_block = _MUJOCO_QHULL_TINYXML_BLOCK
+  new_text = text[:start_idx] + new_block + text[end_newline_idx:]
+  deps_path.write_text(new_text, encoding="utf-8")
+  print("[forge-cli] patched MuJoCo MujocoDependencies.cmake for qhull Emscripten", file=sys.stderr)
 
 
 def _prepare_mujoco(version: str) -> None:
@@ -136,6 +232,7 @@ def _prepare_mujoco(version: str) -> None:
       ["git", "-C", str(mujoco_dir), "checkout", "--detach", "FETCH_HEAD"],
       check=True,
   )
+  _patch_mujoco_qhull_emscripten(mujoco_dir)
 
 
 def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
