@@ -155,10 +155,19 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   dist_dir.mkdir(parents=True, exist_ok=True)
 
   app_dir = REPO_ROOT / "app"
-  # Mirror run-forge.sh: source emsdk env and use emcmake to configure, then build.
+  # Mirror run-forge.sh: source emsdk env when available and use emcmake to
+  # configure, then build. Prefer the EMSDK environment variable (used in CI)
+  # and fall back to $HOME/emsdk for local setups.
+  emsdk_env_snippet = (
+      'if [ -n "${EMSDK:-}" ] && [ -f "${EMSDK}/emsdk_env.sh" ]; then '
+      '  . "${EMSDK}/emsdk_env.sh"; '
+      'elif [ -f "$HOME/emsdk/emsdk_env.sh" ]; then '
+      '  . "$HOME/emsdk/emsdk_env.sh"; '
+      'fi; '
+  )
   cmake_cmd = (
       "set -euo pipefail; "
-      "source ~/emsdk/emsdk_env.sh; "
+      + emsdk_env_snippet +
       f"emcmake cmake "
       f"-S '{app_dir}' "
       f"-B '{build_dir}' "
@@ -207,9 +216,16 @@ def _run_post_build(version: str, short: str, env: Mapping[str, str]) -> None:
 
 def _run_checks(env: Mapping[str, str]) -> None:
   """Run smoke/mesh/gates checks against the active dist/<ver> tree."""
+  emsdk_env_snippet = (
+      'if [ -n "${EMSDK:-}" ] && [ -f "${EMSDK}/emsdk_env.sh" ]; then '
+      '  . "${EMSDK}/emsdk_env.sh"; '
+      'elif [ -f "$HOME/emsdk/emsdk_env.sh" ]; then '
+      '  . "$HOME/emsdk/emsdk_env.sh"; '
+      'fi; '
+  )
   cmd = (
       "set -euo pipefail; "
-      "source ~/emsdk/emsdk_env.sh; "
+      + emsdk_env_snippet +
       "node check/tests/smoke.mjs; "
       "node check/tests/mesh-smoke.mjs; "
       "node check/tests/gates.mjs"
