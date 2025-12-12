@@ -852,8 +852,8 @@
     }
   },
   "meta": {
-    "ast_json": "NORMALIZED_AST_JSON",
+    "ast_json": "/root/dev/mjwf-wsl-test/dist/3.3.7/abi/mujoco_ast.json",
     "clang": "clang",
-    "header": "NORMALIZED_HEADER"
+    "header": "/root/dev/mjwf-wsl-test/external/mujoco/include/mujoco/mujoco.h"
   }
 }

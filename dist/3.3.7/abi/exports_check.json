@@ -1,6 +1,6 @@
 {
   "wasm": "dist/3.3.7/mujoco.wasm",
-  "expected": "dist/3.3.7/abi/wrapper_exports.json",
+  "expected": "dist/3.3.7/abi/wrapper_exports_funcs.json",
   "counts": {
     "required": 1249,
     "actualMjwf": 1259,
