@@ -11,7 +11,7 @@
 
 import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { resolve as pathResolve, dirname } from 'node:path';
+import { resolve as pathResolve, dirname, delimiter as pathDelimiter } from 'node:path';
 
 function parseArgs(argv) {
   if (argv.length < 3) {
@@ -37,11 +37,48 @@ function parseArgs(argv) {
   return opts;
 }
 
-function resolveDefaultNm() {
-  if (process.env.EMSDK) {
-    return pathResolve(process.env.EMSDK, 'upstream', 'bin', 'llvm-nm');
+function findExecutable(candidates) {
+  const pathEnv = process.env.PATH || '';
+  const pathEntries = pathEnv.split(pathDelimiter).filter(Boolean);
+
+  for (const cand of candidates) {
+    if (!cand) continue;
+    // Absolute path candidates.
+    if (cand.includes('/') || cand.includes('\\')) {
+      if (existsSync(cand)) return cand;
+      continue;
+    }
+    for (const dir of pathEntries) {
+      const full = pathResolve(dir, cand);
+      if (existsSync(full)) return cand;
+      if (process.platform === 'win32' && existsSync(`${full}.exe`)) {
+        return `${cand}.exe`;
+      }
+    }
   }
-  return 'llvm-nm';
+
+  return null;
+}
+
+function resolveDefaultNm() {
+  const candidates = [];
+  if (process.env.EMSDK) {
+    candidates.push(pathResolve(process.env.EMSDK, 'upstream', 'bin', 'llvm-nm'));
+  }
+  candidates.push(
+    'llvm-nm',
+    'llvm-nm-19',
+    'llvm-nm-18',
+    'llvm-nm-17',
+    'llvm-nm-16',
+    'llvm-nm-15',
+    'llvm-nm-14',
+    'llvm-nm-13',
+    'nm',
+  );
+
+  const found = findExecutable(candidates);
+  return found || 'llvm-nm';
 }
 
 function ensureDirFor(filePath) {

@@ -27,7 +27,7 @@ Changing the target MuJoCo build is driven by `python forge_cli.py build --versi
 - **Introspect** – `introspect/forge/scan_clang_introspect.py` dumps clang’s AST for `external/mujoco/include/mujoco/mujoco.h`, runs the official codegen for functions/structs/enums, and converts their outputs into JSON under `dist/<ver>/abi/`.
 - **ABI implementation** – `abi_exports/gen_structs.py` consumes `structs_introspect_like.json` to emit `mjwf_abi_structs.*` plus `mjwf_abi_structs.lst`. `abi_exports/gen_funcs.py` merges introspect declarations, NM symbols, and extra exports to produce `mjwf_abi_funcs.*`, `wrapper_exports_funcs.json`, and `exports.lst`.
 - **ABI exports** – `check/post_build.sh` validates `wrapper_exports.json`, `exports_check.json`, and optional `nm_coverage.json` against the native build before continuing. Those manifests feed `check/check_exports.mjs` so the gate logic understands the exact A/B/C sets.
-- **App** – The `app/` directory houses the generated wrappers, helper stubs, and `MJWF_PROFILE` configuration. CMake combines them with MuJoCo to produce `_wasm/mujoco_wasm.js`, exposing the `mjwf_*` API surface.
+- **App** – The `app/` directory houses the generated wrappers, helper stubs, and `MJWF_PROFILE` configuration. CMake combines them with MuJoCo to produce `_wasm/mjwasm_forge.js`, exposing the `mjwf_*` API surface.
 - **Check** – `check/tests/smoke.mjs`, `check/tests/mesh-smoke.mjs`, and `check/tests/gates.mjs` read `distDir()`/`distVersion()` directly, so CI can rerun these scripts after every build to verify exports, smoke/regression flows, and quality gates regardless of the version tag.
 
 ## Notes

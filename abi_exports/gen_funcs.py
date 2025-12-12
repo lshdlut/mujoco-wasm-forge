@@ -380,6 +380,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="Output path for exports_report_funcs.md.",
     )
     parser.add_argument(
+        "--out-exports",
+        type=Path,
+        help="Output path for exports.lst (Emscripten exported symbols list).",
+    )
+    parser.add_argument(
         "--version",
         default=None,
         help="MuJoCo version string used in reports (defaults to the dist/<ver> directory in repo).",
@@ -405,6 +410,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     out_source = args.out_source or (repo_root / "app" / "mjwf_abi_funcs.c")
     out_manifest = args.out_manifest or (abi_dir / "wrapper_exports_funcs.json")
     out_report = args.out_report or (abi_dir / "exports_report_funcs.md")
+    out_exports = args.out_exports or (abi_dir / "exports.lst")
 
     baseline_path = args.baseline
 
@@ -477,6 +483,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     out_source.write_text(generate_source(final_funcs), encoding="utf-8")
     out_manifest.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     out_report.write_text(report_md, encoding="utf-8")
+
+    exports_list: List[str] = []
+    exports_list.extend(manifest.get("required", []) or [])
+    for name in manifest.get("runtime_keep", []) or []:
+        if name not in exports_list:
+            exports_list.append(name)
+    out_exports.write_text(json.dumps(exports_list), encoding="utf-8")
 
     print(
     f"[gen-funcs] ver={version_label} A={len(names_a)} B={len(names_b)} "

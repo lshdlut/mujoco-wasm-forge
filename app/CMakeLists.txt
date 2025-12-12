@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(mujoco_official_wasm)
+project(mjwasm_forge)
 
 # Only require EMSDK when targeting Emscripten
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
@@ -77,18 +77,18 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     set(MJWF_LTO_FLAG "-flto")
   endif()
 
-  add_executable(mujoco_wasm
+  add_executable(mjwasm_forge
     ${MJWF_AUTO_SOURCE}
     ${MJWF_APP_DIR}/mjwf_stubs.c
     ${MJWF_APP_DIR}/mjwf_handles.c
     ${MJWF_APP_DIR}/mjwf_abi_structs.c
   )
 
-  add_dependencies(mujoco_wasm mujoco)
-  target_include_directories(mujoco_wasm PRIVATE ${MJWF_AUTO_DIR})
-  target_link_libraries(mujoco_wasm PRIVATE mujoco)
-  target_compile_options(mujoco_wasm PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
-  target_link_options(mujoco_wasm PRIVATE
+  add_dependencies(mjwasm_forge mujoco)
+  target_include_directories(mjwasm_forge PRIVATE ${MJWF_AUTO_DIR})
+  target_link_libraries(mjwasm_forge PRIVATE mujoco)
+  target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
+  target_link_options(mjwasm_forge PRIVATE
     "-sWASM=1"
     "-sSTACK_SIZE=5242880"
     "-sINITIAL_MEMORY=134217728"
@@ -117,4 +117,3 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/native_compare.cpp")
   add_executable(mujoco_compare "native_compare.cpp")
   target_link_libraries(mujoco_compare PRIVATE mujoco)
 endif()
-

@@ -187,6 +187,45 @@ def _patch_mujoco_qhull_emscripten(mujoco_dir: Path) -> None:
   print("[forge-cli] patched MuJoCo MujocoDependencies.cmake for qhull Emscripten", file=sys.stderr)
 
 
+def _patch_mujoco_localtime_emscripten(mujoco_dir: Path) -> None:
+  """Patch older MuJoCo releases that hard-error on missing localtime_r.
+
+  MuJoCo <=3.3.0 uses a compile-time #error when no thread-safe localtime
+  variant is detected. Emscripten's libc does not define the relevant feature
+  macros, so the build fails. We add a minimal __EMSCRIPTEN__ fallback that
+  copies from localtime(). Newer releases already handle this case.
+  """
+  src = mujoco_dir / "src" / "engine" / "engine_util_errmem.c"
+  if not src.is_file():
+    return
+  text = src.read_text(encoding="utf-8")
+  marker = "Thread-safe version of `localtime` is not present"
+  if marker not in text or "__EMSCRIPTEN__" in text:
+    return
+
+  needle = (
+      "\n#else\n"
+      '    #error "Thread-safe version of `localtime` is not present in the standard C library"\n'
+      "#endif"
+  )
+  if needle not in text:
+    return
+
+  replacement = (
+      "\n#elif defined(__EMSCRIPTEN__)\n"
+      "    // Emscripten may not provide localtime_r/localtime_s; fall back to localtime().\n"
+      "    struct tm* tmp = localtime(&rawtime);\n"
+      "    if (tmp) {\n"
+      "      timeinfo = *tmp;\n"
+      "    }\n"
+      + needle
+  )
+  new_text = text.replace(needle, replacement)
+  if new_text != text:
+    src.write_text(new_text, encoding="utf-8")
+    print("[forge-cli] patched MuJoCo localtime fallback for Emscripten", file=sys.stderr)
+
+
 def _prepare_mujoco(version: str) -> None:
   """Clone or update external/mujoco for the requested version."""
   mujoco_dir = REPO_ROOT / "external" / "mujoco"
@@ -233,6 +272,7 @@ def _prepare_mujoco(version: str) -> None:
       check=True,
   )
   _patch_mujoco_qhull_emscripten(mujoco_dir)
+  _patch_mujoco_localtime_emscripten(mujoco_dir)
 
 
 def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
@@ -253,6 +293,80 @@ def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
       cwd=str(REPO_ROOT),
       env=dict(env),
   )
+
+
+def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -> None:
+  """Bootstrap nm_symbols.json when it is missing.
+
+  The B-set is derived from symbols implemented in the upstream MuJoCo library.
+  Historically we generated it by building a native MuJoCo library and scanning
+  it with llvm-nm. New versions should not require a manual pre-step, so we
+  perform that bootstrap automatically when dist/<ver>/abi/nm_symbols.json is
+  absent.
+  """
+  nm_path = abi_dir / "nm_symbols.json"
+  # Always (re)generate B-set to avoid stale nm_symbols.json influencing builds.
+  msg = "regenerating" if nm_path.is_file() else "bootstrapping"
+  print(f"[forge-cli] {msg} nm_symbols.json (B-set) for {version}", file=sys.stderr)
+
+  build_dir = REPO_ROOT / "build" / "native"
+  if build_dir.exists():
+    shutil.rmtree(build_dir)
+  build_dir.mkdir(parents=True, exist_ok=True)
+
+  mujoco_src = REPO_ROOT / "external" / "mujoco"
+  cmake_args = [
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DMUJOCO_BUILD_PLUGINS=OFF",
+      "-DMUJOCO_BUILD_EXAMPLES=OFF",
+      "-DMUJOCO_BUILD_SIMULATE=OFF",
+      "-DMUJOCO_BUILD_TESTS=OFF",
+      "-DMUJOCO_BUILD_SAMPLES=OFF",
+      "-DMUJOCO_ENABLE_QHULL=OFF",
+  ]
+
+  subprocess.run(
+      ["cmake", "-S", str(mujoco_src), "-B", str(build_dir), *cmake_args],
+      check=True,
+      cwd=str(REPO_ROOT),
+      env=dict(env),
+  )
+  subprocess.run(
+      ["cmake", "--build", str(build_dir), "--target", "mujoco"],
+      check=True,
+      cwd=str(REPO_ROOT),
+      env=dict(env),
+  )
+
+  candidates = sorted(build_dir.rglob("libmujoco.*"))
+  if not candidates:
+    raise RuntimeError(f"Failed to locate libmujoco artifact under {build_dir}")
+
+  preferred_exts = (".a", ".so", ".dylib", ".lib")
+  artifact = None
+  for ext in preferred_exts:
+    for cand in candidates:
+      if cand.suffix == ext:
+        artifact = cand
+        break
+    if artifact is not None:
+      break
+  if artifact is None:
+    artifact = candidates[0]
+
+  nm_script = REPO_ROOT / "abi_impl" / "nm_coverage.mjs"
+  subprocess.run(
+      ["node", str(nm_script), str(artifact), "--out", str(nm_path)],
+      check=True,
+      cwd=str(REPO_ROOT),
+      env=dict(env),
+  )
+
+  report = json.loads(nm_path.read_text(encoding="utf-8"))
+  if not report.get("ok"):
+    raise RuntimeError(
+        f"llvm-nm scan failed for {artifact}: {report.get('error') or 'unknown error'}"
+    )
 
 
 def _run_abi_generators(version: str, env: Mapping[str, str]) -> None:
@@ -407,9 +521,19 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   )
 
   wasm_dir = build_dir / "_wasm"
-  js_src = wasm_dir / "mujoco_wasm.js"
-  wasm_src = wasm_dir / "mujoco_wasm.wasm"
-  map_src = wasm_dir / "mujoco_wasm.wasm.map"
+  js_src = wasm_dir / "mjwasm_forge.js"
+
+  wasm_src = wasm_dir / "mjwasm_forge.wasm"
+  if not wasm_src.is_file():
+    alt = wasm_dir / "mujoco.wasm"
+    if alt.is_file():
+      wasm_src = alt
+
+  map_src = wasm_dir / "mjwasm_forge.wasm.map"
+  if not map_src.is_file():
+    alt_map = wasm_dir / "mujoco.wasm.map"
+    if alt_map.is_file():
+      map_src = alt_map
 
   shutil.copy2(js_src, dist_dir / "mujoco.js")
   shutil.copy2(wasm_src, dist_dir / "mujoco.wasm")
@@ -564,6 +688,15 @@ def _sanitize_meta(dist_dir: Path) -> None:
     data["error"] = ""
     nm_cov.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
+  # Normalize tool-specific metadata in nm_symbols.json.
+  # The actual symbol list is semantic and must remain intact for ABI checks.
+  nm_syms = abi_dir / "nm_symbols.json"
+  if nm_syms.is_file():
+    data = json.loads(nm_syms.read_text(encoding="utf-8"))
+    data["artifact"] = "NORMALIZED_ARTIFACT"
+    data["nmPath"] = "NORMALIZED_NM"
+    nm_syms.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
   # Normalize introspect metadata paths that depend on the checkout location.
   for name in (
       "enums_introspect_like.json",
@@ -668,6 +801,7 @@ def cmd_build(args: argparse.Namespace) -> int:
 
   _prepare_mujoco(version)
   _run_introspect(abi_dir, env)
+  _bootstrap_nm_symbols(version, abi_dir, env)
   _run_abi_generators(version, env)
   _configure_and_build(version, dist_dir, build_dir, env)
   _run_post_build(version, short, env)

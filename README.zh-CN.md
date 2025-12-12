@@ -27,7 +27,7 @@ mujoco-wasm-forge 是生成 MuJoCo WASM 包并验证其导出的流水线。若�
 - **Introspect** – `introspect/forge/scan_clang_introspect.py` 为 `external/mujoco/include/mujoco/mujoco.h` 生成 clang AST，调用官方 introspect codegen 生成 `FUNCTIONS/STRUCTS/ENUMS`，并将结果写成 JSON 存入 `dist/<ver>/abi/`。
 - **ABI 实现** – `abi_exports/gen_structs.py` 依据 `structs_introspect_like.json` 产出 `mjwf_abi_structs.*` 与 `mjwf_abi_structs.lst`。`abi_exports/gen_funcs.py` 把 introspect 声明、`nm_symbols.json`、额外导出整合成 `mjwf_abi_funcs.*`、`wrapper_exports_funcs.json` 与 `exports.lst`。
 - **ABI 导出** – `check/post_build.sh` 验证 `wrapper_exports.json`、`exports_check.json` 和可选 `nm_coverage.json` 与本地构建一致，并让 `check_exports.mjs` 使用该 manifest，保障导出符号符合 A/B/C 关系。
-- **App 层** – `app/` 中含自动生成包装、`mjwf_handles.c`、`mjwf_stubs.c`，CMake 将它们与 MuJoCo 源码编译成 `_wasm/mujoco_wasm.js`，导出 `mjwf_*` API。
+- **App 层** – `app/` 中含自动生成包装、`mjwf_handles.c`、`mjwf_stubs.c`，CMake 将它们与 MuJoCo 源码编译成 `_wasm/mjwasm_forge.js`，导出 `mjwf_*` API。
 - **校验** – `check/tests` 下的 `smoke.mjs`、`mesh-smoke.mjs`、`gates.mjs` 统一调用 `distDir()`/`distVersion()`，CI 在构建后运行这些脚本，验证导出、smoke/mesh 运行及质量门与 `exports.lst`、nm 扫描保持一致。
 
 ## 备注

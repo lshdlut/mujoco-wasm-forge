@@ -40,10 +40,15 @@ if [[ ! -f "$DIST_JS" || ! -f "$DIST_WASM" ]]; then
   exit 1
 fi
 
+EXPECTED_JSON="${ABI_DIR}/wrapper_exports.json"
+if [[ ! -f "${EXPECTED_JSON}" ]]; then
+  EXPECTED_JSON="${ABI_DIR}/wrapper_exports_funcs.json"
+fi
+
 node check/check_exports.mjs \
   --abi "${ABI_DIR}" \
   --wasm "${DIST_WASM}" \
-  --expected "${ABI_DIR}/wrapper_exports.json"
+  --expected "${EXPECTED_JSON}"
 
 if [[ -f "$LIBMUJOCO" ]]; then
   node abi_impl/nm_coverage.mjs \
