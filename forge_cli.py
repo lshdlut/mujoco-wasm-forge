@@ -158,8 +158,9 @@ def _patch_mujoco_qhull_emscripten(mujoco_dir: Path) -> None:
   # tree; this path is referenced from QHULL_PATCH_COMMAND.
   patch_path = cmake_dir / "qhull-support-emscripten.patch"
   patch_text = _QHULL_EMSCRIPTEN_PATCH
-  if not patch_path.is_file() or patch_path.read_text(encoding="utf-8") != patch_text:
-    patch_path.write_text(patch_text, encoding="utf-8")
+  patch_bytes = patch_text.encode("utf-8")
+  if not patch_path.is_file() or patch_path.read_bytes() != patch_bytes:
+    patch_path.write_bytes(patch_bytes)
 
   text = deps_path.read_text(encoding="utf-8")
   if "QHULL_PATCH_COMMAND" in text and "qhull-support-emscripten.patch" in text:

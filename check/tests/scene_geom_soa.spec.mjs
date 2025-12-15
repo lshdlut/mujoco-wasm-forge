@@ -4,6 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import load_mujoco from '../../dist/3.3.7/mujoco.js';
 
+const wasmPath = fileURLToPath(new URL('../../dist/3.3.7/mujoco.wasm', import.meta.url));
+
 function writeFileToFS(Module, hostPath, fsPath) {
   const data = readFileSync(hostPath);
   const dir = path.posix.dirname(fsPath);
@@ -37,7 +39,10 @@ function makeHandleFromXml(Module, fsXmlPath) {
 
 test.describe('mjwf mjvScene geoms SoA exports (Node)', () => {
   test('mjwf_scene_update_and_pack produces readable attribute buffers', async () => {
-    const Module = await load_mujoco();
+    const Module = await load_mujoco({
+      locateFile: (p) => (p.endsWith('.wasm') ? wasmPath : p),
+    });
+    if (Module.ready) await Module.ready;
 
     expect(typeof Module._mjwf_scene_update_and_pack).toBe('function');
     expect(typeof Module._mjwf_scene_ngeom).toBe('function');
@@ -116,4 +121,3 @@ test.describe('mjwf mjvScene geoms SoA exports (Node)', () => {
     }
   });
 });
-

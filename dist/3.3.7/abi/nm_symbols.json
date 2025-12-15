@@ -1,6 +1,6 @@
 {
   "artifact": "build/native/lib/libmujoco.so",
-  "nmPath": "llvm-nm-14",
+  "nmPath": "llvm-nm",
   "ok": true,
   "symbols": [
     "ZN6mujoco4user14StringToVectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEESt6vectorIT_SaIS9_EERKS7_",

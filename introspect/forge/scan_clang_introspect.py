@@ -31,7 +31,51 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Mapping
+from typing import Any, Dict, List, Mapping, Optional
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _to_repo_relpath(path: Path, repo_root: Path) -> str:
+    """Return a stable repo-relative POSIX path, or just the basename."""
+    try:
+        rel = path.resolve().relative_to(repo_root.resolve())
+    except (OSError, RuntimeError, ValueError):
+        return path.name
+    return rel.as_posix()
+
+
+def _windows_path_to_wsl_mount(path: Path) -> Optional[str]:
+    """Best-effort map `C:\\...` -> `/mnt/c/...` for WSL builds."""
+    drive = path.drive
+    if not drive or len(drive) < 2 or drive[1] != ":":
+        return None
+    drive_letter = drive[0].lower()
+    parts = [p for p in path.parts if p not in (drive, drive + "\\", drive + "/")]
+    if not parts:
+        return f"/mnt/{drive_letter}"
+    return "/".join(["/mnt", drive_letter, *parts])
+
+
+def _repo_root_prefixes(repo_root: Path) -> List[str]:
+    prefixes = set()
+    root_str = str(repo_root)
+    prefixes.add(root_str)
+    prefixes.add(root_str.replace("\\", "/"))
+    wsl = _windows_path_to_wsl_mount(repo_root)
+    if wsl:
+        prefixes.add(wsl)
+    return sorted(prefixes, key=len, reverse=True)
+
+
+def _relativize_repo_paths_in_text(text: str, repo_root: Path) -> str:
+    """Strip repo root prefixes from serialized artifacts to avoid local paths."""
+    for prefix in _repo_root_prefixes(repo_root):
+        text = text.replace(prefix + "\\", "")
+        text = text.replace(prefix + "/", "")
+    return text
 
 
 def _ensure_local_introspect_on_path() -> Path:
@@ -57,7 +101,12 @@ def _ensure_local_introspect_on_path() -> Path:
     return py_root
 
 
-def _run_clang_ast_dump_to_file(header: Path, json_out: Path, clang: str) -> None:
+def _run_clang_ast_dump_to_file(
+    header: Path,
+    json_out: Path,
+    clang: str,
+    repo_root: Path,
+) -> None:
     """调用 clang 为 given header 输出 JSON AST 到文件."""
     include_dir = header.parent.parent  # .../include
     cmd = [
@@ -77,6 +126,7 @@ def _run_clang_ast_dump_to_file(header: Path, json_out: Path, clang: str) -> Non
         check=False,
         capture_output=True,
         text=True,
+        cwd=str(repo_root),
     )
     if proc.returncode != 0:
         raise RuntimeError(
@@ -84,10 +134,15 @@ def _run_clang_ast_dump_to_file(header: Path, json_out: Path, clang: str) -> Non
             f"Command: {' '.join(cmd)}\n"
             f"stderr:\n{proc.stderr}"
         )
-    json_out.write_text(proc.stdout, encoding="utf-8")
+    json_out.write_text(
+        _relativize_repo_paths_in_text(proc.stdout, repo_root),
+        encoding="utf-8",
+    )
 
 
-def _run_generator_module(module: str, args: List[str], py_root: Path) -> str:
+def _run_generator_module(
+    module: str, args: List[str], py_root: Path, cwd: Path
+) -> str:
     """在子进程中运行官方 generate_* 模块，返回其 stdout 源码."""
     env = os.environ.copy()
     existing = env.get("PYTHONPATH")
@@ -99,6 +154,7 @@ def _run_generator_module(module: str, args: List[str], py_root: Path) -> str:
         capture_output=True,
         text=True,
         env=env,
+        cwd=str(cwd),
     )
     if proc.returncode != 0:
         raise RuntimeError(
@@ -246,33 +302,49 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    header = args.header.resolve()
-    if not header.is_file():
-        raise SystemExit(f"Header not found: {header}")
+    repo_root = _repo_root()
+
+    header_arg = args.header
+    header_abs = (repo_root / header_arg) if not header_arg.is_absolute() else header_arg
+    header_abs = header_abs.resolve()
+    if not header_abs.is_file():
+        raise SystemExit(f"Header not found: {header_abs}")
 
     out_dir = args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
     py_root = _ensure_local_introspect_on_path()
 
+    # Prefer repo-relative paths for reproducible artifacts.
+    header_for_tools = _to_repo_relpath(header_abs, repo_root)
+    header_for_meta = header_for_tools
+
     ast_json_path = out_dir / "mujoco_ast.json"
-    _run_clang_ast_dump_to_file(header, ast_json_path, clang=args.clang)
+    _run_clang_ast_dump_to_file(
+        Path(header_for_tools),
+        ast_json_path,
+        clang=args.clang,
+        repo_root=repo_root,
+    )
 
     # 运行官方三个 generate_* 模块，拿到 FUNCTIONS / STRUCTS / ENUMS 的 Python 源码
     funcs_src = _run_generator_module(
         "introspect.official.codegen.generate_functions",
-        ["--header_path", str(header), "--json_path", str(ast_json_path)],
+        ["--header_path", header_for_tools, "--json_path", str(ast_json_path)],
         py_root,
+        cwd=repo_root,
     )
     structs_src = _run_generator_module(
         "introspect.official.codegen.generate_structs",
         ["--json_path", str(ast_json_path)],
         py_root,
+        cwd=repo_root,
     )
     enums_src = _run_generator_module(
         "introspect.official.codegen.generate_enums",
         ["--json_path", str(ast_json_path)],
         py_root,
+        cwd=repo_root,
     )
 
     # 在当前进程内 exec 生成的源码，只做一次 py->json 转换
@@ -285,21 +357,30 @@ def main() -> None:
     enums = _enums_to_json(enums_map)
 
     meta = {
-        "header": str(header),
+        "header": header_for_meta,
         "clang": args.clang,
-        "ast_json": str(ast_json_path),
+        "ast_json": _to_repo_relpath(ast_json_path, repo_root),
     }
 
     (out_dir / "functions_introspect_like.json").write_text(
-        json.dumps({"meta": meta, "functions": functions}, indent=2, sort_keys=True),
+        _relativize_repo_paths_in_text(
+            json.dumps({"meta": meta, "functions": functions}, indent=2, sort_keys=True),
+            repo_root,
+        ),
         encoding="utf-8",
     )
     (out_dir / "structs_introspect_like.json").write_text(
-        json.dumps({"meta": meta, "structs": structs}, indent=2, sort_keys=True),
+        _relativize_repo_paths_in_text(
+            json.dumps({"meta": meta, "structs": structs}, indent=2, sort_keys=True),
+            repo_root,
+        ),
         encoding="utf-8",
     )
     (out_dir / "enums_introspect_like.json").write_text(
-        json.dumps({"meta": meta, "enums": enums}, indent=2, sort_keys=True),
+        _relativize_repo_paths_in_text(
+            json.dumps({"meta": meta, "enums": enums}, indent=2, sort_keys=True),
+            repo_root,
+        ),
         encoding="utf-8",
     )
 

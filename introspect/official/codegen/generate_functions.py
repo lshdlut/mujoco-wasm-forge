@@ -151,7 +151,7 @@ def main(argv: Sequence[str]) -> None:
   with open(_JSON_PATH.value, 'r', encoding='utf-8') as f:
     root = json.load(f)
 
-  with open(_HEADER_PATH.value, 'r') as f:
+  with open(_HEADER_PATH.value, 'r', encoding='utf-8', newline='') as f:
     visitor = MjFunctionVisitor(f.read())
 
   traverse(root, visitor)

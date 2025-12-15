@@ -100,7 +100,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     raise SystemExit(f"enums_introspect_like.json not found at {infile}")
 
   enums = load_enums_introspect(infile)
-  payload = build_payload(enums, source=str(infile))
+  payload = build_payload(enums, source=infile.name)
 
   outfile.parent.mkdir(parents=True, exist_ok=True)
   outfile.write_text(json.dumps(payload, indent=2, sort_keys=False), encoding="utf-8")
