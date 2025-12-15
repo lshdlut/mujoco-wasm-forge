@@ -87,6 +87,10 @@ typedef struct { mjModel* m; mjData* d; } _mjwf_view_pair;
 // Getters implemented in mjwf_handles.c
 extern mjModel* _mjwf_model_of(int h);
 extern mjData*  _mjwf_data_of(int h);
+extern mjvScene* _mjwf_scene_of(int h);
+extern mjvOption* _mjwf_vopt_of(int h);
+extern mjvCamera* _mjwf_cam_of(int h);
+extern mjvPerturb* _mjwf_pert_of(int h);
 
 """.lstrip()
 
@@ -137,6 +141,10 @@ AUTO_DTYPE_BY_BASE = {
 STRUCT_PREFIX = {
     "mjModel": "model",
     "mjData": "data",
+    "mjvScene": "scene",
+    "mjvOption": "vopt",
+    "mjvCamera": "cam",
+    "mjvPerturb": "pert",
 }
 
 INT_DIM_BASES = {
@@ -146,6 +154,33 @@ INT_DIM_BASES = {
     "unsigned",
     "mjtSize",
     "size_t",
+}
+
+ROOT_ACCESSOR_BY_STRUCT = {
+    "mjModel": "_mjwf_model_of",
+    "mjData": "_mjwf_data_of",
+    "mjvScene": "_mjwf_scene_of",
+    "mjvOption": "_mjwf_vopt_of",
+    "mjvCamera": "_mjwf_cam_of",
+    "mjvPerturb": "_mjwf_pert_of",
+}
+
+ROOT_CTYPE_BY_STRUCT = {
+    "mjModel": "mjModel*",
+    "mjData": "mjData*",
+    "mjvScene": "mjvScene*",
+    "mjvOption": "mjvOption*",
+    "mjvCamera": "mjvCamera*",
+    "mjvPerturb": "mjvPerturb*",
+}
+
+ROOT_VAR_BY_STRUCT = {
+    "mjModel": "m",
+    "mjData": "d",
+    "mjvScene": "s",
+    "mjvOption": "vopt",
+    "mjvCamera": "cam",
+    "mjvPerturb": "pert",
 }
 
 
@@ -261,7 +296,7 @@ def _dtype_for_type(t: Dict[str, object]) -> Optional[str]:
 
 def collect_pointer_exports(structs: Dict[str, List[FieldInfo]]) -> List[PointerExport]:
     exports: List[PointerExport] = []
-    for struct_name in ("mjModel", "mjData"):
+    for struct_name in ("mjModel", "mjData", "mjvScene", "mjvOption", "mjvCamera", "mjvPerturb"):
         fields = structs.get(struct_name) or []
         for f in fields:
             if not f.name:
@@ -339,7 +374,7 @@ def collect_pointer_exports(structs: Dict[str, List[FieldInfo]]) -> List[Pointer
 
 def collect_dim_exports(structs: Dict[str, List[FieldInfo]]) -> List[DimExport]:
     exports: List[DimExport] = []
-    for struct_name in ("mjModel", "mjData"):
+    for struct_name in ("mjModel", "mjData", "mjvScene", "mjvOption", "mjvCamera", "mjvPerturb"):
         fields = structs.get(struct_name) or []
         for f in fields:
             if not f.name or not f.name.startswith("n"):
@@ -603,8 +638,9 @@ def generate_derived_decl(de: DerivedExport) -> str:
 
 
 def generate_pointer_impl(pe: PointerExport) -> str:
-    owner = "m" if pe.struct == "mjModel" else "d"
-    other = "d" if owner == "m" else "m"
+    owner = ROOT_VAR_BY_STRUCT[pe.struct]
+    owner_ctype = ROOT_CTYPE_BY_STRUCT[pe.struct]
+    accessor = ROOT_ACCESSOR_BY_STRUCT[pe.struct]
     # Scalar fields expose a 1-element pointer view; pointer/array fields
     # return the underlying C pointer directly.
     if pe.is_scalar:
@@ -614,9 +650,7 @@ def generate_pointer_impl(pe: PointerExport) -> str:
     lines = [
         f"EMSCRIPTEN_KEEPALIVE {pe.ctype} mjwf_{pe.base_name}_ptr(int h) {{",
         "  if (!mjwf_helper_valid(h)) return NULL;",
-        "  mjModel* m = _mjwf_model_of(h);",
-        "  mjData* d  = _mjwf_data_of(h);",
-        f"  (void){other};",
+        f"  {owner_ctype} {owner} = {accessor}(h);",
         f"  if (!{owner}) return NULL;",
         f"  return ({pe.ctype})({ptr_expr});",
         "}",
@@ -626,14 +660,13 @@ def generate_pointer_impl(pe: PointerExport) -> str:
 
 
 def generate_dim_impl(de: DimExport) -> str:
-    owner = "m" if de.struct == "mjModel" else "d"
-    other = "d" if owner == "m" else "m"
+    owner = ROOT_VAR_BY_STRUCT[de.struct]
+    owner_ctype = ROOT_CTYPE_BY_STRUCT[de.struct]
+    accessor = ROOT_ACCESSOR_BY_STRUCT[de.struct]
     lines = [
         f"EMSCRIPTEN_KEEPALIVE int mjwf_{de.base_name}(int h) {{",
         "  if (!mjwf_helper_valid(h)) return 0;",
-        "  mjModel* m = _mjwf_model_of(h);",
-        "  mjData* d  = _mjwf_data_of(h);",
-        f"  (void){other};",
+        f"  {owner_ctype} {owner} = {accessor}(h);",
         f"  if (!{owner}) return 0;",
         f"  return (int)({owner}->{de.field});",
         "}",

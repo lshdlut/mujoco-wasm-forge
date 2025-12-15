@@ -82,6 +82,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     ${MJWF_APP_DIR}/mjwf_stubs.c
     ${MJWF_APP_DIR}/mjwf_handles.c
     ${MJWF_APP_DIR}/mjwf_abi_structs.c
+    ${MJWF_APP_DIR}/mjwf_scene_geom_soa.c
   )
 
   add_dependencies(mjwasm_forge mujoco)

@@ -6,11 +6,11 @@ in dist/<ver>/abi tree.
 Special handling (kept explicit and minimal):
   - Prefix whitelist:
       We only wrap MuJoCo C API functions whose names start with:
-        mj_  /  mju_  /  mjs_  /  mjd_
-      This matches the "core" API surface (simulation, math, I/O) and
-      deliberately excludes rendering/UI/thread/helper prefixes such as
-      mjv_ / mjr_ / mjui_ / mjthread_. The goal is to stay close to the
-      official C + embind bindings and avoid exporting incidental helpers.
+        mj_  /  mju_  /  mjs_  /  mjd_  /  mjv_
+      This includes MuJoCo's visualization scene generation entrypoints
+      (mjv_updateScene etc.) while still excluding renderer/UI/thread helper
+      prefixes such as mjr_ / mjui_ / mjthread_. The goal is to keep the
+      exported surface introspect-driven and avoid exporting incidental helpers.
   - Variadic functions:
       The official introspect FUNCTION table normalises varargs: functions
       like mju_error / mju_warning are represented as fixed-signature
@@ -60,7 +60,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 from dist_version import abi_dir as resolve_abi_dir, dist_version as detect_dist_version
 
 
-ALLOWED_PREFIXES: Tuple[str, ...] = ("mj_", "mju_", "mjs_", "mjd_")
+ALLOWED_PREFIXES: Tuple[str, ...] = ("mj_", "mju_", "mjs_", "mjd_", "mjv_")
 RUNTIME_KEEP: Tuple[str, ...] = ("_malloc", "_free", "_realloc")
 
 

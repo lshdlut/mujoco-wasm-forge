@@ -1657,4 +1657,128 @@ MJWF_API_IMPL void mjwf_mju_zero4(mjtNum res[4]) {
   mju_zero4(res);
 }
 
+MJWF_API_IMPL void mjwf_mjv_addGeoms(const mjModel * m, mjData * d, const mjvOption * opt, const mjvPerturb * pert, int catmask, mjvScene * scn) {
+  mjv_addGeoms(m, d, opt, pert, catmask, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_alignToCamera(mjtNum res[3], const mjtNum vec[3], const mjtNum forward[3]) {
+  mjv_alignToCamera(res, vec, forward);
+}
+
+MJWF_API_IMPL void mjwf_mjv_applyPerturbForce(const mjModel * m, mjData * d, const mjvPerturb * pert) {
+  mjv_applyPerturbForce(m, d, pert);
+}
+
+MJWF_API_IMPL void mjwf_mjv_applyPerturbPose(const mjModel * m, mjData * d, const mjvPerturb * pert, int flg_paused) {
+  mjv_applyPerturbPose(m, d, pert, flg_paused);
+}
+
+MJWF_API_IMPL mjvGLCamera mjwf_mjv_averageCamera(const mjvGLCamera * cam1, const mjvGLCamera * cam2) {
+  return mjv_averageCamera(cam1, cam2);
+}
+
+MJWF_API_IMPL void mjwf_mjv_cameraInModel(mjtNum headpos[3], mjtNum forward[3], mjtNum up[3], const mjvScene * scn) {
+  mjv_cameraInModel(headpos, forward, up, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_cameraInRoom(mjtNum headpos[3], mjtNum forward[3], mjtNum up[3], const mjvScene * scn) {
+  mjv_cameraInRoom(headpos, forward, up, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_connector(mjvGeom * geom, int type, mjtNum width, const mjtNum from[3], const mjtNum to[3]) {
+  mjv_connector(geom, type, width, from, to);
+}
+
+MJWF_API_IMPL mjData * mjwf_mjv_copyData(mjData * dest, const mjModel * m, const mjData * src) {
+  return mjv_copyData(dest, m, src);
+}
+
+MJWF_API_IMPL void mjwf_mjv_copyModel(mjModel * dest, const mjModel * src) {
+  mjv_copyModel(dest, src);
+}
+
+MJWF_API_IMPL void mjwf_mjv_defaultCamera(mjvCamera * cam) {
+  mjv_defaultCamera(cam);
+}
+
+MJWF_API_IMPL void mjwf_mjv_defaultFigure(mjvFigure * fig) {
+  mjv_defaultFigure(fig);
+}
+
+MJWF_API_IMPL void mjwf_mjv_defaultFreeCamera(const mjModel * m, mjvCamera * cam) {
+  mjv_defaultFreeCamera(m, cam);
+}
+
+MJWF_API_IMPL void mjwf_mjv_defaultOption(mjvOption * opt) {
+  mjv_defaultOption(opt);
+}
+
+MJWF_API_IMPL void mjwf_mjv_defaultPerturb(mjvPerturb * pert) {
+  mjv_defaultPerturb(pert);
+}
+
+MJWF_API_IMPL void mjwf_mjv_defaultScene(mjvScene * scn) {
+  mjv_defaultScene(scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_freeScene(mjvScene * scn) {
+  mjv_freeScene(scn);
+}
+
+MJWF_API_IMPL mjtNum mjwf_mjv_frustumHeight(const mjvScene * scn) {
+  return mjv_frustumHeight(scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_initGeom(mjvGeom * geom, int type, const mjtNum size[3], const mjtNum pos[3], const mjtNum mat[9], const float rgba[4]) {
+  mjv_initGeom(geom, type, size, pos, mat, rgba);
+}
+
+MJWF_API_IMPL void mjwf_mjv_initPerturb(const mjModel * m, mjData * d, const mjvScene * scn, mjvPerturb * pert) {
+  mjv_initPerturb(m, d, scn, pert);
+}
+
+MJWF_API_IMPL void mjwf_mjv_makeLights(const mjModel * m, const mjData * d, mjvScene * scn) {
+  mjv_makeLights(m, d, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_makeScene(const mjModel * m, mjvScene * scn, int maxgeom) {
+  mjv_makeScene(m, scn, maxgeom);
+}
+
+MJWF_API_IMPL void mjwf_mjv_model2room(mjtNum roompos[3], mjtNum roomquat[4], const mjtNum modelpos[3], const mjtNum modelquat[4], const mjvScene * scn) {
+  mjv_model2room(roompos, roomquat, modelpos, modelquat, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_moveCamera(const mjModel * m, int action, mjtNum reldx, mjtNum reldy, const mjvScene * scn, mjvCamera * cam) {
+  mjv_moveCamera(m, action, reldx, reldy, scn, cam);
+}
+
+MJWF_API_IMPL void mjwf_mjv_moveModel(const mjModel * m, int action, mjtNum reldx, mjtNum reldy, const mjtNum roomup[3], mjvScene * scn) {
+  mjv_moveModel(m, action, reldx, reldy, roomup, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_movePerturb(const mjModel * m, const mjData * d, int action, mjtNum reldx, mjtNum reldy, const mjvScene * scn, mjvPerturb * pert) {
+  mjv_movePerturb(m, d, action, reldx, reldy, scn, pert);
+}
+
+MJWF_API_IMPL void mjwf_mjv_room2model(mjtNum modelpos[3], mjtNum modelquat[4], const mjtNum roompos[3], const mjtNum roomquat[4], const mjvScene * scn) {
+  mjv_room2model(modelpos, modelquat, roompos, roomquat, scn);
+}
+
+MJWF_API_IMPL int mjwf_mjv_select(const mjModel * m, const mjData * d, const mjvOption * vopt, mjtNum aspectratio, mjtNum relx, mjtNum rely, const mjvScene * scn, mjtNum selpnt[3], int geomid[1], int flexid[1], int skinid[1]) {
+  return mjv_select(m, d, vopt, aspectratio, relx, rely, scn, selpnt, geomid, flexid, skinid);
+}
+
+MJWF_API_IMPL void mjwf_mjv_updateCamera(const mjModel * m, const mjData * d, mjvCamera * cam, mjvScene * scn) {
+  mjv_updateCamera(m, d, cam, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_updateScene(const mjModel * m, mjData * d, const mjvOption * opt, const mjvPerturb * pert, mjvCamera * cam, int catmask, mjvScene * scn) {
+  mjv_updateScene(m, d, opt, pert, cam, catmask, scn);
+}
+
+MJWF_API_IMPL void mjwf_mjv_updateSkin(const mjModel * m, const mjData * d, mjvScene * scn) {
+  mjv_updateSkin(m, d, scn);
+}
+
 #undef MJWF_API_IMPL

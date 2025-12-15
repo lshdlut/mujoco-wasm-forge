@@ -25,7 +25,7 @@ from dist_version import (
 )
 
 
-ALLOWED_FUNC_PREFIXES: Tuple[str, ...] = ("mj_", "mju_", "mjs_", "mjd_")
+ALLOWED_FUNC_PREFIXES: Tuple[str, ...] = ("mj_", "mju_", "mjs_", "mjd_", "mjv_")
 
 
 def _load_json(path: Path) -> Mapping[str, object]:

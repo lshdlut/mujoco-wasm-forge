@@ -14,7 +14,7 @@
 ## Totals
 - A: 490
 - B: 892
-- C (functions only): 412
+- C (functions only): 443
 - Prefix breakdown: mj=148, mju=126, mjs=134, mjd=4
 
 ## Special Exclusions (by name → reason)
@@ -65,37 +65,6 @@
 - mjui_themeColor -> non_core_prefix
 - mjui_themeSpacing -> non_core_prefix
 - mjui_update -> non_core_prefix
-- mjv_addGeoms -> non_core_prefix
-- mjv_alignToCamera -> non_core_prefix
-- mjv_applyPerturbForce -> non_core_prefix
-- mjv_applyPerturbPose -> non_core_prefix
-- mjv_averageCamera -> non_core_prefix
-- mjv_cameraInModel -> non_core_prefix
-- mjv_cameraInRoom -> non_core_prefix
-- mjv_connector -> non_core_prefix
-- mjv_copyData -> non_core_prefix
-- mjv_copyModel -> non_core_prefix
-- mjv_defaultCamera -> non_core_prefix
-- mjv_defaultFigure -> non_core_prefix
-- mjv_defaultFreeCamera -> non_core_prefix
-- mjv_defaultOption -> non_core_prefix
-- mjv_defaultPerturb -> non_core_prefix
-- mjv_defaultScene -> non_core_prefix
-- mjv_freeScene -> non_core_prefix
-- mjv_frustumHeight -> non_core_prefix
-- mjv_initGeom -> non_core_prefix
-- mjv_initPerturb -> non_core_prefix
-- mjv_makeLights -> non_core_prefix
-- mjv_makeScene -> non_core_prefix
-- mjv_model2room -> non_core_prefix
-- mjv_moveCamera -> non_core_prefix
-- mjv_moveModel -> non_core_prefix
-- mjv_movePerturb -> non_core_prefix
-- mjv_room2model -> non_core_prefix
-- mjv_select -> non_core_prefix
-- mjv_updateCamera -> non_core_prefix
-- mjv_updateScene -> non_core_prefix
-- mjv_updateSkin -> non_core_prefix
 
 ## Set Differences (for auditing)
 - A - B (declared only): 0

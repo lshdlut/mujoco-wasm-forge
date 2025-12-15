@@ -377,10 +377,24 @@ def _run_abi_generators(version: str, env: Mapping[str, str]) -> None:
   env_for_py["PYTHONPATH"] = root_str if not existing else f"{root_str}{os.pathsep}{existing}"
 
   gen_structs = REPO_ROOT / "abi_exports" / "gen_structs.py"
+  gen_enums = REPO_ROOT / "abi_exports" / "gen_enums.py"
+  gen_scene_geom_soa = REPO_ROOT / "abi_exports" / "gen_scene_geom_soa.py"
   out_h = REPO_ROOT / "app" / "mjwf_abi_structs.h"
   out_c = REPO_ROOT / "app" / "mjwf_abi_structs.c"
   subprocess.run(
       ["python3", str(gen_structs), str(out_h), str(out_c)],
+      check=True,
+      cwd=str(REPO_ROOT),
+      env=env_for_py,
+  )
+  subprocess.run(
+      ["python3", str(gen_enums), "--abi", str(REPO_ROOT / "dist" / version / "abi")],
+      check=True,
+      cwd=str(REPO_ROOT),
+      env=env_for_py,
+  )
+  subprocess.run(
+      ["python3", str(gen_scene_geom_soa), "--abi", str(REPO_ROOT / "dist" / version / "abi")],
       check=True,
       cwd=str(REPO_ROOT),
       env=env_for_py,

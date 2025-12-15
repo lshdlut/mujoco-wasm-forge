@@ -16,6 +16,9 @@
 
 #define MJWF_MAXH 64
 
+// Scene state helpers are defined in the generated mjwf_scene_geom_soa.c.
+void mjwf_scene_reset(int h);
+
 typedef struct MjwfHandle {
   mjModel* m;
   mjData*  d;
@@ -169,6 +172,7 @@ EMSCRIPTEN_KEEPALIVE void mjwf_helper_free(int h) {
   if (!mjwf_handle_ok(h)) {
     return;
   }
+  mjwf_scene_reset(h);
   mj_deleteData(g_pool[h].d);
   mj_deleteModel(g_pool[h].m);
   mjwf_free_slot(h);
