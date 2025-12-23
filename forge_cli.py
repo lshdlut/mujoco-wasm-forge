@@ -672,7 +672,7 @@ def _sanitize_meta(dist_dir: Path) -> None:
     report.write_text("\n".join(normalized) + "\n", encoding="utf-8")
 
   # Normalize JSON generatedAt fields and non-semantic metadata in key JSON files.
-  for name in ("mjapi.json", "wrapper_exports.json", "wrapper_exports_funcs.json"):
+  for name in ("mjapi.json", "wrapper_exports.json", "wrapper_exports_funcs.json", "enums.json"):
     f = abi_dir / name
     if not f.is_file():
       continue
