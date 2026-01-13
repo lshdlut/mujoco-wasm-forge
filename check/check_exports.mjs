@@ -23,8 +23,13 @@ const ALLOWED_RUNTIME = new Set([
   '__table_base',
   '__stack_pointer',
   '__indirect_function_table',
+  '__cxa_can_catch',
+  '__cxa_decrement_exception_refcount',
+  '__cxa_free_exception',
+  '__cxa_get_exception_ptr',
   '__cxa_increment_exception_refcount',
   '__cxa_is_pointer_type',
+  '__get_exception_message',
   'memory',
   'table',
   'stackSave',
@@ -41,6 +46,7 @@ const ALLOWED_RUNTIME = new Set([
   '_emscripten_stack_alloc',
   '_emscripten_stack_restore',
   '_emscripten_timeout',
+  '_emscripten_tempret_set',
   '_strerror',
 ]);
 

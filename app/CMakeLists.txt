@@ -23,9 +23,6 @@ set_property(CACHE MJWF_PROFILE PROPERTY STRINGS default fast official fast_offi
 
 # Resolve repo root from the app directory and pull in MuJoCo sources.
 get_filename_component(MJWF_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
-if (NOT MJWF_EXPORTS_LIST AND DEFINED ENV{MJWF_EXPORTS_LIST})
-  set(MJWF_EXPORTS_LIST "$ENV{MJWF_EXPORTS_LIST}")
-endif()
 add_subdirectory("${MJWF_ROOT}/external/mujoco" official_build EXCLUDE_FROM_ALL)
 
 find_program(NODE_EXECUTABLE node)
@@ -39,9 +36,18 @@ set(MJWF_IMPL_JSON "${CMAKE_CURRENT_BINARY_DIR}/nm_${MJVER}.json")
 set(MJWF_ABI_DIR "${MJWF_ROOT}/dist/${MJVER}/abi")
 set(MJWF_IMPL_ARTIFACT "${CMAKE_CURRENT_BINARY_DIR}/lib/libmujoco.a")
 
+# Prefer an explicit cache variable (e.g. -DMJWF_EXPORTS_LIST=...) or an environment override,
+# otherwise default to the versioned dist export list.
+if (NOT MJWF_EXPORTS_LIST)
+  if (DEFINED ENV{MJWF_EXPORTS_LIST})
+    set(MJWF_EXPORTS_LIST "$ENV{MJWF_EXPORTS_LIST}")
+  else()
+    set(MJWF_EXPORTS_LIST "${MJWF_ABI_DIR}/exports.lst")
+  endif()
+endif()
+
 add_custom_command(
   OUTPUT ${MJWF_IMPL_JSON}
-  BYPRODUCTS ${MJWF_IMPL_JSON}
   COMMAND ${NODE_EXECUTABLE} ${MJWF_ROOT}/abi_impl/nm_coverage.mjs
           ${MJWF_IMPL_ARTIFACT}
           --out ${MJWF_IMPL_JSON}
@@ -55,7 +61,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   set(MJWF_OPT_FLAG "-Oz")
   set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
   set(MJWF_FS_FLAG "-sFORCE_FILESYSTEM=0")
-  set(MJWF_EXC_FLAG "-sDISABLE_EXCEPTION_CATCHING=1")
+  # MuJoCo uses C++ exceptions (mjXError/mjCError) for XML parsing and model
+  # compilation error handling. Disabling exception catching turns recoverable
+  # load errors (e.g., missing referenced files) into a hard abort.
+  set(MJWF_EXC_FLAG "-sDISABLE_EXCEPTION_CATCHING=0")
   set(MJWF_DEBUG_FLAGS "")
   set(MJWF_LTO_FLAG "-flto")
   if (MJWF_PROFILE STREQUAL "fast")
@@ -89,6 +98,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   target_include_directories(mjwasm_forge PRIVATE ${MJWF_AUTO_DIR})
   target_link_libraries(mjwasm_forge PRIVATE mujoco)
   target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
+  # Ensure exception catching is enabled consistently at compile+link time; MuJoCo relies on
+  # try/catch for load-time fallbacks (e.g., namespaced refs in <replicate>/<attach>).
+  target_compile_options(mjwasm_forge PRIVATE ${MJWF_EXC_FLAG})
+  target_compile_options(mujoco PRIVATE ${MJWF_EXC_FLAG})
   target_link_options(mjwasm_forge PRIVATE
     "-sWASM=1"
     "-sSTACK_SIZE=5242880"
