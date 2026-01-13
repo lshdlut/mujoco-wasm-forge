@@ -58,6 +58,7 @@ add_custom_command(
 add_custom_target(mjwf_impl_${MJVER} DEPENDS ${MJWF_IMPL_JSON})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  option(MJWF_ENABLE_PLUGINS "Link MuJoCo plugin libraries into the wasm build" OFF)
   set(MJWF_OPT_FLAG "-Oz")
   set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
   set(MJWF_FS_FLAG "-sFORCE_FILESYSTEM=0")
@@ -97,6 +98,21 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   add_dependencies(mjwasm_forge mujoco)
   target_include_directories(mjwasm_forge PRIVATE ${MJWF_AUTO_DIR})
   target_link_libraries(mjwasm_forge PRIVATE mujoco)
+  if (MJWF_ENABLE_PLUGINS)
+    # MuJoCo plugins register via static constructors. When the plugins are
+    # built as archives (as is the case under Emscripten), the registration
+    # object files would otherwise be stripped unless we force-load them.
+    target_link_libraries(
+      mjwasm_forge
+      PRIVATE
+      "-Wl,--whole-archive"
+      actuator
+      elasticity
+      sensor
+      sdf_plugin
+      "-Wl,--no-whole-archive"
+    )
+  endif()
   target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
   # Ensure exception catching is enabled consistently at compile+link time; MuJoCo relies on
   # try/catch for load-time fallbacks (e.g., namespaced refs in <replicate>/<attach>).
@@ -106,7 +122,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     "-sWASM=1"
     "-sSTACK_SIZE=5242880"
     "-sINITIAL_MEMORY=134217728"
-    "-sMAXIMUM_MEMORY=536870912"
+    "-sMAXIMUM_MEMORY=2147483648"
     "-sALLOW_MEMORY_GROWTH=1"
     "-sENVIRONMENT=web,worker,node"
     "-sEXPORT_ES6=1"
