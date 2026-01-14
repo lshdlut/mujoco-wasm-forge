@@ -492,14 +492,16 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       f"-B '{build_dir}' "
       "-DCMAKE_BUILD_TYPE=Release "
       "-DMUJOCO_ENABLE_QHULL=OFF "
-      "-DMUJOCO_BUILD_PLUGINS=OFF "
+      "-DMUJOCO_BUILD_PLUGINS=ON "
       "-DMUJOCO_BUILD_EXAMPLES=OFF "
       "-DMUJOCO_BUILD_SIMULATE=OFF "
       "-DMUJOCO_BUILD_TESTS=OFF "
       "-DMUJOCO_BUILD_SAMPLES=OFF "
       "-DCMAKE_SKIP_INSTALL_RULES=ON "
       "-DLIBM_LIBRARY:STRING=-lm "
-      "-DMJWF_PROFILE=default "
+      "-DMJWF_ENABLE_PLUGINS=ON "
+      "-DMJWF_ENABLE_SIMD=ON "
+      "-DMJWF_PROFILE=fast "
       f"-DMJVER='{version}'"
   )
   build_cmd = (

@@ -15,10 +15,11 @@ option(MUJOCO_BUILD_EXAMPLES "" OFF)
 option(MUJOCO_BUILD_SIMULATE "" OFF)
 option(MUJOCO_BUILD_TESTS "" OFF)
 option(MUJOCO_BUILD_SAMPLES "" OFF)
+option(MUJOCO_BUILD_PLUGINS "" ON)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-set(MJWF_PROFILE "default" CACHE STRING "MuJoCo WASM wrapper profile (default|fast|official|fast_official)")
+set(MJWF_PROFILE "fast" CACHE STRING "MuJoCo WASM wrapper profile (default|fast|official|fast_official)")
 set_property(CACHE MJWF_PROFILE PROPERTY STRINGS default fast official fast_official)
 
 # Resolve repo root from the app directory and pull in MuJoCo sources.
@@ -58,7 +59,12 @@ add_custom_command(
 add_custom_target(mjwf_impl_${MJVER} DEPENDS ${MJWF_IMPL_JSON})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-  option(MJWF_ENABLE_PLUGINS "Link MuJoCo plugin libraries into the wasm build" OFF)
+  option(MJWF_ENABLE_PLUGINS "Link MuJoCo plugin libraries into the wasm build" ON)
+  option(MJWF_ENABLE_SIMD "Enable WebAssembly SIMD (-msimd128)" ON)
+  set(MJWF_SIMD_FLAG "")
+  if (MJWF_ENABLE_SIMD)
+    set(MJWF_SIMD_FLAG "-msimd128")
+  endif()
   set(MJWF_OPT_FLAG "-Oz")
   set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
   set(MJWF_FS_FLAG "-sFORCE_FILESYSTEM=0")
@@ -113,11 +119,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
       "-Wl,--no-whole-archive"
     )
   endif()
-  target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG})
+  target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG} ${MJWF_SIMD_FLAG})
   # Ensure exception catching is enabled consistently at compile+link time; MuJoCo relies on
   # try/catch for load-time fallbacks (e.g., namespaced refs in <replicate>/<attach>).
   target_compile_options(mjwasm_forge PRIVATE ${MJWF_EXC_FLAG})
-  target_compile_options(mujoco PRIVATE ${MJWF_EXC_FLAG})
+  foreach(_target mujoco actuator elasticity sensor sdf_plugin)
+    if (TARGET ${_target})
+      target_compile_options(${_target} PRIVATE ${MJWF_EXC_FLAG} ${MJWF_SIMD_FLAG})
+    endif()
+  endforeach()
   target_link_options(mjwasm_forge PRIVATE
     "-sWASM=1"
     "-sSTACK_SIZE=5242880"
@@ -130,6 +140,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     "-sWASM_BIGINT=1"
     "-sEXPORT_NAME=load_mujoco"
     ${MJWF_OPT_FLAG}
+    ${MJWF_SIMD_FLAG}
     ${MJWF_ASSERT_FLAG}
     ${MJWF_FS_FLAG}
     ${MJWF_EXC_FLAG}
