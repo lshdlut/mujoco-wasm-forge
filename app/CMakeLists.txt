@@ -15,7 +15,6 @@ option(MUJOCO_BUILD_EXAMPLES "" OFF)
 option(MUJOCO_BUILD_SIMULATE "" OFF)
 option(MUJOCO_BUILD_TESTS "" OFF)
 option(MUJOCO_BUILD_SAMPLES "" OFF)
-option(MUJOCO_BUILD_PLUGINS "" ON)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
@@ -104,26 +103,49 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   add_dependencies(mjwasm_forge mujoco)
   target_include_directories(mjwasm_forge PRIVATE ${MJWF_AUTO_DIR})
   target_link_libraries(mjwasm_forge PRIVATE mujoco)
+  set(_mjwf_plugin_targets "")
+  cmake_path(SET _mjwf_plugin_root NORMALIZE "${MJWF_ROOT}/external/mujoco/plugin")
+  get_property(_mjwf_mujoco_subdirs DIRECTORY "${MJWF_ROOT}/external/mujoco" PROPERTY SUBDIRECTORIES)
+  foreach(_mjwf_subdir IN LISTS _mjwf_mujoco_subdirs)
+    cmake_path(IS_PREFIX _mjwf_plugin_root "${_mjwf_subdir}" NORMALIZE _mjwf_is_plugin_dir)
+    if (_mjwf_is_plugin_dir)
+      get_property(_mjwf_dir_targets DIRECTORY "${_mjwf_subdir}" PROPERTY BUILDSYSTEM_TARGETS)
+      foreach(_mjwf_target IN LISTS _mjwf_dir_targets)
+        if (TARGET ${_mjwf_target})
+          get_target_property(_mjwf_target_type ${_mjwf_target} TYPE)
+          if (_mjwf_target_type MATCHES "^(STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY)$")
+            list(APPEND _mjwf_plugin_targets ${_mjwf_target})
+          endif()
+        endif()
+      endforeach()
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES _mjwf_plugin_targets)
   if (MJWF_ENABLE_PLUGINS)
     # MuJoCo plugins register via static constructors. When the plugins are
     # built as archives (as is the case under Emscripten), the registration
     # object files would otherwise be stripped unless we force-load them.
-    target_link_libraries(
-      mjwasm_forge
-      PRIVATE
-      "-Wl,--whole-archive"
-      actuator
-      elasticity
-      sensor
-      sdf_plugin
-      "-Wl,--no-whole-archive"
-    )
+    if (_mjwf_plugin_targets)
+      target_link_libraries(
+        mjwasm_forge
+        PRIVATE
+        "-Wl,--whole-archive"
+        ${_mjwf_plugin_targets}
+        "-Wl,--no-whole-archive"
+      )
+    else()
+      message(
+        WARNING
+          "MJWF_ENABLE_PLUGINS is ON but no MuJoCo plugin targets were discovered under "
+          "${_mjwf_plugin_root}"
+      )
+    endif()
   endif()
   target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG} ${MJWF_SIMD_FLAG})
   # Ensure exception catching is enabled consistently at compile+link time; MuJoCo relies on
   # try/catch for load-time fallbacks (e.g., namespaced refs in <replicate>/<attach>).
   target_compile_options(mjwasm_forge PRIVATE ${MJWF_EXC_FLAG})
-  foreach(_target mujoco actuator elasticity sensor sdf_plugin)
+  foreach(_target mujoco ${_mjwf_plugin_targets})
     if (TARGET ${_target})
       target_compile_options(${_target} PRIVATE ${MJWF_EXC_FLAG} ${MJWF_SIMD_FLAG})
     endif()
@@ -139,6 +161,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     "-sMODULARIZE=1"
     "-sWASM_BIGINT=1"
     "-sEXPORT_NAME=load_mujoco"
+    "-lexports.js"
     ${MJWF_OPT_FLAG}
     ${MJWF_SIMD_FLAG}
     ${MJWF_ASSERT_FLAG}

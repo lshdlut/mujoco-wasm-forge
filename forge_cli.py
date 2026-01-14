@@ -318,7 +318,6 @@ def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -
   mujoco_src = REPO_ROOT / "external" / "mujoco"
   cmake_args = [
       "-DCMAKE_BUILD_TYPE=Release",
-      "-DMUJOCO_BUILD_PLUGINS=OFF",
       "-DMUJOCO_BUILD_EXAMPLES=OFF",
       "-DMUJOCO_BUILD_SIMULATE=OFF",
       "-DMUJOCO_BUILD_TESTS=OFF",
@@ -479,9 +478,15 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   # and fall back to $HOME/emsdk for local setups.
   emsdk_env_snippet = (
       'if [ -n "${EMSDK:-}" ] && [ -f "${EMSDK}/emsdk_env.sh" ]; then '
-      '  . "${EMSDK}/emsdk_env.sh"; '
+      '  _mjwf_emsdk_env="${EMSDK}/.mjwf_emsdk_env.sh"; '
+      "  tr -d '\\r' < \"${EMSDK}/emsdk_env.sh\" > \"${_mjwf_emsdk_env}\"; "
+      '  . "${_mjwf_emsdk_env}"; '
+      '  rm -f "${_mjwf_emsdk_env}"; '
       'elif [ -f "$HOME/emsdk/emsdk_env.sh" ]; then '
-      '  . "$HOME/emsdk/emsdk_env.sh"; '
+      '  _mjwf_emsdk_env="$HOME/emsdk/.mjwf_emsdk_env.sh"; '
+      "  tr -d '\\r' < \"$HOME/emsdk/emsdk_env.sh\" > \"${_mjwf_emsdk_env}\"; "
+      '  . "${_mjwf_emsdk_env}"; '
+      '  rm -f "${_mjwf_emsdk_env}"; '
       'fi; '
   )
   configure_cmd = (
@@ -492,7 +497,6 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       f"-B '{build_dir}' "
       "-DCMAKE_BUILD_TYPE=Release "
       "-DMUJOCO_ENABLE_QHULL=OFF "
-      "-DMUJOCO_BUILD_PLUGINS=ON "
       "-DMUJOCO_BUILD_EXAMPLES=OFF "
       "-DMUJOCO_BUILD_SIMULATE=OFF "
       "-DMUJOCO_BUILD_TESTS=OFF "
