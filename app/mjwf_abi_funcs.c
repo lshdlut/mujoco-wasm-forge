@@ -105,6 +105,10 @@ MJWF_API_IMPL mjSpec * mjwf_mj_copySpec(const mjSpec * s) {
   return mj_copySpec(s);
 }
 
+MJWF_API_IMPL void mjwf_mj_copyState(const mjModel * m, const mjData * src, mjData * dst, unsigned int sig) {
+  mj_copyState(m, src, dst, sig);
+}
+
 MJWF_API_IMPL void mjwf_mj_crb(const mjModel * m, mjData * d) {
   mj_crb(m, d);
 }
@@ -161,6 +165,10 @@ MJWF_API_IMPL void mjwf_mj_energyVel(const mjModel * m, mjData * d) {
   mj_energyVel(m, d);
 }
 
+MJWF_API_IMPL void mjwf_mj_extractState(const mjModel * m, const mjtNum * src, unsigned int srcsig, mjtNum * dst, unsigned int dstsig) {
+  mj_extractState(m, src, srcsig, dst, dstsig);
+}
+
 MJWF_API_IMPL void mjwf_mj_factorM(const mjModel * m, mjData * d) {
   mj_factorM(m, d);
 }
@@ -199,6 +207,10 @@ MJWF_API_IMPL void mjwf_mj_fwdActuation(const mjModel * m, mjData * d) {
 
 MJWF_API_IMPL void mjwf_mj_fwdConstraint(const mjModel * m, mjData * d) {
   mj_fwdConstraint(m, d);
+}
+
+MJWF_API_IMPL void mjwf_mj_fwdKinematics(const mjModel * m, mjData * d) {
+  mj_fwdKinematics(m, d);
 }
 
 MJWF_API_IMPL void mjwf_mj_fwdPosition(const mjModel * m, mjData * d) {
@@ -377,7 +389,7 @@ MJWF_API_IMPL void mjwf_mj_mulM2(const mjModel * m, const mjData * d, mjtNum * r
   mj_mulM2(m, d, res, vec);
 }
 
-MJWF_API_IMPL void mjwf_mj_multiRay(const mjModel * m, mjData * d, const mjtNum pnt[3], const mjtNum * vec, const mjtByte * geomgroup, mjtByte flg_static, int bodyexclude, int * geomid, mjtNum * dist, int nray, mjtNum cutoff) {
+MJWF_API_IMPL void mjwf_mj_multiRay(const mjModel * m, mjData * d, const mjtNum pnt[3], const mjtNum vec[3], const mjtByte * geomgroup, mjtByte flg_static, int bodyexclude, int * geomid, mjtNum * dist, int nray, mjtNum cutoff) {
   mj_multiRay(m, d, pnt, vec, geomgroup, flg_static, bodyexclude, geomid, dist, nray, cutoff);
 }
 
@@ -395,6 +407,10 @@ MJWF_API_IMPL void mjwf_mj_objectAcceleration(const mjModel * m, const mjData * 
 
 MJWF_API_IMPL void mjwf_mj_objectVelocity(const mjModel * m, const mjData * d, int objtype, int objid, mjtNum res[6], int flg_local) {
   mj_objectVelocity(m, d, objtype, objid, res, flg_local);
+}
+
+MJWF_API_IMPL mjSpec * mjwf_mj_parse(const char * filename, const char * content_type, const mjVFS * vfs, char * error, int error_sz) {
+  return mj_parse(filename, content_type, vfs, error, error_sz);
 }
 
 MJWF_API_IMPL mjSpec * mjwf_mj_parseXML(const char * filename, const mjVFS * vfs, char * error, int error_sz) {
@@ -537,7 +553,7 @@ MJWF_API_IMPL void mjwf_mj_setTotalmass(mjModel * m, mjtNum newmass) {
   mj_setTotalmass(m, newmass);
 }
 
-MJWF_API_IMPL int mjwf_mj_sizeModel(const mjModel * m) {
+MJWF_API_IMPL mjtSize mjwf_mj_sizeModel(const mjModel * m) {
   return mj_sizeModel(m);
 }
 
@@ -1029,6 +1045,30 @@ MJWF_API_IMPL const void * mjwf_mjs_getUserValue(mjsElement * element, const cha
   return mjs_getUserValue(element, key);
 }
 
+MJWF_API_IMPL mjsWrap * mjwf_mjs_getWrap(const mjsTendon * tendonspec, int i) {
+  return mjs_getWrap(tendonspec, i);
+}
+
+MJWF_API_IMPL double mjwf_mjs_getWrapCoef(mjsWrap * wrap) {
+  return mjs_getWrapCoef(wrap);
+}
+
+MJWF_API_IMPL double mjwf_mjs_getWrapDivisor(mjsWrap * wrap) {
+  return mjs_getWrapDivisor(wrap);
+}
+
+MJWF_API_IMPL int mjwf_mjs_getWrapNum(const mjsTendon * tendonspec) {
+  return mjs_getWrapNum(tendonspec);
+}
+
+MJWF_API_IMPL mjsSite * mjwf_mjs_getWrapSideSite(mjsWrap * wrap) {
+  return mjs_getWrapSideSite(wrap);
+}
+
+MJWF_API_IMPL mjsElement * mjwf_mjs_getWrapTarget(mjsWrap * wrap) {
+  return mjs_getWrapTarget(wrap);
+}
+
 MJWF_API_IMPL int mjwf_mjs_isWarning(mjSpec * s) {
   return mjs_isWarning(s);
 }
@@ -1497,7 +1537,7 @@ MJWF_API_IMPL void mjwf_mju_quatZ2Vec(mjtNum quat[4], const mjtNum vec[3]) {
   mju_quatZ2Vec(quat, vec);
 }
 
-MJWF_API_IMPL mjtNum mjwf_mju_rayFlex(const mjModel * m, const mjData * d, int flex_layer, mjtByte flg_vert, mjtByte flg_edge, mjtByte flg_face, mjtByte flg_skin, int flexid, const mjtNum * pnt, const mjtNum * vec, int vertid[1]) {
+MJWF_API_IMPL mjtNum mjwf_mju_rayFlex(const mjModel * m, const mjData * d, int flex_layer, mjtByte flg_vert, mjtByte flg_edge, mjtByte flg_face, mjtByte flg_skin, int flexid, const mjtNum pnt[3], const mjtNum vec[3], int vertid[1]) {
   return mju_rayFlex(m, d, flex_layer, flg_vert, flg_edge, flg_face, flg_skin, flexid, pnt, vec, vertid);
 }
 
@@ -1675,6 +1715,14 @@ MJWF_API_IMPL void mjwf_mjv_applyPerturbPose(const mjModel * m, mjData * d, cons
 
 MJWF_API_IMPL mjvGLCamera mjwf_mjv_averageCamera(const mjvGLCamera * cam1, const mjvGLCamera * cam2) {
   return mjv_averageCamera(cam1, cam2);
+}
+
+MJWF_API_IMPL void mjwf_mjv_cameraFrame(mjtNum headpos[3], mjtNum forward[3], mjtNum up[3], mjtNum right[3], const mjData * d, const mjvCamera * cam) {
+  mjv_cameraFrame(headpos, forward, up, right, d, cam);
+}
+
+MJWF_API_IMPL void mjwf_mjv_cameraFrustum(float zver[2], float zhor[2], float zclip[2], const mjModel * m, const mjvCamera * cam) {
+  mjv_cameraFrustum(zver, zhor, zclip, m, cam);
 }
 
 MJWF_API_IMPL void mjwf_mjv_cameraInModel(mjtNum headpos[3], mjtNum forward[3], mjtNum up[3], const mjvScene * scn) {

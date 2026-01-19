@@ -14,6 +14,8 @@ data_actuator_length_ptr
 data_actuator_moment_ptr
 data_actuator_velocity_ptr
 data_arena_ptr
+data_body_awake_ind_ptr
+data_body_awake_ptr
 data_buffer_ptr
 data_bvh_aabb_dyn_ptr
 data_bvh_active_ptr
@@ -48,6 +50,7 @@ data_contact_vert_ptr
 data_crb_ptr
 data_ctrl_ptr
 data_cvel_ptr
+data_dof_awake_ind_ptr
 data_dof_island_ptr
 data_efc_AR_colind_ptr
 data_efc_AR_ptr
@@ -111,9 +114,11 @@ data_ifrc_smooth_ptr
 data_island_dofadr_ptr
 data_island_idofadr_ptr
 data_island_iefcadr_ptr
+data_island_itreeadr_ptr
 data_island_ne_ptr
 data_island_nefc_ptr
 data_island_nf_ptr
+data_island_ntree_ptr
 data_island_nv_ptr
 data_light_xdir_ptr
 data_light_xpos_ptr
@@ -121,6 +126,7 @@ data_map_dof2idof_ptr
 data_map_efc2iefc_ptr
 data_map_idof2dof_ptr
 data_map_iefc2efc_ptr
+data_map_itree2tree_ptr
 data_maxuse_arena_ptr
 data_maxuse_con_ptr
 data_maxuse_efc_ptr
@@ -134,6 +140,7 @@ data_moment_rownnz_ptr
 data_nA
 data_nJ
 data_narena
+data_nbody_awake
 data_nbuffer
 data_ncon
 data_ne
@@ -142,8 +149,12 @@ data_nf
 data_nidof
 data_nisland
 data_nl
+data_nparent_awake
 data_nplugin
+data_ntree_awake
+data_nv_awake
 data_parena_ptr
+data_parent_awake_ind_ptr
 data_pbase_ptr
 data_plugin_data_ptr
 data_plugin_ptr
@@ -203,6 +214,9 @@ data_time_ptr
 data_timer_duration_ptr
 data_timer_number_ptr
 data_timer_ptr
+data_tree_asleep_ptr
+data_tree_awake_ptr
+data_tree_island_ptr
 data_userdata_ptr
 data_warning_lastinfo_ptr
 data_warning_number_ptr
@@ -309,6 +323,7 @@ model_dof_damping_ptr
 model_dof_frictionloss_ptr
 model_dof_invweight0_ptr
 model_dof_jntid_ptr
+model_dof_length_ptr
 model_dof_parentid_ptr
 model_dof_simplenum_ptr
 model_dof_solimp_ptr
@@ -650,6 +665,7 @@ model_opt_o_solimp_ptr
 model_opt_o_solref_ptr
 model_opt_sdf_initpoints_ptr
 model_opt_sdf_iterations_ptr
+model_opt_sleep_tolerance_ptr
 model_opt_solver_ptr
 model_opt_timestep_ptr
 model_opt_tolerance_ptr
@@ -745,6 +761,8 @@ model_tendon_solimp_lim_ptr
 model_tendon_solref_fri_ptr
 model_tendon_solref_lim_ptr
 model_tendon_stiffness_ptr
+model_tendon_treeid_ptr
+model_tendon_treenum_ptr
 model_tendon_user_ptr
 model_tendon_width_ptr
 model_tex_adr_ptr
@@ -758,6 +776,11 @@ model_tex_width_ptr
 model_text_adr_ptr
 model_text_data_ptr
 model_text_size_ptr
+model_tree_bodyadr_ptr
+model_tree_bodynum_ptr
+model_tree_dofadr_ptr
+model_tree_dofnum_ptr
+model_tree_sleep_policy_ptr
 model_tuple_adr_ptr
 model_tuple_objid_ptr
 model_tuple_objprm_ptr

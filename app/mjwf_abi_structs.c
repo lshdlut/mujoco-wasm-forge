@@ -446,6 +446,42 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_dof_M0_ptr(int h) {
   if (!m) return NULL;
   return (double*)(m->dof_M0);
 }
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_dof_length_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->dof_length);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tree_bodyadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tree_bodyadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tree_bodynum_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tree_bodynum);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tree_dofadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tree_dofadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tree_dofnum_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tree_dofnum);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tree_sleep_policy_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tree_sleep_policy);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_geom_type_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -1868,6 +1904,18 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_group_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->tendon_group);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_treenum_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tendon_treenum);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_treeid_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tendon_treeid);
+}
 EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_model_tendon_limited_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -2804,6 +2852,12 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_data_sensordata_ptr(int h) {
   if (!d) return NULL;
   return (double*)(d->sensordata);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_tree_asleep_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->tree_asleep);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_plugin_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjData* d = _mjwf_data_of(h);
@@ -3092,6 +3146,36 @@ EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_data_bvh_active_ptr(int h) {
   if (!d) return NULL;
   return (uint8_t*)(d->bvh_active);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_tree_awake_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->tree_awake);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_body_awake_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->body_awake);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_body_awake_ind_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->body_awake_ind);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_parent_awake_ind_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->parent_awake_ind);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_dof_awake_ind_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->dof_awake_ind);
+}
 EMSCRIPTEN_KEEPALIVE double* mjwf_data_flexedge_velocity_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjData* d = _mjwf_data_of(h);
@@ -3343,6 +3427,30 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_tendon_efcadr_ptr(int h) {
   mjData* d = _mjwf_data_of(h);
   if (!d) return NULL;
   return (int32_t*)(d->tendon_efcadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_tree_island_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->tree_island);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_island_ntree_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->island_ntree);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_island_itreeadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->island_itreeadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_map_itree2tree_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (int32_t*)(d->map_itree2tree);
 }
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_dof_island_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -4604,6 +4712,30 @@ EMSCRIPTEN_KEEPALIVE int mjwf_data_nidof(int h) {
   if (!d) return 0;
   return (int)(d->nidof);
 }
+EMSCRIPTEN_KEEPALIVE int mjwf_data_ntree_awake(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return 0;
+  return (int)(d->ntree_awake);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_data_nbody_awake(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return 0;
+  return (int)(d->nbody_awake);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_data_nparent_awake(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return 0;
+  return (int)(d->nparent_awake);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_data_nv_awake(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return 0;
+  return (int)(d->nv_awake);
+}
 EMSCRIPTEN_KEEPALIVE int mjwf_scene_ngeom(int h) {
   if (!mjwf_helper_valid(h)) return 0;
   mjvScene* s = _mjwf_scene_of(h);
@@ -4675,6 +4807,14 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_opt_ccd_tolerance_ptr(int h) {
   (void)d;
   if (!m) return NULL;
   return (double*)(&(m->opt.ccd_tolerance));
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_opt_sleep_tolerance_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  mjData* d  = _mjwf_data_of(h);
+  (void)d;
+  if (!m) return NULL;
+  return (double*)(&(m->opt.sleep_tolerance));
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_opt_gravity_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;

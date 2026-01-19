@@ -1,0 +1,134 @@
+# MuJoCo WASM Function Export Report (ver 3.4.0)
+
+## Special Rules
+- Prefix whitelist: export only `mj_`, `mju_`, `mjs_`, `mjd_` symbols; rendering/UI/thread helpers (mjv_/mjr_/mjui_/mjthread_) are excluded.
+- Variadic: introspect treats varargs functions as fixed signatures, so gen_funcs.py does not synthesise *_v adapters; mju_error/mju_warning are exported with their introspect-declared parameter lists.
+- Runtime helpers: `_malloc`, `_free`, `_realloc` are kept via runtime_keep and not wrapped as mjwf_*.
+
+## A, B, C Overview
+- A: declarations from dist/<ver>/abi/functions_introspect_like.json (introspect).
+- B: implemented symbols from dist/<ver>/abi/nm_symbols.json (llvm-nm -g --defined-only).
+- C: A ∩ B after applying prefix whitelist and any future exclusions, emitted as mjwf_* wrappers.
+- Hard gate: (A ∩ B) - C must be empty.
+
+## Totals
+- A: 505
+- B: 916
+- C (functions only): 455
+- Prefix breakdown: mj=152, mju=126, mjs=140, mjd=4
+
+## Special Exclusions (by name → reason)
+- mjc_distance -> non_core_prefix
+- mjc_getSDF -> non_core_prefix
+- mjc_gradient -> non_core_prefix
+- mjp_defaultDecoder -> non_core_prefix
+- mjp_defaultPlugin -> non_core_prefix
+- mjp_defaultResourceProvider -> non_core_prefix
+- mjp_findDecoder -> non_core_prefix
+- mjp_getPlugin -> non_core_prefix
+- mjp_getPluginAtSlot -> non_core_prefix
+- mjp_getResourceProvider -> non_core_prefix
+- mjp_getResourceProviderAtSlot -> non_core_prefix
+- mjp_pluginCount -> non_core_prefix
+- mjp_registerDecoder -> non_core_prefix
+- mjp_registerPlugin -> non_core_prefix
+- mjp_registerResourceProvider -> non_core_prefix
+- mjp_resourceProviderCount -> non_core_prefix
+- mjr_addAux -> non_core_prefix
+- mjr_blitAux -> non_core_prefix
+- mjr_blitBuffer -> non_core_prefix
+- mjr_changeFont -> non_core_prefix
+- mjr_defaultContext -> non_core_prefix
+- mjr_drawPixels -> non_core_prefix
+- mjr_figure -> non_core_prefix
+- mjr_findRect -> non_core_prefix
+- mjr_finish -> non_core_prefix
+- mjr_freeContext -> non_core_prefix
+- mjr_getError -> non_core_prefix
+- mjr_label -> non_core_prefix
+- mjr_makeContext -> non_core_prefix
+- mjr_maxViewport -> non_core_prefix
+- mjr_overlay -> non_core_prefix
+- mjr_readPixels -> non_core_prefix
+- mjr_rectangle -> non_core_prefix
+- mjr_render -> non_core_prefix
+- mjr_resizeOffscreen -> non_core_prefix
+- mjr_restoreBuffer -> non_core_prefix
+- mjr_setAux -> non_core_prefix
+- mjr_setBuffer -> non_core_prefix
+- mjr_text -> non_core_prefix
+- mjr_uploadHField -> non_core_prefix
+- mjr_uploadMesh -> non_core_prefix
+- mjr_uploadTexture -> non_core_prefix
+- mjui_add -> non_core_prefix
+- mjui_addToSection -> non_core_prefix
+- mjui_event -> non_core_prefix
+- mjui_render -> non_core_prefix
+- mjui_resize -> non_core_prefix
+- mjui_themeColor -> non_core_prefix
+- mjui_themeSpacing -> non_core_prefix
+- mjui_update -> non_core_prefix
+
+## Set Differences (for auditing)
+- A - B (declared only): 0
+- none
+- B - A (implemented only): 411
+- ZN6mujoco4user14StringToVectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEESt6vectorIT_SaIS9_EERKS7_
+- ZN8tinyxml210XMLComment9ParseDeepEPcPNS_7StrPairEPi
+- ZN8tinyxml210XMLCommentC1EPNS_11XMLDocumentE
+- ZN8tinyxml210XMLCommentC2EPNS_11XMLDocumentE
+- ZN8tinyxml210XMLCommentD0Ev
+- ZN8tinyxml210XMLCommentD1Ev
+- ZN8tinyxml210XMLCommentD2Ev
+- ZN8tinyxml210XMLElement13InsertNewTextEPKc
+- ZN8tinyxml210XMLElement15CreateAttributeEv
+- ZN8tinyxml210XMLElement15DeleteAttributeEPKc
+- ZN8tinyxml210XMLElement15DeleteAttributeEPNS_12XMLAttributeE
+- ZN8tinyxml210XMLElement15ParseAttributesEPcPi
+- ZN8tinyxml210XMLElement16InsertNewCommentEPKc
+- ZN8tinyxml210XMLElement16InsertNewUnknownEPKc
+- ZN8tinyxml210XMLElement20InsertNewDeclarationEPKc
+- ZN8tinyxml210XMLElement21FindOrCreateAttributeEPKc
+- ZN8tinyxml210XMLElement21InsertNewChildElementEPKc
+- ZN8tinyxml210XMLElement7SetTextEPKc
+- ZN8tinyxml210XMLElement7SetTextEb
+- ZN8tinyxml210XMLElement7SetTextEd
+- ZN8tinyxml210XMLElement7SetTextEf
+- ZN8tinyxml210XMLElement7SetTextEi
+- ZN8tinyxml210XMLElement7SetTextEj
+- ZN8tinyxml210XMLElement7SetTextEl
+- ZN8tinyxml210XMLElement7SetTextEm
+- ZN8tinyxml210XMLElement9ParseDeepEPcPNS_7StrPairEPi
+- ZN8tinyxml210XMLElementC1EPNS_11XMLDocumentE
+- ZN8tinyxml210XMLElementC2EPNS_11XMLDocumentE
+- ZN8tinyxml210XMLElementD0Ev
+- ZN8tinyxml210XMLElementD1Ev
+- ZN8tinyxml210XMLElementD2Ev
+- ZN8tinyxml210XMLPrinter10PrintSpaceEi
+- ZN8tinyxml210XMLPrinter10PushHeaderEbb
+- ZN8tinyxml210XMLPrinter10VisitEnterERKNS_10XMLElementEPKNS_12XMLAttributeE
+- ZN8tinyxml210XMLPrinter10VisitEnterERKNS_11XMLDocumentE
+- ZN8tinyxml210XMLPrinter11OpenElementEPKcb
+- ZN8tinyxml210XMLPrinter11PrintStringEPKcb
+- ZN8tinyxml210XMLPrinter11PushCommentEPKc
+- ZN8tinyxml210XMLPrinter11PushUnknownEPKc
+- ZN8tinyxml210XMLPrinter12CloseElementEb
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKcS2_
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKcb
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKcd
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKci
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKcj
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKcl
+- ZN8tinyxml210XMLPrinter13PushAttributeEPKcm
+- ZN8tinyxml210XMLPrinter15PushDeclarationEPKc
+- ZN8tinyxml210XMLPrinter17PrepareForNewNodeEb
+- ZN8tinyxml210XMLPrinter23SealElementIfJustOpenedEv
+- ... (+361 more)
+- (A ∩ B) - C (should be zero): 0
+- none
+
+## Baseline Comparison (wrapper_exports.json)
+- Baseline-only (present in snapshot, missing now): 0
+- none
+- Current-only (new in this run vs baseline): 0
+- none

@@ -13,6 +13,25 @@ import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve as pathResolve, dirname, delimiter as pathDelimiter } from 'node:path';
 
+function isWsl() {
+  return Boolean(process.env.WSL_INTEROP || process.env.WSL_DISTRO_NAME);
+}
+
+function isWindowsToolPath(toolPath) {
+  if (!toolPath) return false;
+  const lower = toolPath.toLowerCase();
+  if (lower.endsWith('.exe')) return true;
+  if (toolPath.startsWith('/mnt/') && existsSync(`${toolPath}.exe`)) return true;
+  return false;
+}
+
+function toWindowsPath(path) {
+  const res = spawnSync('wslpath', ['-w', path], { encoding: 'utf8' });
+  if (res.error || res.status !== 0) return path;
+  const out = (res.stdout || '').trim();
+  return out || path;
+}
+
 function parseArgs(argv) {
   if (argv.length < 3) {
     console.error('Usage: node abi_impl/nm_coverage.mjs <libmujoco.a> [--out report.json]');
@@ -104,7 +123,9 @@ function normalizeNmPath(nmPath) {
 }
 
 function runNm(nmPath, artifact) {
-  const res = spawnSync(nmPath, ['-g', '--defined-only', '-P', artifact], { encoding: 'utf8' });
+  const artifactArg =
+    isWsl() && isWindowsToolPath(nmPath) ? toWindowsPath(artifact) : artifact;
+  const res = spawnSync(nmPath, ['-g', '--defined-only', '-P', artifactArg], { encoding: 'utf8' });
   return res;
 }
 
