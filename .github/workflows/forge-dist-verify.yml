@@ -94,7 +94,7 @@ jobs:
           elif ref_type == "tag" and ref_name.startswith("forge-"):
             tag_payload = ref_name[len("forge-") :]
             # Accept forge-3.3.7-r1 and forge-3.3.8-alpha1.
-            tag_payload = re.sub(r"-r\\d+$", "", tag_payload)
+            tag_payload = re.sub(r"-r\d+$", "", tag_payload)
             versions = [tag_payload]
             reason = "tag"
           else:
