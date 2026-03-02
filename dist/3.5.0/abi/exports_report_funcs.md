@@ -13,7 +13,7 @@
 
 ## Totals
 - A: 518
-- B: 932
+- B: 1316
 - C (functions only): 468
 - Prefix breakdown: mj=160, mju=131, mjs=140, mjd=4
 
@@ -72,58 +72,58 @@
 ## Set Differences (for auditing)
 - A - B (declared only): 0
 - none
-- B - A (implemented only): 414
-- Z16SetGlobalXmlSpecP7mjSpec_
-- ZN6mujoco4user14StringToVectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEESt6vectorIT_SaIS9_EERKS7_
-- ZN8tinyxml210XMLComment9ParseDeepEPcPNS_7StrPairEPi
-- ZN8tinyxml210XMLCommentC1EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLCommentC2EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLCommentD0Ev
-- ZN8tinyxml210XMLCommentD1Ev
-- ZN8tinyxml210XMLCommentD2Ev
-- ZN8tinyxml210XMLElement13InsertNewTextEPKc
-- ZN8tinyxml210XMLElement15CreateAttributeEv
-- ZN8tinyxml210XMLElement15DeleteAttributeEPKc
-- ZN8tinyxml210XMLElement15DeleteAttributeEPNS_12XMLAttributeE
-- ZN8tinyxml210XMLElement15ParseAttributesEPcPi
-- ZN8tinyxml210XMLElement16InsertNewCommentEPKc
-- ZN8tinyxml210XMLElement16InsertNewUnknownEPKc
-- ZN8tinyxml210XMLElement20InsertNewDeclarationEPKc
-- ZN8tinyxml210XMLElement21FindOrCreateAttributeEPKc
-- ZN8tinyxml210XMLElement21InsertNewChildElementEPKc
-- ZN8tinyxml210XMLElement7SetTextEPKc
-- ZN8tinyxml210XMLElement7SetTextEb
-- ZN8tinyxml210XMLElement7SetTextEd
-- ZN8tinyxml210XMLElement7SetTextEf
-- ZN8tinyxml210XMLElement7SetTextEi
-- ZN8tinyxml210XMLElement7SetTextEj
-- ZN8tinyxml210XMLElement7SetTextEl
-- ZN8tinyxml210XMLElement7SetTextEm
-- ZN8tinyxml210XMLElement9ParseDeepEPcPNS_7StrPairEPi
-- ZN8tinyxml210XMLElementC1EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLElementC2EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLElementD0Ev
-- ZN8tinyxml210XMLElementD1Ev
-- ZN8tinyxml210XMLElementD2Ev
-- ZN8tinyxml210XMLPrinter10PrintSpaceEi
-- ZN8tinyxml210XMLPrinter10PushHeaderEbb
-- ZN8tinyxml210XMLPrinter10VisitEnterERKNS_10XMLElementEPKNS_12XMLAttributeE
-- ZN8tinyxml210XMLPrinter10VisitEnterERKNS_11XMLDocumentE
-- ZN8tinyxml210XMLPrinter11OpenElementEPKcb
-- ZN8tinyxml210XMLPrinter11PrintStringEPKcb
-- ZN8tinyxml210XMLPrinter11PushCommentEPKc
-- ZN8tinyxml210XMLPrinter11PushUnknownEPKc
-- ZN8tinyxml210XMLPrinter12CloseElementEb
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcS2_
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcb
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcd
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKci
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcj
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcl
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcm
-- ZN8tinyxml210XMLPrinter15PushDeclarationEPKc
-- ZN8tinyxml210XMLPrinter17PrepareForNewNodeEb
-- ... (+364 more)
+- B - A (implemented only): 798
+- ?SetGlobalXmlSpec@@YAXPEAUmjSpec_@@@Z
+- _IMPORT_DESCRIPTOR_mujoco
+- _NULL_IMPORT_DESCRIPTOR
+- _imp_?SetGlobalXmlSpec@@YAXPEAUmjSpec_@@@Z
+- _imp__mjPRIVATE__get_tls_error_fn
+- _imp__mjPRIVATE__get_tls_warning_fn
+- _imp__mjPRIVATE__get_xml_precision
+- _imp__mjPRIVATE__set_tls_error_fn
+- _imp__mjPRIVATE__set_tls_warning_fn
+- _imp__mjPRIVATE__set_xml_precision
+- _imp_mjCOLLISIONFUNC
+- _imp_mjCONDATA_SIZE
+- _imp_mjDISABLESTRING
+- _imp_mjENABLESTRING
+- _imp_mjFRAMESTRING
+- _imp_mjLABELSTRING
+- _imp_mjRNDSTRING
+- _imp_mjTIMERSTRING
+- _imp_mjVISSTRING
+- _imp_mj_Euler
+- _imp_mj_EulerSkip
+- _imp_mj_RungeKutta
+- _imp_mj_actuatorDisabled
+- _imp_mj_addBufferVFS
+- _imp_mj_addContact
+- _imp_mj_addFileVFS
+- _imp_mj_addM
+- _imp_mj_angmomMat
+- _imp_mj_applyFT
+- _imp_mj_arenaAllocByte
+- _imp_mj_camlight
+- _imp_mj_checkAcc
+- _imp_mj_checkPos
+- _imp_mj_checkVel
+- _imp_mj_clearCache
+- _imp_mj_collideOBB
+- _imp_mj_collision
+- _imp_mj_comPos
+- _imp_mj_comVel
+- _imp_mj_compareFwdInv
+- _imp_mj_compile
+- _imp_mj_constraintUpdate
+- _imp_mj_constraintUpdate_impl
+- _imp_mj_contactForce
+- _imp_mj_copyBack
+- _imp_mj_copyData
+- _imp_mj_copyModel
+- _imp_mj_copySpec
+- _imp_mj_copyState
+- _imp_mj_crb
+- ... (+748 more)
 - (A ∩ B) - C (should be zero): 0
 - none
 

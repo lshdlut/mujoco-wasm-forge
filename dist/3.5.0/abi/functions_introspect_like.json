@@ -7612,7 +7612,7 @@
       }
     },
     {
-      "doc": "Print internal XML schema as plain text or HTML, with style-padding or &nbsp;.",
+      "doc": "Print internal XML schema as plain text or HTML, with style-padding or \u807d.",
       "name": "mj_printSchema",
       "param_decls": [
         "const char * filename",
@@ -32794,7 +32794,7 @@
   ],
   "meta": {
     "ast_json": "dist/3.5.0/abi/mujoco_ast.json",
-    "clang": "clang",
+    "clang": "C:\\emsdk\\upstream\\bin\\clang.exe",
     "header": "external/mujoco/include/mujoco/mujoco.h"
   }
 }
