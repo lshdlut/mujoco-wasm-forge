@@ -14,6 +14,11 @@ external/
 _tools/
 local_tools/
 
+## Docs build outputs
+docs/_build/
+docs/en/_build/
+docs/zh/_build/
+
 ## Python bytecode / caches
 *.pyc
 __pycache__/
