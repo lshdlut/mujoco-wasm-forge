@@ -30,6 +30,24 @@ from dist_version import list_dist_versions
 REPO_ROOT = Path(__file__).resolve().parent
 
 
+def _resolve_build_root() -> Path:
+  """Return the root directory used for build trees.
+
+  By default the forge CLI uses ``<repo>/build`` for intermediate build output.
+  When working from a OneDrive checkout this can create excessive sync churn.
+  Set ``MJWF_BUILD_ROOT`` to place build trees elsewhere (e.g. on a local SSD
+  cache directory outside OneDrive).
+  """
+  raw = os.environ.get("MJWF_BUILD_ROOT", "").strip()
+  if not raw:
+    return REPO_ROOT / "build"
+
+  path = Path(raw).expanduser()
+  if not path.is_absolute():
+    path = REPO_ROOT / path
+  return path.resolve()
+
+
 # Local copy of the upstream qhull Emscripten support patch used by MuJoCo.
 _QHULL_EMSCRIPTEN_PATCH = """diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 0423820..c5295c1 100644
@@ -240,6 +258,17 @@ def _prepare_mujoco(version: str) -> None:
         check=True,
         cwd=str(REPO_ROOT),
     )
+  else:
+    # Ensure ref switching is deterministic even when prior runs left patches or
+    # build output in the external checkout.
+    subprocess.run(
+        ["git", "-C", str(mujoco_dir), "reset", "--hard"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
+        check=True,
+    )
 
   ref = version
   # Prefer tags when they exist so that 3.3.7 resolves to refs/tags/3.3.7.
@@ -310,7 +339,7 @@ def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -
   msg = "regenerating" if nm_path.is_file() else "bootstrapping"
   print(f"[forge-cli] {msg} nm_symbols.json (B-set) for {version}", file=sys.stderr)
 
-  build_dir = REPO_ROOT / "build" / "native"
+  build_dir = _resolve_build_root() / "native"
   if build_dir.exists():
     shutil.rmtree(build_dir)
   build_dir.mkdir(parents=True, exist_ok=True)
@@ -814,7 +843,7 @@ def cmd_build(args: argparse.Namespace) -> int:
   short = _compute_short(version, args.short)
   dist_dir = REPO_ROOT / "dist" / version
   abi_dir = dist_dir / "abi"
-  build_dir = REPO_ROOT / "build" / "forge"
+  build_dir = _resolve_build_root() / "forge"
 
   print(f"[forge-cli] build version {version} (short={short})", file=sys.stderr)
 
