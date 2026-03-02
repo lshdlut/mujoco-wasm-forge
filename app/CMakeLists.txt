@@ -134,11 +134,28 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
         "-Wl,--no-whole-archive"
       )
     else()
-      message(
-        WARNING
-          "MJWF_ENABLE_PLUGINS is ON but no MuJoCo plugin targets were discovered under "
-          "${_mjwf_plugin_root}"
-      )
+      set(_mjwf_sensor_plugin_dir "${MJWF_ROOT}/external/mujoco/plugin/sensor")
+      if (EXISTS "${_mjwf_sensor_plugin_dir}/register.cc")
+        message(
+          STATUS
+            "MJWF_ENABLE_PLUGINS is ON but no MuJoCo plugin targets were discovered under "
+            "${_mjwf_plugin_root}; compiling sensor/touch_grid sources directly"
+        )
+        target_sources(
+          mjwasm_forge
+          PRIVATE
+          "${_mjwf_sensor_plugin_dir}/register.cc"
+          "${_mjwf_sensor_plugin_dir}/touch_grid.cc"
+        )
+        # Some plugins include internal MuJoCo headers from src/.
+        target_include_directories(mjwasm_forge PRIVATE "${MJWF_ROOT}/external/mujoco/src")
+      else()
+        message(
+          WARNING
+            "MJWF_ENABLE_PLUGINS is ON but no MuJoCo plugin targets were discovered under "
+            "${_mjwf_plugin_root}"
+        )
+      endif()
     endif()
   endif()
   target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG} ${MJWF_SIMD_FLAG})

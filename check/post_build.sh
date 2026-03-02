@@ -34,6 +34,7 @@ ABI_DIR="dist/${MJVER}/abi"
 DIST_JS="dist/${MJVER}/mujoco.js"
 DIST_WASM="dist/${MJVER}/mujoco.wasm"
 LIBMUJOCO="build/${SHORT}/lib/libmujoco.a"
+NODE_BIN="${NODE:-node}"
 
 if [[ ! -f "$DIST_JS" || ! -f "$DIST_WASM" ]]; then
   echo "[post-build] missing dist artifacts for ${MJVER}" >&2
@@ -45,13 +46,13 @@ if [[ ! -f "${EXPECTED_JSON}" ]]; then
   EXPECTED_JSON="${ABI_DIR}/wrapper_exports_funcs.json"
 fi
 
-node check/check_exports.mjs \
+"${NODE_BIN}" check/check_exports.mjs \
   --abi "${ABI_DIR}" \
   --wasm "${DIST_WASM}" \
   --expected "${EXPECTED_JSON}"
 
 if [[ -f "$LIBMUJOCO" ]]; then
-  node abi_impl/nm_coverage.mjs \
+  "${NODE_BIN}" abi_impl/nm_coverage.mjs \
     "${LIBMUJOCO}" \
     --out "${ABI_DIR}/nm_coverage.json"
 else

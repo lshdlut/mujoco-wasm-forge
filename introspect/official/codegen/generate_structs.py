@@ -171,9 +171,21 @@ class MjStructVisitor:
     )
 
   def _make_anonymous_key(self, node: ClangJsonNode) -> str:
-    line = node['loc']['line']
-    col = node['loc']['col']
-    return f'{line}:{col}'
+    loc = node.get('loc') or {}
+    line = loc.get('line')
+    col = loc.get('col')
+    if line is not None and col is not None:
+      return f'{line}:{col}'
+
+    offset = loc.get('offset')
+    if offset is None:
+      begin = (node.get('range') or {}).get('begin') or {}
+      offset = begin.get('offset')
+    if col is None:
+      col = 0
+    if offset is None:
+      return node.get('id', 'anonymous')
+    return f'offset:{offset}:{col}'
 
   def visit(self, node: ClangJsonNode) -> None:
     """Visits a JSON node."""

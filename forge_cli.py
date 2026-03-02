@@ -30,6 +30,109 @@ from dist_version import list_dist_versions
 REPO_ROOT = Path(__file__).resolve().parent
 
 
+def _python_executable() -> str:
+  """Return the Python executable to use for child invocations."""
+  return sys.executable or "python"
+
+
+def _resolve_bash_executable() -> str:
+  """Return the bash executable to use for subprocess calls."""
+  if os.name != "nt":
+    return "bash"
+
+  override = os.environ.get("MJWF_BASH", "").strip()
+  if override:
+    return override
+
+  candidates = (
+      Path("C:/Program Files/Git/bin/bash.exe"),
+      Path("C:/Program Files/Git/usr/bin/bash.exe"),
+  )
+  for cand in candidates:
+    if cand.is_file():
+      return str(cand)
+
+  return "bash"
+
+
+def _bash_argv(*args: str) -> List[str]:
+  return [_resolve_bash_executable(), *args]
+
+
+def _resolve_node_executable(env: Mapping[str, str]) -> str:
+  """Return a node executable suitable for running check scripts."""
+  for key in ("NODE", "EMSDK_NODE"):
+    cand = env.get(key, "").strip()
+    if cand:
+      return cand
+
+  emsdk = env.get("EMSDK", "").strip()
+  if emsdk:
+    base = Path(emsdk)
+    if base.is_dir():
+      node_root = base / "node"
+      if node_root.is_dir():
+        candidates = sorted(node_root.glob("*_64bit/bin/node.exe"))
+        if candidates:
+          return str(candidates[-1])
+
+  return "node"
+
+
+def _rmtree_force(path: Path) -> None:
+  def _onerror(func, failed_path: str, _exc_info) -> None:
+    try:
+      os.chmod(failed_path, 0o700)
+    except OSError:
+      pass
+    func(failed_path)
+
+  shutil.rmtree(path, onerror=_onerror)
+
+
+def _resolve_clang_executable(env: Mapping[str, str]) -> str:
+  """Return a clang executable suitable for the introspection AST dump."""
+  for key in ("MJWF_CLANG", "CLANG"):
+    cand = env.get(key, "").strip()
+    if cand:
+      return cand
+
+  emsdk = env.get("EMSDK", "").strip()
+  if emsdk:
+    base = Path(emsdk)
+    if base.is_dir():
+      clang_exe = base / "upstream" / "bin" / ("clang.exe" if os.name == "nt" else "clang")
+      if clang_exe.is_file():
+        return str(clang_exe)
+
+  return "clang"
+
+
+def _resolve_ninja_executable(env: Mapping[str, str]) -> str | None:
+  override = env.get("MJWF_NINJA", "").strip()
+  if override:
+    path = Path(override)
+    if path.is_file():
+      return str(path)
+
+  if os.name == "nt":
+    vs_ninja = Path(
+        "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/"
+        "CommonExtensions/Microsoft/CMake/Ninja/ninja.exe"
+    )
+    if vs_ninja.is_file():
+      return str(vs_ninja)
+
+  return None
+
+
+def _maybe_extend_env_include_path(env: MutableMapping[str, str], key: str, value: str) -> None:
+  if not value:
+    return
+  existing = env.get(key, "").strip()
+  env[key] = value if not existing else f"{value}{os.pathsep}{existing}"
+
+
 def _resolve_build_root() -> Path:
   """Return the root directory used for build trees.
 
@@ -245,6 +348,126 @@ def _patch_mujoco_localtime_emscripten(mujoco_dir: Path) -> None:
     print("[forge-cli] patched MuJoCo localtime fallback for Emscripten", file=sys.stderr)
 
 
+def _patch_mujoco_disable_pthreads_emscripten(mujoco_dir: Path) -> None:
+  """Disable -pthread in MuJoCo's Emscripten build flags.
+
+  MuJoCo's upstream CMakeLists enables -pthread for wasm builds. That requires
+  WebAssembly threads support (SharedArrayBuffer / COOP+COEP in browsers) and
+  can break consumers that load the dist in default web/worker contexts.
+  """
+  cmake_lists = mujoco_dir / "CMakeLists.txt"
+  if not cmake_lists.is_file():
+    return
+
+  text = cmake_lists.read_text(encoding="utf-8")
+  new_text = text
+  new_text = new_text.replace(
+      'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")',
+      'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")',
+  )
+  new_text = new_text.replace(
+      'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3 -pthread -fexceptions")',
+      'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3 -fexceptions")',
+  )
+  if new_text != text:
+    cmake_lists.write_text(new_text, encoding="utf-8")
+    print("[forge-cli] patched MuJoCo to disable -pthread under Emscripten", file=sys.stderr)
+
+
+def _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir: Path) -> None:
+  """Disable multi-threaded XML compilation by default when wasm threads are unavailable."""
+  src = mujoco_dir / "src" / "user" / "user_init.c"
+  if not src.is_file():
+    return
+
+  text = src.read_text(encoding="utf-8")
+  if "__EMSCRIPTEN_PTHREADS__" in text and "spec->compiler.usethread" in text:
+    # Already patched (or upstream has a similar change).
+    return
+
+  needle = "  spec->compiler.usethread = 1;"
+  if needle not in text:
+    return
+
+  replacement = (
+      "#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)\n"
+      "  spec->compiler.usethread = 0;\n"
+      "#else\n"
+      "  spec->compiler.usethread = 1;\n"
+      "#endif"
+  )
+  new_text = text.replace(needle, replacement, 1)
+  if new_text != text:
+    src.write_text(new_text, encoding="utf-8")
+    print("[forge-cli] patched MuJoCo to default compiler.usethread=0 for non-pthreads wasm", file=sys.stderr)
+
+
+def _patch_mujoco_mj_compile_trycatch(mujoco_dir: Path) -> None:
+  """Patch MuJoCo's mj_compile to catch exceptions and surface an error message.
+
+  MuJoCo uses C++ exceptions (mjCError) internally for model compilation errors.
+  When the exception escapes mj_compile in a wasm build, Emscripten surfaces it
+  as a raw numeric thrown value, leaving JS callers without a stable errmsg.
+  """
+  src = mujoco_dir / "src" / "user" / "user_api.cc"
+  if not src.is_file():
+    return
+
+  text = src.read_text(encoding="utf-8")
+  if "Unknown exception in mj_compile" in text:
+    # Already patched (or upstream has an equivalent fix).
+    return
+
+  if "#include <exception>" not in text:
+    marker = "#include <cstring>\n"
+    if marker in text:
+      text = text.replace(marker, marker + "#include <exception>\n", 1)
+
+  needle = "mjModel* mj_compile(mjSpec* s, const mjVFS* vfs) {"
+  start = text.find(needle)
+  if start < 0:
+    return
+
+  brace_start = text.find("{", start)
+  if brace_start < 0:
+    return
+
+  depth = 0
+  end = None
+  for i in range(brace_start, len(text)):
+    ch = text[i]
+    if ch == "{":
+      depth += 1
+    elif ch == "}":
+      depth -= 1
+      if depth == 0:
+        end = i + 1
+        break
+  if end is None:
+    return
+
+  replacement = """mjModel* mj_compile(mjSpec* s, const mjVFS* vfs) {
+  mjCModel* modelC = static_cast<mjCModel*>(s->element);
+  try {
+    return modelC->Compile(vfs);
+  } catch (mjCError& e) {
+    modelC->SetError(e);
+    return nullptr;
+  } catch (const std::exception& e) {
+    modelC->SetError(mjCError(0, "%s", e.what()));
+    return nullptr;
+  } catch (...) {
+    modelC->SetError(mjCError(0, "Unknown exception in mj_compile"));
+    return nullptr;
+  }
+}"""
+
+  new_text = text[:start] + replacement + text[end:]
+  if new_text != text:
+    src.write_text(new_text, encoding="utf-8")
+    print("[forge-cli] patched MuJoCo mj_compile try/catch", file=sys.stderr)
+
+
 def _prepare_mujoco(version: str) -> None:
   """Clone or update external/mujoco for the requested version."""
   mujoco_dir = REPO_ROOT / "external" / "mujoco"
@@ -303,6 +526,9 @@ def _prepare_mujoco(version: str) -> None:
   )
   _patch_mujoco_qhull_emscripten(mujoco_dir)
   _patch_mujoco_localtime_emscripten(mujoco_dir)
+  _patch_mujoco_disable_pthreads_emscripten(mujoco_dir)
+  _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir)
+  _patch_mujoco_mj_compile_trycatch(mujoco_dir)
 
 
 def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
@@ -310,10 +536,19 @@ def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
   abi_dir.mkdir(parents=True, exist_ok=True)
   header = REPO_ROOT / "external" / "mujoco" / "include" / "mujoco" / "mujoco.h"
   script = REPO_ROOT / "introspect" / "forge" / "scan_clang_introspect.py"
+  env_for_py = dict(env)
+  clang_exe = _resolve_clang_executable(env_for_py)
+  emsdk = env_for_py.get("EMSDK", "").strip()
+  if emsdk:
+    sysroot_include = Path(emsdk) / "upstream" / "emscripten" / "cache" / "sysroot" / "include"
+    if sysroot_include.is_dir():
+      _maybe_extend_env_include_path(env_for_py, "C_INCLUDE_PATH", str(sysroot_include))
   subprocess.run(
       [
-          "python3",
+          _python_executable(),
           str(script),
+          "--clang",
+          clang_exe,
           "--header",
           str(header),
           "--out-dir",
@@ -321,7 +556,7 @@ def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
       ],
       check=True,
       cwd=str(REPO_ROOT),
-      env=dict(env),
+      env=env_for_py,
   )
 
 
@@ -341,7 +576,7 @@ def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -
 
   build_dir = _resolve_build_root() / "native"
   if build_dir.exists():
-    shutil.rmtree(build_dir)
+    _rmtree_force(build_dir)
   build_dir.mkdir(parents=True, exist_ok=True)
 
   mujoco_src = REPO_ROOT / "external" / "mujoco"
@@ -360,18 +595,31 @@ def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -
       cwd=str(REPO_ROOT),
       env=dict(env),
   )
+
+  cache = build_dir / "CMakeCache.txt"
+  build_cmd = ["cmake", "--build", str(build_dir), "--target", "mujoco"]
+  if cache.is_file():
+    text = cache.read_text(encoding="utf-8", errors="ignore")
+    if "CMAKE_CONFIGURATION_TYPES:STRING=" in text:
+      build_cmd.extend(["--config", "Release"])
+
   subprocess.run(
-      ["cmake", "--build", str(build_dir), "--target", "mujoco"],
+      build_cmd,
       check=True,
       cwd=str(REPO_ROOT),
       env=dict(env),
   )
 
-  candidates = sorted(build_dir.rglob("libmujoco.*"))
-  if not candidates:
-    raise RuntimeError(f"Failed to locate libmujoco artifact under {build_dir}")
-
   preferred_exts = (".a", ".so", ".dylib", ".lib")
+  candidates: List[Path] = []
+  for pattern in ("libmujoco.*", "mujoco.*"):
+    for cand in build_dir.rglob(pattern):
+      if cand.suffix.lower() in preferred_exts:
+        candidates.append(cand)
+  candidates = sorted(set(candidates))
+  if not candidates:
+    raise RuntimeError(f"Failed to locate MuJoCo library artifact under {build_dir}")
+
   artifact = None
   for ext in preferred_exts:
     for cand in candidates:
@@ -384,8 +632,9 @@ def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -
     artifact = candidates[0]
 
   nm_script = REPO_ROOT / "abi_impl" / "nm_coverage.mjs"
+  node_exe = _resolve_node_executable(env)
   subprocess.run(
-      ["node", str(nm_script), str(artifact), "--out", str(nm_path)],
+      [node_exe, str(nm_script), str(artifact), "--out", str(nm_path)],
       check=True,
       cwd=str(REPO_ROOT),
       env=dict(env),
@@ -411,26 +660,26 @@ def _run_abi_generators(version: str, env: Mapping[str, str]) -> None:
   out_h = REPO_ROOT / "app" / "mjwf_abi_structs.h"
   out_c = REPO_ROOT / "app" / "mjwf_abi_structs.c"
   subprocess.run(
-      ["python3", str(gen_structs), str(out_h), str(out_c)],
+      [_python_executable(), str(gen_structs), str(out_h), str(out_c)],
       check=True,
       cwd=str(REPO_ROOT),
       env=env_for_py,
   )
   subprocess.run(
-      ["python3", str(gen_enums), "--abi", str(REPO_ROOT / "dist" / version / "abi")],
+      [_python_executable(), str(gen_enums), "--abi", str(REPO_ROOT / "dist" / version / "abi")],
       check=True,
       cwd=str(REPO_ROOT),
       env=env_for_py,
   )
   subprocess.run(
-      ["python3", str(gen_scene_geom_soa), "--abi", str(REPO_ROOT / "dist" / version / "abi")],
+      [_python_executable(), str(gen_scene_geom_soa), "--abi", str(REPO_ROOT / "dist" / version / "abi")],
       check=True,
       cwd=str(REPO_ROOT),
       env=env_for_py,
   )
   # gen_funcs is shipped as a module; keep using -m to avoid duplicating its entrypoint.
   subprocess.run(
-      ["python3", "-m", "abi_exports.gen_funcs", "--version", version],
+      [_python_executable(), "-m", "abi_exports.gen_funcs", "--version", version],
       check=True,
       cwd=str(REPO_ROOT),
       env=env_for_py,
@@ -522,6 +771,11 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       "set -euo pipefail; "
       + emsdk_env_snippet +
       f"emcmake cmake "
+      + (
+          f"-G Ninja -DCMAKE_MAKE_PROGRAM='{_resolve_ninja_executable(env)}' "
+          if _resolve_ninja_executable(env) and os.name == "nt"
+          else ""
+      ) +
       f"-S '{app_dir}' "
       f"-B '{build_dir}' "
       "-DCMAKE_BUILD_TYPE=Release "
@@ -545,7 +799,7 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
 
   def _run_configure(check: bool) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["bash", "-lc", configure_cmd],
+        _bash_argv("-lc", configure_cmd),
         cwd=str(REPO_ROOT),
         env=dict(env),
         check=check,
@@ -564,7 +818,7 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
     _run_configure(check=True)
 
   subprocess.run(
-      ["bash", "-lc", build_cmd],
+      _bash_argv("-lc", build_cmd),
       check=True,
       cwd=str(REPO_ROOT),
       env=dict(env),
@@ -594,11 +848,13 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
 def _run_post_build(version: str, short: str, env: Mapping[str, str]) -> None:
   """Run check/post_build.sh for the built version."""
   post = REPO_ROOT / "check" / "post_build.sh"
+  env_for_sh = dict(env)
+  env_for_sh["NODE"] = _resolve_node_executable(env_for_sh)
   subprocess.run(
-      ["bash", str(post), "--version", version, "--short", short],
+      _bash_argv(str(post), "--version", version, "--short", short),
       check=True,
       cwd=str(REPO_ROOT),
-      env=dict(env),
+      env=env_for_sh,
   )
 
 
@@ -616,10 +872,12 @@ def _run_checks(env: Mapping[str, str]) -> None:
       + emsdk_env_snippet +
       "node check/tests/smoke.mjs; "
       "node check/tests/mesh-smoke.mjs; "
+      "node check/tests/mesh-texture-smoke.mjs; "
+      "node check/tests/plugin-touch-grid.mjs; "
       "node check/tests/gates.mjs"
   )
   subprocess.run(
-      ["bash", "-lc", cmd],
+      _bash_argv("-lc", cmd),
       check=True,
       cwd=str(REPO_ROOT),
       env=dict(env),

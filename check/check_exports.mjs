@@ -47,6 +47,8 @@ const ALLOWED_RUNTIME = new Set([
   '_emscripten_stack_restore',
   '_emscripten_timeout',
   '_emscripten_tempret_set',
+  'setTempRet0',
+  'getTempRet0',
   '_strerror',
 ]);
 
