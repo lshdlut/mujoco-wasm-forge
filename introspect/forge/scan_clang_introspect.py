@@ -126,6 +126,7 @@ def _run_clang_ast_dump_to_file(
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         cwd=str(repo_root),
     )
     if proc.returncode != 0:
@@ -147,12 +148,16 @@ def _run_generator_module(
     env = os.environ.copy()
     existing = env.get("PYTHONPATH")
     env["PYTHONPATH"] = str(py_root) + (os.pathsep + existing if existing else "")
+    # Ensure subprocess stdout/stderr use UTF-8 so captured sources are portable.
+    env.setdefault("PYTHONUTF8", "1")
+    env.setdefault("PYTHONIOENCODING", "utf-8")
     cmd = [sys.executable, "-m", module] + args
     proc = subprocess.run(
         cmd,
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=env,
         cwd=str(cwd),
     )
