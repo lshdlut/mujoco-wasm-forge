@@ -189,6 +189,9 @@ jobs:
         run: |
           set -euxo pipefail
           python3 forge_cli.py build --version ${{ matrix.ver }}
+          if [[ -d "../dist/${{ matrix.ver }}/pthreads" ]]; then
+            python3 forge_cli.py build --version ${{ matrix.ver }} --pthreads
+          fi
 
       - name: Verify dist matches reproducible build
         run: |
