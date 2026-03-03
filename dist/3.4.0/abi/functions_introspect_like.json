@@ -7256,7 +7256,7 @@
       }
     },
     {
-      "doc": "Print internal XML schema as plain text or HTML, with style-padding or \u807d.",
+      "doc": "Print internal XML schema as plain text or HTML, with style-padding or &nbsp;.",
       "name": "mj_printSchema",
       "param_decls": [
         "const char * filename",
