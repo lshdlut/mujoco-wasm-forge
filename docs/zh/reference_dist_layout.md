@@ -8,9 +8,14 @@
 dist/<ver>/
   mujoco.js
   mujoco.wasm
+  pthreads/                # 可选（使用 --pthreads 构建时产生）
+    mujoco.js
+    mujoco.wasm
+    *.worker.*             # Emscripten 线程 worker 辅助文件（名称随工具链而变）
   abi/
     exports.lst
     exports_check.json
+    exports_check.pthreads.json  # 可选（pthreads 变体的导出检查结果）
     exports_report_funcs.md
     nm_symbols.json
     wrapper_exports_funcs.json
@@ -30,4 +35,3 @@ dist/<ver>/
 | `exports_report_funcs.md` | 人类可读的导出状态报告。 |
 | `*_introspect_like.json` | headers 导出的声明信息（便于 diff/审计）。 |
 | `mujoco_ast.json` | clang AST dump（体积大，更多用于排查与审计）。 |
-

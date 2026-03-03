@@ -8,9 +8,14 @@ The forge output for a given MuJoCo version/ref lives under `dist/<ver>/`.
 dist/<ver>/
   mujoco.js
   mujoco.wasm
+  pthreads/                # optional (when built with --pthreads)
+    mujoco.js
+    mujoco.wasm
+    *.worker.*             # Emscripten thread worker stubs (name varies)
   abi/
     exports.lst
     exports_check.json
+    exports_check.pthreads.json  # optional (pthreads export check output)
     exports_report_funcs.md
     nm_symbols.json
     wrapper_exports_funcs.json
@@ -30,4 +35,3 @@ dist/<ver>/
 | `exports_report_funcs.md` | Human-readable export status report. |
 | `*_introspect_like.json` | Header-derived declarations for diff/audit. |
 | `mujoco_ast.json` | Clang AST dump (large; mostly for debugging and auditing). |
-

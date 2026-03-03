@@ -6,6 +6,8 @@ English | [简体中文](README.zh-CN.md)
 
 mujoco-wasm-forge is a toolchain for producing MuJoCo WebAssembly builds and keeping their exports under control. To build a specific MuJoCo release, run `python forge_cli.py build --version <mjver>` from the repo root. The CLI prepares `dist/<ver>`, runs the introspect/ABI/export steps, then launches the Emscripten build and gate checks for that version. Helpers such as `dist_version.py` and `check/dist_paths.mjs` let every script discover the active `dist/<ver>` so the rest of the pipeline simply consumes the right artifacts.
 
+To build the thread-enabled variant, pass `--pthreads`. The runtime artifacts are written under `dist/<ver>/pthreads/` (ABI stays shared under `dist/<ver>/abi/`).
+
 ## Automated run entrypoint
 
 `forge_cli.py` sequences every stage of the pipeline for the requested version (`prepare` → `introspect` → ABI generation → `emcmake` build → `check/post_build.sh`), and can optionally run the smoke, mesh-smoke, and gates tests when invoked with `--with-checks`. Calling `python forge_cli.py build --version 3.3.7 --with-checks` (or whichever MuJoCo ref you are targeting) lets developers and CI targets reproduce the full, version-agnostic flow without touching any of the underlying scripts.

@@ -9,6 +9,9 @@
 
 These are the two files you typically copy into your web/worker/node project.
 
+If you build with `--pthreads`, the thread-enabled bundle is written under
+`dist/<ver>/pthreads/` with the same `mujoco.js` / `mujoco.wasm` names.
+
 ## ABI & audit artifacts (what maintainers and reviewers use)
 
 The `dist/<ver>/abi/` directory contains the “paper trail” that makes upgrades reviewable:
@@ -16,7 +19,7 @@ The `dist/<ver>/abi/` directory contains the “paper trail” that makes upgrad
 - `exports.lst`: exported C symbols (link-time contract).
 - `nm_symbols.json`: symbol inventory from the implementation side.
 - `wrapper_exports_funcs.json`: wrapper exports produced by the generators.
-- `exports_check.json` / `exports_report_funcs.md`: export check results / human-readable report.
+- `exports_check.json` / `exports_check.pthreads.json` / `exports_report_funcs.md`: export check results / human-readable report.
 - `*_introspect_like.json`: header-derived declarations for functions/structs/enums.
 - `mujoco_ast.json`: clang AST dump (large, mostly for debugging and auditing).
 
@@ -27,7 +30,10 @@ Many scripts resolve the active version via environment variables:
 - `MJVER` (preferred)
 - `DIST_VERSION`
 
+For runtime checks, you can also select the dist variant:
+
+- `MJWF_DIST_VARIANT=pthreads` (or `DIST_VARIANT=pthreads`)
+
 When you run `forge_cli.py build --version <mjver>`, the CLI sets those variables for the subprocesses it launches.
 If you run scripts manually (for example `node check/tests/smoke.mjs`), you should set `MJVER`/`DIST_VERSION`
 explicitly.
-

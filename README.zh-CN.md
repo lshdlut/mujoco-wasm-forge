@@ -6,6 +6,8 @@
 
 mujoco-wasm-forge 是生成 MuJoCo WASM 包并验证其导出的流水线。若要为某个版本构建，推荐在仓库根目录运行 `python forge_cli.py build --version <mjver>`。该 CLI 会准备好 `dist/<ver>`，依次走完 introspect、ABI、导出、Emscripten 构建以及门控检查。`dist_version.py` 与 `check/dist_paths.mjs` 会告诉其他脚本当前生效的是哪一套 `dist/<ver>`，让整个流水线在不同版本间切换时无需额外改动。
 
+如需构建线程版本，可使用 `--pthreads`。线程版运行时产物会写到 `dist/<ver>/pthreads/`（ABI 仍共用 `dist/<ver>/abi/`）。
+
 ## 自动化运行入口
 
 根目录下的 `forge_cli.py` 会接管从 prepare、introspect、ABI 生成、`emcmake` 构建、`check/post_build.sh` 到可选 smoke/mesh/gates 测试的全部步骤，并且只需传入 `--version`（可选 `--short` 与 `--with-checks`）。通过 `python forge_cli.py build --version 3.3.7 --with-checks`（或目标 MuJoCo 版本）即可在本地或 CI 中复刻完整的、版本无关流程。
