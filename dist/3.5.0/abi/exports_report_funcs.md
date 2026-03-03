@@ -13,7 +13,7 @@
 
 ## Totals
 - A: 518
-- B: 1316
+- B: 2913
 - C (functions only): 468
 - Prefix breakdown: mj=160, mju=131, mjs=140, mjd=4
 
@@ -34,96 +34,95 @@
 - mjp_registerPlugin -> non_core_prefix
 - mjp_registerResourceProvider -> non_core_prefix
 - mjp_resourceProviderCount -> non_core_prefix
-- mjr_addAux -> non_core_prefix
-- mjr_blitAux -> non_core_prefix
-- mjr_blitBuffer -> non_core_prefix
-- mjr_changeFont -> non_core_prefix
-- mjr_defaultContext -> non_core_prefix
-- mjr_drawPixels -> non_core_prefix
-- mjr_figure -> non_core_prefix
-- mjr_findRect -> non_core_prefix
-- mjr_finish -> non_core_prefix
-- mjr_freeContext -> non_core_prefix
-- mjr_getError -> non_core_prefix
-- mjr_label -> non_core_prefix
-- mjr_makeContext -> non_core_prefix
-- mjr_maxViewport -> non_core_prefix
-- mjr_overlay -> non_core_prefix
-- mjr_readPixels -> non_core_prefix
-- mjr_rectangle -> non_core_prefix
-- mjr_render -> non_core_prefix
-- mjr_resizeOffscreen -> non_core_prefix
-- mjr_restoreBuffer -> non_core_prefix
-- mjr_setAux -> non_core_prefix
-- mjr_setBuffer -> non_core_prefix
-- mjr_text -> non_core_prefix
-- mjr_uploadHField -> non_core_prefix
-- mjr_uploadMesh -> non_core_prefix
-- mjr_uploadTexture -> non_core_prefix
-- mjui_add -> non_core_prefix
-- mjui_addToSection -> non_core_prefix
-- mjui_event -> non_core_prefix
-- mjui_render -> non_core_prefix
-- mjui_resize -> non_core_prefix
-- mjui_themeColor -> non_core_prefix
-- mjui_themeSpacing -> non_core_prefix
-- mjui_update -> non_core_prefix
 
 ## Set Differences (for auditing)
-- A - B (declared only): 0
-- none
-- B - A (implemented only): 798
-- ?SetGlobalXmlSpec@@YAXPEAUmjSpec_@@@Z
-- _IMPORT_DESCRIPTOR_mujoco
-- _NULL_IMPORT_DESCRIPTOR
-- _imp_?SetGlobalXmlSpec@@YAXPEAUmjSpec_@@@Z
-- _imp__mjPRIVATE__get_tls_error_fn
-- _imp__mjPRIVATE__get_tls_warning_fn
-- _imp__mjPRIVATE__get_xml_precision
-- _imp__mjPRIVATE__set_tls_error_fn
-- _imp__mjPRIVATE__set_tls_warning_fn
-- _imp__mjPRIVATE__set_xml_precision
-- _imp_mjCOLLISIONFUNC
-- _imp_mjCONDATA_SIZE
-- _imp_mjDISABLESTRING
-- _imp_mjENABLESTRING
-- _imp_mjFRAMESTRING
-- _imp_mjLABELSTRING
-- _imp_mjRNDSTRING
-- _imp_mjTIMERSTRING
-- _imp_mjVISSTRING
-- _imp_mj_Euler
-- _imp_mj_EulerSkip
-- _imp_mj_RungeKutta
-- _imp_mj_actuatorDisabled
-- _imp_mj_addBufferVFS
-- _imp_mj_addContact
-- _imp_mj_addFileVFS
-- _imp_mj_addM
-- _imp_mj_angmomMat
-- _imp_mj_applyFT
-- _imp_mj_arenaAllocByte
-- _imp_mj_camlight
-- _imp_mj_checkAcc
-- _imp_mj_checkPos
-- _imp_mj_checkVel
-- _imp_mj_clearCache
-- _imp_mj_collideOBB
-- _imp_mj_collision
-- _imp_mj_comPos
-- _imp_mj_comVel
-- _imp_mj_compareFwdInv
-- _imp_mj_compile
-- _imp_mj_constraintUpdate
-- _imp_mj_constraintUpdate_impl
-- _imp_mj_contactForce
-- _imp_mj_copyBack
-- _imp_mj_copyData
-- _imp_mj_copyModel
-- _imp_mj_copySpec
-- _imp_mj_copyState
-- _imp_mj_crb
-- ... (+748 more)
+- A - B (declared only): 34
+- mjr_addAux
+- mjr_blitAux
+- mjr_blitBuffer
+- mjr_changeFont
+- mjr_defaultContext
+- mjr_drawPixels
+- mjr_figure
+- mjr_findRect
+- mjr_finish
+- mjr_freeContext
+- mjr_getError
+- mjr_label
+- mjr_makeContext
+- mjr_maxViewport
+- mjr_overlay
+- mjr_readPixels
+- mjr_rectangle
+- mjr_render
+- mjr_resizeOffscreen
+- mjr_restoreBuffer
+- mjr_setAux
+- mjr_setBuffer
+- mjr_text
+- mjr_uploadHField
+- mjr_uploadMesh
+- mjr_uploadTexture
+- mjui_add
+- mjui_addToSection
+- mjui_event
+- mjui_render
+- mjui_resize
+- mjui_themeColor
+- mjui_themeSpacing
+- mjui_update
+- B - A (implemented only): 2429
+- MJCF
+- RK4_A
+- RK4_B
+- TFAuto_map
+- Z10PolygonCmpRK11MeshPolygonS1_
+- Z10mjuu_dist3PKdS0_
+- Z11mjCopyErrorPcPKci
+- Z11mjuu_getextNSt3__217basic_string_viewIcNS_11char_traitsIcEEEE
+- Z11mjuu_matadriii
+- Z11mjuu_mulmatPdPKdS1_
+- Z11mjuu_setvecPddd
+- Z11mjuu_setvecPdddd
+- Z11mjuu_setvecPddddd
+- Z11mjuu_setvecPfddd
+- Z11mjuu_setvecPfdddd
+- Z11mjuu_z2quatPdPKd
+- Z12ComputeBasisI9Stencil2DEvPdPKdPKiS5_S5_d
+- Z12ComputeBasisI9Stencil3DEvPdPKdPKiS5_S5_d
+- Z12MetricTensorI9Stencil2DEvPdiddPA9_Kd
+- Z12MetricTensorI9Stencil3DEvPdiddPA9_Kd
+- Z12mjuu_definedd
+- Z12mjuu_mulRMRTPdPKdS1_
+- Z12mjuu_mulquatPdPKdS1_
+- Z12mjuu_normvecPdi
+- Z12mjuu_normvecPfi
+- Z12mjuu_zerovecPdi
+- Z12mjuu_zerovecPfi
+- Z13mjuu_addtovecPdPKdi
+- Z13mjuu_crossvecPdPKdS1_
+- Z13mjuu_localposPdPKdS1_S1_
+- Z13mjuu_quat2matPdPKd
+- Z13mjuu_scalevecPdPKddi
+- Z13mjuu_stripextNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z13mjuu_visccoefPddPKdd
+- Z14ComputeBendingI11StencilFlapEvPdS1_PKidd
+- Z14mjuu_isabspathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14mjuu_localaxisPdPKdS1_
+- Z14mjuu_localquatPdPKdS1_
+- Z14mjuu_mulvecmatPdPKdS1_
+- Z14mjuu_offcenterPddPKd
+- Z14mjuu_strippathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14sensorDatatype10mjtSensor_
+- Z15mjuu_dirnamelenPKc
+- Z15mjuu_frame2quatPdPKdS1_S1_
+- Z15mjuu_frameaccumPdS_PKdS1_
+- Z15mjuu_makenormalIdEdPdPKT_S3_S3_
+- Z15mjuu_makenormalIfEdPdPKT_S3_S3_
+- Z15mjuu_mulvecmatTPdPKdS1_
+- Z15mjuu_rotVecQuatPdPKdS1_
+- Z15mjuu_trnVecPosePdPKdS1_S1_
+- ... (+2379 more)
 - (A ∩ B) - C (should be zero): 0
 - none
 
