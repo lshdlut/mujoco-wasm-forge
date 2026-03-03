@@ -1,0 +1,15 @@
+{
+  "wasm": "dist/3.5.0/pthreads/mujoco.wasm",
+  "expected": "dist/3.5.0/abi/wrapper_exports_funcs.json",
+  "counts": {
+    "required": 1445,
+    "actualMjwf": 1455,
+    "missingRequired": 0,
+    "unexpectedNonMjwf": 0,
+    "forbiddenPrefix": 0
+  },
+  "missingRequired": [],
+  "unexpectedNonMjwf": [],
+  "forbiddenPrefixExports": [],
+  "ok": true
+}

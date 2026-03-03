@@ -1,6 +1,6 @@
 {
   "artifact": "mujoco.lib",
-  "nmPath": "llvm-nm",
+  "nmPath": "llvm-nm.exe",
   "ok": true,
   "symbols": [
     "?SetGlobalXmlSpec@@YAXPEAUmjSpec_@@@Z",
