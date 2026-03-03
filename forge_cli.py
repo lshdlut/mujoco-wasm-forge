@@ -422,13 +422,16 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
         ["git", "-C", str(mujoco_dir), "reset", "--hard"],
         check=True,
     )
-    clean_proc = subprocess.run(
-        ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-    if clean_proc.returncode != 0:
+    for attempt in range(3):
+      clean_proc = subprocess.run(
+          ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
+          stdout=subprocess.PIPE,
+          stderr=subprocess.STDOUT,
+          text=True,
+      )
+      if clean_proc.returncode == 0:
+        break
+
       out = clean_proc.stdout or ""
       print(out, file=sys.stderr, end="")
       failed_paths: List[Path] = []
@@ -443,18 +446,24 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
       if not failed_paths:
         clean_proc.check_returncode()
 
+      removed_any = False
       for path in failed_paths:
         if not path.exists():
           continue
+        removed_any = True
         if path.is_dir():
           _rmtree_force(path)
         else:
+          try:
+            os.chmod(path, 0o700)
+          except OSError:
+            pass
           path.unlink()
 
-      subprocess.run(
-          ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
-          check=True,
-      )
+      if not removed_any:
+        clean_proc.check_returncode()
+    else:
+      raise SystemExit("external/mujoco git clean -fdx failed after retries")
 
   ref = version
   # Prefer tags when they exist so that 3.3.7 resolves to refs/tags/3.3.7.
