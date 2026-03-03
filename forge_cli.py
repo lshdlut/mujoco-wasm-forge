@@ -691,6 +691,7 @@ def _configure_wasm_build_dir(
           shutil.rmtree(cmake_files)
 
   app_dir = REPO_ROOT / "app"
+  node_exe = _resolve_node_executable(env).replace("\\", "/")
   # Mirror run-forge.sh: source emsdk env when available and use emcmake to
   # configure, then build. Prefer the EMSDK environment variable (used in CI)
   # and fall back to $HOME/emsdk for local setups.
@@ -726,6 +727,7 @@ def _configure_wasm_build_dir(
       "-DMUJOCO_BUILD_SAMPLES=OFF "
       "-DCMAKE_SKIP_INSTALL_RULES=ON "
       "-DLIBM_LIBRARY:STRING=-lm "
+      f"-DNODE_EXECUTABLE='{node_exe}' "
       "-DMJWF_ENABLE_PLUGINS=ON "
       "-DMJWF_ENABLE_SIMD=ON "
       + ("-DMJWF_ENABLE_PTHREADS=ON " if enable_pthreads else "")
