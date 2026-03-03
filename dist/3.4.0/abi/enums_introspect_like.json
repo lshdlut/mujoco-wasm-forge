@@ -875,7 +875,7 @@
   },
   "meta": {
     "ast_json": "dist/3.4.0/abi/mujoco_ast.json",
-    "clang": "clang",
+    "clang": "C:\\emsdk\\upstream\\bin\\clang.exe",
     "header": "external/mujoco/include/mujoco/mujoco.h"
   }
 }
