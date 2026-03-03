@@ -5,6 +5,8 @@
   "version": "0.0.0",
   "scripts": {
     "build:forge": "node build/build-forge.mjs",
-    "test:smoke-325": "node check/tests/smoke-325.mjs"
+    "test:smoke-325": "node check/tests/smoke-325.mjs",
+    "bench:node": "node bench/node/run_matrix.mjs",
+    "bench:report": "node bench/node/report.mjs"
   }
 }

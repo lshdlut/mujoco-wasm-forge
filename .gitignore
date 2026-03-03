@@ -19,6 +19,12 @@ docs/_build/
 docs/en/_build/
 docs/zh/_build/
 
+## Bench outputs
+bench/results/**
+!bench/results/summary.md
+bench/results/raw/
+bench/results/raw_browser/
+
 ## Python bytecode / caches
 *.pyc
 __pycache__/
