@@ -422,10 +422,39 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
         ["git", "-C", str(mujoco_dir), "reset", "--hard"],
         check=True,
     )
-    subprocess.run(
+    clean_proc = subprocess.run(
         ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
-        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
+    if clean_proc.returncode != 0:
+      out = clean_proc.stdout or ""
+      print(out, file=sys.stderr, end="")
+      failed_paths: List[Path] = []
+      for line in out.splitlines():
+        m = re.search(r"warning: failed to remove ([^:]+): Permission denied", line)
+        if not m:
+          continue
+        rel = m.group(1).strip().rstrip("/").rstrip("\\")
+        if rel:
+          failed_paths.append(mujoco_dir / rel)
+
+      if not failed_paths:
+        clean_proc.check_returncode()
+
+      for path in failed_paths:
+        if not path.exists():
+          continue
+        if path.is_dir():
+          _rmtree_force(path)
+        else:
+          path.unlink()
+
+      subprocess.run(
+          ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
+          check=True,
+      )
 
   ref = version
   # Prefer tags when they exist so that 3.3.7 resolves to refs/tags/3.3.7.
