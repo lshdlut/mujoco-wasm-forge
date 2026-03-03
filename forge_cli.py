@@ -422,9 +422,15 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
         ["git", "-C", str(mujoco_dir), "reset", "--hard"],
         check=True,
     )
+    clean_cmd = ["git", "-C", str(mujoco_dir), "clean", "-fd"]
+    # Some platforms (notably OneDrive-backed Windows checkouts) may deny
+    # deleting ignored dependency caches. Enable with MJWF_GIT_CLEAN_IGNORED=1
+    # when a full `git clean -fdx` is required.
+    if os.environ.get("MJWF_GIT_CLEAN_IGNORED", "").strip():
+      clean_cmd.append("-x")
     for attempt in range(3):
       clean_proc = subprocess.run(
-          ["git", "-C", str(mujoco_dir), "clean", "-fdx"],
+          clean_cmd,
           stdout=subprocess.PIPE,
           stderr=subprocess.STDOUT,
           text=True,
@@ -463,7 +469,7 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
       if not removed_any:
         clean_proc.check_returncode()
     else:
-      raise SystemExit("external/mujoco git clean -fdx failed after retries")
+      raise SystemExit(f"external/mujoco git clean failed after retries: {clean_cmd}")
 
   ref = version
   # Prefer tags when they exist so that 3.3.7 resolves to refs/tags/3.3.7.
