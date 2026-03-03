@@ -1,10 +1,15 @@
-// Handle pool and lifecycle helpers for MuJoCo WASM
+// Handle pool and lifecycle helpers for MuJoCo WASM.
 // Generated exports cover raw field access; this file only manages handles.
 
+#include <mujoco/mjspec.h>
 #include <mujoco/mujoco.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <exception>
+
+#include "user/user_objects.h"
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten/emscripten.h>
@@ -16,8 +21,10 @@
 
 #define MJWF_MAXH 64
 
+extern "C" {
 // Scene state helpers are defined in the generated mjwf_scene_geom_soa.c.
 void mjwf_scene_reset(int h);
+}
 
 typedef struct MjwfHandle {
   mjModel* m;
@@ -116,33 +123,62 @@ static mjtNum mjwf_time_now(void) {
 }
 #endif
 
-EMSCRIPTEN_KEEPALIVE void mjwf_enable_timers(void) {
+extern "C" EMSCRIPTEN_KEEPALIVE void mjwf_enable_timers(void) {
   // Install a default timer callback so that d->timer[...] accumulates stats.
   mjcb_time = mjwf_time_now;
 }
 
-EMSCRIPTEN_KEEPALIVE int mjwf_helper_errno_last_global(void) {
+extern "C" EMSCRIPTEN_KEEPALIVE int mjwf_helper_errno_last_global(void) {
   return g_last_errno;
 }
 
-EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last_global(void) {
+extern "C" EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last_global(void) {
   return g_last_errmsg;
 }
 
-EMSCRIPTEN_KEEPALIVE int mjwf_helper_errno_last(int h) {
+extern "C" EMSCRIPTEN_KEEPALIVE int mjwf_helper_errno_last(int h) {
   return mjwf_handle_ok(h) ? g_pool[h].last_errno : 0;
 }
 
-EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last(int h) {
+extern "C" EMSCRIPTEN_KEEPALIVE const char* mjwf_helper_errmsg_last(int h) {
   return mjwf_handle_ok(h) ? g_pool[h].last_errmsg : "";
 }
 
-EMSCRIPTEN_KEEPALIVE int mjwf_helper_make_from_xml(const char* path) {
+extern "C" EMSCRIPTEN_KEEPALIVE int mjwf_helper_make_from_xml(const char* path) {
   mjwf_install_mju_hooks();
+  mjwf_set_global_error(0, NULL);
   char error[1024] = {0};
-  mjModel* m = mj_loadXML(path, NULL, error, sizeof(error));
+  mjSpec* s = mj_parseXML(path, NULL, error, sizeof(error));
+  if (!s) {
+    mjwf_set_global_error(1, error[0] ? error : "mj_parseXML failed");
+    return -1;
+  }
+
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+  // Emscripten without pthread support cannot run std::thread-based XML
+  // compilation (mesh/texture parallelism). Force serial compilation so that
+  // mjwf_helper_make_from_xml works in default web/worker contexts.
+  s->compiler.usethread = 0;
+#endif
+
+  mjModel* m = NULL;
+  try {
+    m = mj_compile(s, NULL);
+  } catch (const mjCError& e) {
+    mjwf_set_global_error(1, e.message[0] ? e.message : "mj_compile failed");
+  } catch (const std::exception& e) {
+    mjwf_set_global_error(1, e.what());
+  } catch (...) {
+    mjwf_set_global_error(1, "mj_compile threw an unknown exception");
+  }
+
+  mj_deleteSpec(s);
   if (!m) {
-    mjwf_set_global_error(1, error[0] ? error : "mj_loadXML failed");
+    if (g_last_errmsg[0] == '\0' && error[0]) {
+      // mj_parseXML may have produced a warning/error message even if it
+      // returned a spec; surface it as a fallback.
+      mjwf_set_global_error(1, error);
+    }
     return -1;
   }
   mjData* d = mj_makeData(m);
@@ -164,11 +200,11 @@ EMSCRIPTEN_KEEPALIVE int mjwf_helper_make_from_xml(const char* path) {
   return h;
 }
 
-EMSCRIPTEN_KEEPALIVE int mjwf_helper_valid(int h) {
+extern "C" EMSCRIPTEN_KEEPALIVE int mjwf_helper_valid(int h) {
   return mjwf_handle_ok(h) ? 1 : 0;
 }
 
-EMSCRIPTEN_KEEPALIVE void mjwf_helper_free(int h) {
+extern "C" EMSCRIPTEN_KEEPALIVE void mjwf_helper_free(int h) {
   if (!mjwf_handle_ok(h)) {
     return;
   }
@@ -178,19 +214,19 @@ EMSCRIPTEN_KEEPALIVE void mjwf_helper_free(int h) {
   mjwf_free_slot(h);
 }
 
-EMSCRIPTEN_KEEPALIVE mjModel* mjwf_helper_model_ptr(int h) {
+extern "C" EMSCRIPTEN_KEEPALIVE mjModel* mjwf_helper_model_ptr(int h) {
   return mjwf_handle_ok(h) ? g_pool[h].m : NULL;
 }
 
-EMSCRIPTEN_KEEPALIVE mjData* mjwf_helper_data_ptr(int h) {
+extern "C" EMSCRIPTEN_KEEPALIVE mjData* mjwf_helper_data_ptr(int h) {
   return mjwf_handle_ok(h) ? g_pool[h].d : NULL;
 }
 
 // Internal accessors used by generated code.
-mjModel* _mjwf_model_of(int h) {
+extern "C" mjModel* _mjwf_model_of(int h) {
   return mjwf_helper_model_ptr(h);
 }
 
-mjData* _mjwf_data_of(int h) {
+extern "C" mjData* _mjwf_data_of(int h) {
   return mjwf_helper_data_ptr(h);
 }

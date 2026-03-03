@@ -65,6 +65,9 @@ function findExecutable(candidates) {
     // Absolute path candidates.
     if (cand.includes('/') || cand.includes('\\')) {
       if (existsSync(cand)) return cand;
+      if (process.platform === 'win32' && existsSync(`${cand}.exe`)) {
+        return `${cand}.exe`;
+      }
       continue;
     }
     for (const dir of pathEntries) {

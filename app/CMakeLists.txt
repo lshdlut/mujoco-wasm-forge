@@ -60,9 +60,17 @@ add_custom_target(mjwf_impl_${MJVER} DEPENDS ${MJWF_IMPL_JSON})
 if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   option(MJWF_ENABLE_PLUGINS "Link MuJoCo plugin libraries into the wasm build" ON)
   option(MJWF_ENABLE_SIMD "Enable WebAssembly SIMD (-msimd128)" ON)
+  option(MJWF_ENABLE_PTHREADS "Enable WebAssembly threads (-pthread)" OFF)
   set(MJWF_SIMD_FLAG "")
   if (MJWF_ENABLE_SIMD)
     set(MJWF_SIMD_FLAG "-msimd128")
+  endif()
+  set(MJWF_PTHREAD_FLAG "")
+  set(MJWF_PTHREAD_POOL_FLAG "")
+  if (MJWF_ENABLE_PTHREADS)
+    set(MJWF_PTHREAD_FLAG "-pthread")
+    # Fixed-size default pool to limit init-time prewarming cost.
+    set(MJWF_PTHREAD_POOL_FLAG "-sPTHREAD_POOL_SIZE=4")
   endif()
   set(MJWF_OPT_FLAG "-Oz")
   set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")
@@ -95,14 +103,20 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   add_executable(mjwasm_forge
     ${MJWF_AUTO_SOURCE}
     ${MJWF_APP_DIR}/mjwf_stubs.c
-    ${MJWF_APP_DIR}/mjwf_handles.c
+    ${MJWF_APP_DIR}/mjwf_handles.cc
     ${MJWF_APP_DIR}/mjwf_abi_structs.c
     ${MJWF_APP_DIR}/mjwf_scene_geom_soa.c
   )
 
   add_dependencies(mjwasm_forge mujoco)
   target_include_directories(mjwasm_forge PRIVATE ${MJWF_AUTO_DIR})
-  target_link_libraries(mjwasm_forge PRIVATE mujoco)
+  # MuJoCo's compiler reports detailed errors via the internal mjCError type,
+  # which lives under src/. The helper wrapper catches and forwards these
+  # messages for JS consumers.
+  target_include_directories(mjwasm_forge PRIVATE "${MJWF_ROOT}/external/mujoco/src")
+  # user/user_objects.h pulls in tiny_obj_loader.h, so ensure the include path
+  # for the tinyobjloader dependency is available to the wrapper translation unit.
+  target_link_libraries(mjwasm_forge PRIVATE mujoco tinyobjloader)
   set(_mjwf_plugin_targets "")
   cmake_path(SET _mjwf_plugin_root NORMALIZE "${MJWF_ROOT}/external/mujoco/plugin")
   get_property(_mjwf_mujoco_subdirs DIRECTORY "${MJWF_ROOT}/external/mujoco" PROPERTY SUBDIRECTORIES)
@@ -147,8 +161,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
           "${_mjwf_sensor_plugin_dir}/register.cc"
           "${_mjwf_sensor_plugin_dir}/touch_grid.cc"
         )
-        # Some plugins include internal MuJoCo headers from src/.
-        target_include_directories(mjwasm_forge PRIVATE "${MJWF_ROOT}/external/mujoco/src")
       else()
         message(
           WARNING
@@ -159,6 +171,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
     endif()
   endif()
   target_compile_options(mjwasm_forge PRIVATE "-fvisibility=hidden" ${MJWF_OPT_FLAG} ${MJWF_SIMD_FLAG})
+  target_compile_options(mjwasm_forge PRIVATE ${MJWF_PTHREAD_FLAG})
   # Ensure exception catching is enabled consistently at compile+link time; MuJoCo relies on
   # try/catch for load-time fallbacks (e.g., namespaced refs in <replicate>/<attach>).
   target_compile_options(mjwasm_forge PRIVATE ${MJWF_EXC_FLAG})
@@ -169,6 +182,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   endforeach()
   target_link_options(mjwasm_forge PRIVATE
     "-sWASM=1"
+    ${MJWF_PTHREAD_FLAG}
+    ${MJWF_PTHREAD_POOL_FLAG}
     "-sSTACK_SIZE=5242880"
     "-sINITIAL_MEMORY=134217728"
     "-sMAXIMUM_MEMORY=2147483648"

@@ -382,7 +382,7 @@ def _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir: Path) 
 
   text = src.read_text(encoding="utf-8")
   if "__EMSCRIPTEN_PTHREADS__" in text and "spec->compiler.usethread" in text:
-    # Already patched (or upstream has a similar change).
+    # Already patched (or upstream has an equivalent change).
     return
 
   needle = "  spec->compiler.usethread = 1;"
@@ -402,73 +402,7 @@ def _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir: Path) 
     print("[forge-cli] patched MuJoCo to default compiler.usethread=0 for non-pthreads wasm", file=sys.stderr)
 
 
-def _patch_mujoco_mj_compile_trycatch(mujoco_dir: Path) -> None:
-  """Patch MuJoCo's mj_compile to catch exceptions and surface an error message.
-
-  MuJoCo uses C++ exceptions (mjCError) internally for model compilation errors.
-  When the exception escapes mj_compile in a wasm build, Emscripten surfaces it
-  as a raw numeric thrown value, leaving JS callers without a stable errmsg.
-  """
-  src = mujoco_dir / "src" / "user" / "user_api.cc"
-  if not src.is_file():
-    return
-
-  text = src.read_text(encoding="utf-8")
-  if "Unknown exception in mj_compile" in text:
-    # Already patched (or upstream has an equivalent fix).
-    return
-
-  if "#include <exception>" not in text:
-    marker = "#include <cstring>\n"
-    if marker in text:
-      text = text.replace(marker, marker + "#include <exception>\n", 1)
-
-  needle = "mjModel* mj_compile(mjSpec* s, const mjVFS* vfs) {"
-  start = text.find(needle)
-  if start < 0:
-    return
-
-  brace_start = text.find("{", start)
-  if brace_start < 0:
-    return
-
-  depth = 0
-  end = None
-  for i in range(brace_start, len(text)):
-    ch = text[i]
-    if ch == "{":
-      depth += 1
-    elif ch == "}":
-      depth -= 1
-      if depth == 0:
-        end = i + 1
-        break
-  if end is None:
-    return
-
-  replacement = """mjModel* mj_compile(mjSpec* s, const mjVFS* vfs) {
-  mjCModel* modelC = static_cast<mjCModel*>(s->element);
-  try {
-    return modelC->Compile(vfs);
-  } catch (mjCError& e) {
-    modelC->SetError(e);
-    return nullptr;
-  } catch (const std::exception& e) {
-    modelC->SetError(mjCError(0, "%s", e.what()));
-    return nullptr;
-  } catch (...) {
-    modelC->SetError(mjCError(0, "Unknown exception in mj_compile"));
-    return nullptr;
-  }
-}"""
-
-  new_text = text[:start] + replacement + text[end:]
-  if new_text != text:
-    src.write_text(new_text, encoding="utf-8")
-    print("[forge-cli] patched MuJoCo mj_compile try/catch", file=sys.stderr)
-
-
-def _prepare_mujoco(version: str) -> None:
+def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
   """Clone or update external/mujoco for the requested version."""
   mujoco_dir = REPO_ROOT / "external" / "mujoco"
   git_dir = mujoco_dir / ".git"
@@ -526,9 +460,9 @@ def _prepare_mujoco(version: str) -> None:
   )
   _patch_mujoco_qhull_emscripten(mujoco_dir)
   _patch_mujoco_localtime_emscripten(mujoco_dir)
-  _patch_mujoco_disable_pthreads_emscripten(mujoco_dir)
   _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir)
-  _patch_mujoco_mj_compile_trycatch(mujoco_dir)
+  if not enable_pthreads:
+    _patch_mujoco_disable_pthreads_emscripten(mujoco_dir)
 
 
 def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
@@ -686,7 +620,13 @@ def _run_abi_generators(version: str, env: Mapping[str, str]) -> None:
   )
 
 
-def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Mapping[str, str]) -> None:
+def _configure_and_build(
+    version: str,
+    dist_dir: Path,
+    build_dir: Path,
+    env: Mapping[str, str],
+    enable_pthreads: bool,
+) -> None:
   """Configure the Emscripten + CMake build and emit dist/<ver> artifacts."""
   build_dir.mkdir(parents=True, exist_ok=True)
   dist_dir.mkdir(parents=True, exist_ok=True)
@@ -788,7 +728,8 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
       "-DLIBM_LIBRARY:STRING=-lm "
       "-DMJWF_ENABLE_PLUGINS=ON "
       "-DMJWF_ENABLE_SIMD=ON "
-      "-DMJWF_PROFILE=fast "
+      + ("-DMJWF_ENABLE_PTHREADS=ON " if enable_pthreads else "")
+      + "-DMJWF_PROFILE=fast "
       f"-DMJVER='{version}'"
   )
   build_cmd = (
@@ -844,14 +785,34 @@ def _configure_and_build(version: str, dist_dir: Path, build_dir: Path, env: Map
   if map_src.is_file():
     shutil.copy2(map_src, dist_dir / "mujoco.wasm.map")
 
+  if enable_pthreads:
+    # Emscripten's pthread worker modules import the original output basename
+    # (e.g. mjwasm_forge.js/wasm). Keep those alongside the stable mujoco.* names.
+    shutil.copy2(js_src, dist_dir / js_src.name)
+    shutil.copy2(wasm_src, dist_dir / wasm_src.name)
+    if map_src.is_file():
+      shutil.copy2(map_src, dist_dir / map_src.name)
 
-def _run_post_build(version: str, short: str, env: Mapping[str, str]) -> None:
+  for worker_src in sorted(wasm_dir.glob("*.worker.js")):
+    shutil.copy2(worker_src, dist_dir / worker_src.name)
+  for worker_map_src in sorted(wasm_dir.glob("*.worker.js.map")):
+    shutil.copy2(worker_map_src, dist_dir / worker_map_src.name)
+  for worker_src in sorted(wasm_dir.glob("*.worker.mjs")):
+    shutil.copy2(worker_src, dist_dir / worker_src.name)
+  for worker_map_src in sorted(wasm_dir.glob("*.worker.mjs.map")):
+    shutil.copy2(worker_map_src, dist_dir / worker_map_src.name)
+
+
+def _run_post_build(version: str, short: str, env: Mapping[str, str], variant: str = "") -> None:
   """Run check/post_build.sh for the built version."""
   post = REPO_ROOT / "check" / "post_build.sh"
   env_for_sh = dict(env)
   env_for_sh["NODE"] = _resolve_node_executable(env_for_sh)
+  argv = [str(post), "--version", version, "--short", short]
+  if variant:
+    argv.extend(["--variant", variant])
   subprocess.run(
-      _bash_argv(str(post), "--version", version, "--short", short),
+      _bash_argv(*argv),
       check=True,
       cwd=str(REPO_ROOT),
       env=env_for_sh,
@@ -1099,25 +1060,36 @@ def cmd_build(args: argparse.Namespace) -> int:
   """Entry point: prepare → introspect → ABI → build → post_build → checks."""
   version: str = args.version
   short = _compute_short(version, args.short)
-  dist_dir = REPO_ROOT / "dist" / version
-  abi_dir = dist_dir / "abi"
-  build_dir = _resolve_build_root() / "forge"
+  enable_pthreads = bool(getattr(args, "pthreads", False))
+  variant = "pthreads" if enable_pthreads else ""
+
+  dist_root = REPO_ROOT / "dist" / version
+  abi_dir = dist_root / "abi"
+  dist_dir = dist_root / variant if variant else dist_root
+  build_dir = _resolve_build_root() / "forge" / short / ("pthreads" if enable_pthreads else "single")
 
   print(f"[forge-cli] build version {version} (short={short})", file=sys.stderr)
+  if enable_pthreads:
+    print("[forge-cli] pthreads enabled (WebAssembly threads)", file=sys.stderr)
 
   env = _base_env_for_version(version, abi_dir)
+  if variant:
+    env["MJWF_DIST_VARIANT"] = variant
+  else:
+    env.pop("MJWF_DIST_VARIANT", None)
 
-  _prepare_mujoco(version)
+  _prepare_mujoco(version, enable_pthreads)
   _run_introspect(abi_dir, env)
   _bootstrap_nm_symbols(version, abi_dir, env)
   _run_abi_generators(version, env)
-  _configure_and_build(version, dist_dir, build_dir, env)
-  _run_post_build(version, short, env)
+  _configure_and_build(version, dist_dir, build_dir, env, enable_pthreads)
+  _run_post_build(version, short, env, variant=variant)
 
   if args.with_checks:
     _run_checks(env)
 
-  print(f"[forge-cli] finished dist/{version}", file=sys.stderr)
+  suffix = f"/{variant}" if variant else ""
+  print(f"[forge-cli] finished dist/{version}{suffix}", file=sys.stderr)
   return 0
 
 
@@ -1142,6 +1114,11 @@ def build_parser() -> argparse.ArgumentParser:
       "--with-checks",
       action="store_true",
       help="Run smoke/mesh/gates scripts after post-build.",
+  )
+  p_build.add_argument(
+      "--pthreads",
+      action="store_true",
+      help="Build with Emscripten pthreads (-pthread) enabled (requires SharedArrayBuffer in browsers).",
   )
   p_build.set_defaults(func=cmd_build)
 
