@@ -13,7 +13,7 @@
 
 ## Totals
 - A: 490
-- B: 892
+- B: 3348
 - C (functions only): 443
 - Prefix breakdown: mj=148, mju=126, mjs=134, mjd=4
 
@@ -69,58 +69,58 @@
 ## Set Differences (for auditing)
 - A - B (declared only): 0
 - none
-- B - A (implemented only): 402
-- ZN6mujoco4user14StringToVectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEESt6vectorIT_SaIS9_EERKS7_
-- ZN8tinyxml210XMLComment9ParseDeepEPcPNS_7StrPairEPi
-- ZN8tinyxml210XMLCommentC1EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLCommentC2EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLCommentD0Ev
-- ZN8tinyxml210XMLCommentD1Ev
-- ZN8tinyxml210XMLCommentD2Ev
-- ZN8tinyxml210XMLElement13InsertNewTextEPKc
-- ZN8tinyxml210XMLElement15CreateAttributeEv
-- ZN8tinyxml210XMLElement15DeleteAttributeEPKc
-- ZN8tinyxml210XMLElement15DeleteAttributeEPNS_12XMLAttributeE
-- ZN8tinyxml210XMLElement15ParseAttributesEPcPi
-- ZN8tinyxml210XMLElement16InsertNewCommentEPKc
-- ZN8tinyxml210XMLElement16InsertNewUnknownEPKc
-- ZN8tinyxml210XMLElement20InsertNewDeclarationEPKc
-- ZN8tinyxml210XMLElement21FindOrCreateAttributeEPKc
-- ZN8tinyxml210XMLElement21InsertNewChildElementEPKc
-- ZN8tinyxml210XMLElement7SetTextEPKc
-- ZN8tinyxml210XMLElement7SetTextEb
-- ZN8tinyxml210XMLElement7SetTextEd
-- ZN8tinyxml210XMLElement7SetTextEf
-- ZN8tinyxml210XMLElement7SetTextEi
-- ZN8tinyxml210XMLElement7SetTextEj
-- ZN8tinyxml210XMLElement7SetTextEl
-- ZN8tinyxml210XMLElement7SetTextEm
-- ZN8tinyxml210XMLElement9ParseDeepEPcPNS_7StrPairEPi
-- ZN8tinyxml210XMLElementC1EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLElementC2EPNS_11XMLDocumentE
-- ZN8tinyxml210XMLElementD0Ev
-- ZN8tinyxml210XMLElementD1Ev
-- ZN8tinyxml210XMLElementD2Ev
-- ZN8tinyxml210XMLPrinter10PrintSpaceEi
-- ZN8tinyxml210XMLPrinter10PushHeaderEbb
-- ZN8tinyxml210XMLPrinter10VisitEnterERKNS_10XMLElementEPKNS_12XMLAttributeE
-- ZN8tinyxml210XMLPrinter10VisitEnterERKNS_11XMLDocumentE
-- ZN8tinyxml210XMLPrinter11OpenElementEPKcb
-- ZN8tinyxml210XMLPrinter11PrintStringEPKcb
-- ZN8tinyxml210XMLPrinter11PushCommentEPKc
-- ZN8tinyxml210XMLPrinter11PushUnknownEPKc
-- ZN8tinyxml210XMLPrinter12CloseElementEb
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcS2_
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcb
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcd
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKci
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcj
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcl
-- ZN8tinyxml210XMLPrinter13PushAttributeEPKcm
-- ZN8tinyxml210XMLPrinter15PushDeclarationEPKc
-- ZN8tinyxml210XMLPrinter17PrepareForNewNodeEb
-- ZN8tinyxml210XMLPrinter23SealElementIfJustOpenedEv
-- ... (+352 more)
+- B - A (implemented only): 2858
+- MJCF
+- RK4_A
+- RK4_B
+- TFAuto_map
+- Z10PolygonCmpRK11MeshPolygonS1_
+- Z10mjuu_dist3PKdS0_
+- Z11CompileMeshP7mjCMeshPK6mjVFS_RSt13exception_ptrRNSt3__25mutexEPNS6_12basic_stringIcNS6_11char_traitsIcEENS6_9allocatorIcEEEE
+- Z11mjCopyErrorPcPKci
+- Z11mjuu_getextNSt3__217basic_string_viewIcNS_11char_traitsIcEEEE
+- Z11mjuu_matadriii
+- Z11mjuu_mulmatPdPKdS1_
+- Z11mjuu_setvecPddd
+- Z11mjuu_setvecPdddd
+- Z11mjuu_setvecPddddd
+- Z11mjuu_setvecPfddd
+- Z11mjuu_setvecPfdddd
+- Z11mjuu_z2quatPdPKd
+- Z12ComputeBasisI9Stencil2DEvPdPKdPKiS5_S5_d
+- Z12ComputeBasisI9Stencil3DEvPdPKdPKiS5_S5_d
+- Z12MetricTensorI9Stencil2DEvPdiddPA9_Kd
+- Z12MetricTensorI9Stencil3DEvPdiddPA9_Kd
+- Z12mjuu_definedd
+- Z12mjuu_mulRMRTPdPKdS1_
+- Z12mjuu_mulquatPdPKdS1_
+- Z12mjuu_normvecPdi
+- Z12mjuu_normvecPfi
+- Z12mjuu_zerovecPdi
+- Z12mjuu_zerovecPfi
+- Z13mjuu_addtovecPdPKdi
+- Z13mjuu_crossvecPdPKdS1_
+- Z13mjuu_localposPdPKdS1_S1_
+- Z13mjuu_quat2matPdPKd
+- Z13mjuu_scalevecPdPKddi
+- Z13mjuu_stripextNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z13mjuu_visccoefPddPKdd
+- Z14ComputeBendingI11StencilFlapEvPdS1_PKidd
+- Z14mjuu_isabspathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14mjuu_localaxisPdPKdS1_
+- Z14mjuu_localquatPdPKdS1_
+- Z14mjuu_mulvecmatPdPKdS1_
+- Z14mjuu_offcenterPddPKd
+- Z14mjuu_strippathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14sensorDatatype10mjtSensor_
+- Z15mjuu_dirnamelenPKc
+- Z15mjuu_frame2quatPdPKdS1_S1_
+- Z15mjuu_frameaccumPdS_PKdS1_
+- Z15mjuu_makenormalIdEdPdPKT_S3_S3_
+- Z15mjuu_makenormalIfEdPdPKT_S3_S3_
+- Z15mjuu_mulvecmatTPdPKdS1_
+- Z15mjuu_rotVecQuatPdPKdS1_
+- ... (+2808 more)
 - (A ∩ B) - C (should be zero): 0
 - none
 
