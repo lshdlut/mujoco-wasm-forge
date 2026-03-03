@@ -494,76 +494,32 @@ def _run_introspect(abi_dir: Path, env: Mapping[str, str]) -> None:
   )
 
 
-def _bootstrap_nm_symbols(version: str, abi_dir: Path, env: Mapping[str, str]) -> None:
-  """Bootstrap nm_symbols.json when it is missing.
+def _bootstrap_nm_symbols(version: str, abi_dir: Path, build_dir: Path, env: Mapping[str, str]) -> None:
+  """(Re)generate dist/<ver>/abi/nm_symbols.json (B-set) from the wasm build.
 
-  The B-set is derived from symbols implemented in the upstream MuJoCo library.
-  Historically we generated it by building a native MuJoCo library and scanning
-  it with llvm-nm. New versions should not require a manual pre-step, so we
-  perform that bootstrap automatically when dist/<ver>/abi/nm_symbols.json is
-  absent.
+  The B-set is the inventory of symbols implemented by MuJoCo as built for the
+  WebAssembly target. Deriving it from a native host build is not portable
+  across platforms (e.g. Windows import libraries introduce _imp_* symbols).
+  Instead, we scan the Emscripten-built MuJoCo static archive produced in the
+  wasm build tree.
   """
   nm_path = abi_dir / "nm_symbols.json"
-  # Always (re)generate B-set to avoid stale nm_symbols.json influencing builds.
   msg = "regenerating" if nm_path.is_file() else "bootstrapping"
   print(f"[forge-cli] {msg} nm_symbols.json (B-set) for {version}", file=sys.stderr)
 
-  build_dir = _resolve_build_root() / "native"
-  if build_dir.exists():
-    _rmtree_force(build_dir)
-  build_dir.mkdir(parents=True, exist_ok=True)
-
-  mujoco_src = REPO_ROOT / "external" / "mujoco"
-  cmake_args = [
-      "-DCMAKE_BUILD_TYPE=Release",
-      "-DMUJOCO_BUILD_EXAMPLES=OFF",
-      "-DMUJOCO_BUILD_SIMULATE=OFF",
-      "-DMUJOCO_BUILD_TESTS=OFF",
-      "-DMUJOCO_BUILD_SAMPLES=OFF",
-      "-DMUJOCO_ENABLE_QHULL=OFF",
-  ]
-
-  subprocess.run(
-      ["cmake", "-S", str(mujoco_src), "-B", str(build_dir), *cmake_args],
-      check=True,
-      cwd=str(REPO_ROOT),
-      env=dict(env),
+  lib_dir = build_dir / "lib"
+  candidates = (
+      lib_dir / "libmujoco.a",
+      lib_dir / "mujoco.a",
   )
+  artifact = next((c for c in candidates if c.is_file()), None)
+  if artifact is None and lib_dir.is_dir():
+    found = sorted(lib_dir.glob("libmujoco.*"))
+    if found:
+      artifact = found[0]
 
-  cache = build_dir / "CMakeCache.txt"
-  build_cmd = ["cmake", "--build", str(build_dir), "--target", "mujoco"]
-  if cache.is_file():
-    text = cache.read_text(encoding="utf-8", errors="ignore")
-    if "CMAKE_CONFIGURATION_TYPES:STRING=" in text:
-      build_cmd.extend(["--config", "Release"])
-
-  subprocess.run(
-      build_cmd,
-      check=True,
-      cwd=str(REPO_ROOT),
-      env=dict(env),
-  )
-
-  preferred_exts = (".a", ".so", ".dylib", ".lib")
-  candidates: List[Path] = []
-  for pattern in ("libmujoco.*", "mujoco.*"):
-    for cand in build_dir.rglob(pattern):
-      if cand.suffix.lower() in preferred_exts:
-        candidates.append(cand)
-  candidates = sorted(set(candidates))
-  if not candidates:
-    raise RuntimeError(f"Failed to locate MuJoCo library artifact under {build_dir}")
-
-  artifact = None
-  for ext in preferred_exts:
-    for cand in candidates:
-      if cand.suffix == ext:
-        artifact = cand
-        break
-    if artifact is not None:
-      break
-  if artifact is None:
-    artifact = candidates[0]
+  if artifact is None or not artifact.is_file():
+    raise RuntimeError(f"Failed to locate Emscripten libmujoco archive under {lib_dir}")
 
   nm_script = REPO_ROOT / "abi_impl" / "nm_coverage.mjs"
   node_exe = _resolve_node_executable(env)
@@ -620,16 +576,14 @@ def _run_abi_generators(version: str, env: Mapping[str, str]) -> None:
   )
 
 
-def _configure_and_build(
+def _configure_wasm_build_dir(
     version: str,
-    dist_dir: Path,
     build_dir: Path,
     env: Mapping[str, str],
     enable_pthreads: bool,
 ) -> None:
-  """Configure the Emscripten + CMake build and emit dist/<ver> artifacts."""
+  """Configure the Emscripten + CMake build directory."""
   build_dir.mkdir(parents=True, exist_ok=True)
-  dist_dir.mkdir(parents=True, exist_ok=True)
 
   def _apply_qhull_emscripten_patch(build_root: Path) -> bool:
     """Apply the qhull Emscripten patch in the fetched qhull git checkout.
@@ -732,11 +686,6 @@ def _configure_and_build(
       + "-DMJWF_PROFILE=fast "
       f"-DMJVER='{version}'"
   )
-  build_cmd = (
-      "set -euo pipefail; "
-      + emsdk_env_snippet +
-      f"cmake --build '{build_dir}' -- -j \"$(nproc)\""
-  )
 
   def _run_configure(check: bool) -> subprocess.CompletedProcess:
     return subprocess.run(
@@ -758,6 +707,27 @@ def _configure_and_build(
     _reset_qhull_state(build_dir)
     _run_configure(check=True)
 
+
+def _build_wasm(build_dir: Path, env: Mapping[str, str], target: str | None = None) -> None:
+  """Build the wasm project (optionally a single target) in an existing build dir."""
+  emsdk_env_snippet = (
+      'if [ -n "${EMSDK:-}" ] && [ -f "${EMSDK}/emsdk_env.sh" ]; then '
+      '  _mjwf_emsdk_env="${EMSDK}/.mjwf_emsdk_env.sh"; '
+      "  tr -d '\\r' < \"${EMSDK}/emsdk_env.sh\" > \"${_mjwf_emsdk_env}\"; "
+      '  . "${_mjwf_emsdk_env}"; '
+      '  rm -f "${_mjwf_emsdk_env}"; '
+      'elif [ -f "$HOME/emsdk/emsdk_env.sh" ]; then '
+      '  _mjwf_emsdk_env="$HOME/emsdk/.mjwf_emsdk_env.sh"; '
+      "  tr -d '\\r' < \"$HOME/emsdk/emsdk_env.sh\" > \"${_mjwf_emsdk_env}\"; "
+      '  . "${_mjwf_emsdk_env}"; '
+      '  rm -f "${_mjwf_emsdk_env}"; '
+      'fi; '
+  )
+  cmd = "cmake --build " + f"'{build_dir}'"
+  if target:
+    cmd += f" --target {target}"
+  cmd += " -- -j \"$(nproc)\""
+  build_cmd = "set -euo pipefail; " + emsdk_env_snippet + cmd
   subprocess.run(
       _bash_argv("-lc", build_cmd),
       check=True,
@@ -765,6 +735,10 @@ def _configure_and_build(
       env=dict(env),
   )
 
+
+def _copy_wasm_artifacts(build_dir: Path, dist_dir: Path, enable_pthreads: bool) -> None:
+  """Copy build_dir/_wasm outputs into dist/<ver>."""
+  dist_dir.mkdir(parents=True, exist_ok=True)
   wasm_dir = build_dir / "_wasm"
   js_src = wasm_dir / "mjwasm_forge.js"
 
@@ -1085,9 +1059,12 @@ def cmd_build(args: argparse.Namespace) -> int:
 
   _prepare_mujoco(version, enable_pthreads)
   _run_introspect(abi_dir, env)
-  _bootstrap_nm_symbols(version, abi_dir, env)
+  _configure_wasm_build_dir(version, build_dir, env, enable_pthreads)
+  _build_wasm(build_dir, env, target="mujoco")
+  _bootstrap_nm_symbols(version, abi_dir, build_dir, env)
   _run_abi_generators(version, env)
-  _configure_and_build(version, dist_dir, build_dir, env, enable_pthreads)
+  _build_wasm(build_dir, env)
+  _copy_wasm_artifacts(build_dir, dist_dir, enable_pthreads)
   _run_post_build(version, short, env, variant=variant)
 
   if args.with_checks:
