@@ -385,18 +385,20 @@ def _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir: Path) 
     # Already patched (or upstream has an equivalent change).
     return
 
-  needle = "  spec->compiler.usethread = 1;"
-  if needle not in text:
+  pattern = re.compile(r"^(\s*)spec->compiler\.usethread\s*=\s*1;\s*$", re.MULTILINE)
+  m = pattern.search(text)
+  if not m:
     return
 
+  indent = m.group(1)
   replacement = (
-      "#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)\n"
-      "  spec->compiler.usethread = 0;\n"
-      "#else\n"
-      "  spec->compiler.usethread = 1;\n"
-      "#endif"
+      f"{indent}#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)\n"
+      f"{indent}spec->compiler.usethread = 0;\n"
+      f"{indent}#else\n"
+      f"{indent}spec->compiler.usethread = 1;\n"
+      f"{indent}#endif"
   )
-  new_text = text.replace(needle, replacement, 1)
+  new_text = pattern.sub(replacement, text, count=1)
   if new_text != text:
     src.write_text(new_text, encoding="utf-8")
     print("[forge-cli] patched MuJoCo to default compiler.usethread=0 for non-pthreads wasm", file=sys.stderr)

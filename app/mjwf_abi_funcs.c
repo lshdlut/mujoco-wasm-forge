@@ -105,7 +105,7 @@ MJWF_API_IMPL mjSpec * mjwf_mj_copySpec(const mjSpec * s) {
   return mj_copySpec(s);
 }
 
-MJWF_API_IMPL void mjwf_mj_copyState(const mjModel * m, const mjData * src, mjData * dst, int sig) {
+MJWF_API_IMPL void mjwf_mj_copyState(const mjModel * m, const mjData * src, mjData * dst, unsigned int sig) {
   mj_copyState(m, src, dst, sig);
 }
 
@@ -165,7 +165,7 @@ MJWF_API_IMPL void mjwf_mj_energyVel(const mjModel * m, mjData * d) {
   mj_energyVel(m, d);
 }
 
-MJWF_API_IMPL void mjwf_mj_extractState(const mjModel * m, const mjtNum * src, int srcsig, mjtNum * dst, int dstsig) {
+MJWF_API_IMPL void mjwf_mj_extractState(const mjModel * m, const mjtNum * src, unsigned int srcsig, mjtNum * dst, unsigned int dstsig) {
   mj_extractState(m, src, srcsig, dst, dstsig);
 }
 
@@ -241,7 +241,7 @@ MJWF_API_IMPL const char * mjwf_mj_getPluginConfig(const mjModel * m, int plugin
   return mj_getPluginConfig(m, plugin_id, attrib);
 }
 
-MJWF_API_IMPL void mjwf_mj_getState(const mjModel * m, const mjData * d, mjtNum * state, int sig) {
+MJWF_API_IMPL void mjwf_mj_getState(const mjModel * m, const mjData * d, mjtNum * state, unsigned int sig) {
   mj_getState(m, d, state, sig);
 }
 
@@ -255,14 +255,6 @@ MJWF_API_IMPL const char * mjwf_mj_id2name(const mjModel * m, int type, int id) 
 
 MJWF_API_IMPL void mjwf_mj_implicit(const mjModel * m, mjData * d) {
   mj_implicit(m, d);
-}
-
-MJWF_API_IMPL void mjwf_mj_initCtrlHistory(const mjModel * m, mjData * d, int id, const mjtNum * times, const mjtNum * values) {
-  mj_initCtrlHistory(m, d, id, times, values);
-}
-
-MJWF_API_IMPL void mjwf_mj_initSensorHistory(const mjModel * m, mjData * d, int id, const mjtNum * times, const mjtNum * values, mjtNum phase) {
-  mj_initSensorHistory(m, d, id, times, values, phase);
 }
 
 MJWF_API_IMPL void mjwf_mj_integratePos(const mjModel * m, mjtNum * qpos, const mjtNum * qvel, mjtNum dt) {
@@ -349,10 +341,6 @@ MJWF_API_IMPL mjModel * mjwf_mj_loadModel(const char * filename, const mjVFS * v
   return mj_loadModel(filename, vfs);
 }
 
-MJWF_API_IMPL mjModel * mjwf_mj_loadModelBuffer(const void * buffer, int buffer_sz) {
-  return mj_loadModelBuffer(buffer, buffer_sz);
-}
-
 MJWF_API_IMPL void mjwf_mj_loadPluginLibrary(const char * path) {
   mj_loadPluginLibrary(path);
 }
@@ -385,10 +373,6 @@ MJWF_API_IMPL void mjwf_mj_markStack(mjData * d) {
   mj_markStack(d);
 }
 
-MJWF_API_IMPL int mjwf_mj_mountVFS(mjVFS * vfs, const char * filepath, const mjpResourceProvider * provider) {
-  return mj_mountVFS(vfs, filepath, provider);
-}
-
 MJWF_API_IMPL void mjwf_mj_mulJacTVec(const mjModel * m, const mjData * d, mjtNum * res, const mjtNum * vec) {
   mj_mulJacTVec(m, d, res, vec);
 }
@@ -405,8 +389,8 @@ MJWF_API_IMPL void mjwf_mj_mulM2(const mjModel * m, const mjData * d, mjtNum * r
   mj_mulM2(m, d, res, vec);
 }
 
-MJWF_API_IMPL void mjwf_mj_multiRay(const mjModel * m, mjData * d, const mjtNum pnt[3], const mjtNum * vec, const mjtByte * geomgroup, mjtByte flg_static, int bodyexclude, int * geomid, mjtNum * dist, mjtNum * normal, int nray, mjtNum cutoff) {
-  mj_multiRay(m, d, pnt, vec, geomgroup, flg_static, bodyexclude, geomid, dist, normal, nray, cutoff);
+MJWF_API_IMPL void mjwf_mj_multiRay(const mjModel * m, mjData * d, const mjtNum pnt[3], const mjtNum vec[3], const mjtByte * geomgroup, mjtByte flg_static, int bodyexclude, int * geomid, mjtNum * dist, int nray, mjtNum cutoff) {
+  mj_multiRay(m, d, pnt, vec, geomgroup, flg_static, bodyexclude, geomid, dist, nray, cutoff);
 }
 
 MJWF_API_IMPL int mjwf_mj_name2id(const mjModel * m, int type, const char * name) {
@@ -473,28 +457,16 @@ MJWF_API_IMPL void mjwf_mj_projectConstraint(const mjModel * m, mjData * d) {
   mj_projectConstraint(m, d);
 }
 
-MJWF_API_IMPL mjtNum mjwf_mj_ray(const mjModel * m, const mjData * d, const mjtNum pnt[3], const mjtNum vec[3], const mjtByte * geomgroup, mjtByte flg_static, int bodyexclude, int geomid[1], mjtNum normal[3]) {
-  return mj_ray(m, d, pnt, vec, geomgroup, flg_static, bodyexclude, geomid, normal);
+MJWF_API_IMPL mjtNum mjwf_mj_ray(const mjModel * m, const mjData * d, const mjtNum pnt[3], const mjtNum vec[3], const mjtByte * geomgroup, mjtByte flg_static, int bodyexclude, int geomid[1]) {
+  return mj_ray(m, d, pnt, vec, geomgroup, flg_static, bodyexclude, geomid);
 }
 
-MJWF_API_IMPL mjtNum mjwf_mj_rayFlex(const mjModel * m, const mjData * d, int flex_layer, mjtByte flg_vert, mjtByte flg_edge, mjtByte flg_face, mjtByte flg_skin, int flexid, const mjtNum pnt[3], const mjtNum vec[3], int vertid[1], mjtNum normal[3]) {
-  return mj_rayFlex(m, d, flex_layer, flg_vert, flg_edge, flg_face, flg_skin, flexid, pnt, vec, vertid, normal);
+MJWF_API_IMPL mjtNum mjwf_mj_rayHfield(const mjModel * m, const mjData * d, int geomid, const mjtNum pnt[3], const mjtNum vec[3]) {
+  return mj_rayHfield(m, d, geomid, pnt, vec);
 }
 
-MJWF_API_IMPL mjtNum mjwf_mj_rayHfield(const mjModel * m, const mjData * d, int geomid, const mjtNum pnt[3], const mjtNum vec[3], mjtNum normal[3]) {
-  return mj_rayHfield(m, d, geomid, pnt, vec, normal);
-}
-
-MJWF_API_IMPL mjtNum mjwf_mj_rayMesh(const mjModel * m, const mjData * d, int geomid, const mjtNum pnt[3], const mjtNum vec[3], mjtNum normal[3]) {
-  return mj_rayMesh(m, d, geomid, pnt, vec, normal);
-}
-
-MJWF_API_IMPL mjtNum mjwf_mj_readCtrl(const mjModel * m, const mjData * d, int id, mjtNum time, int interp) {
-  return mj_readCtrl(m, d, id, time, interp);
-}
-
-MJWF_API_IMPL const mjtNum * mjwf_mj_readSensor(const mjModel * m, const mjData * d, int id, mjtNum time, mjtNum * result, int interp) {
-  return mj_readSensor(m, d, id, time, result, interp);
+MJWF_API_IMPL mjtNum mjwf_mj_rayMesh(const mjModel * m, const mjData * d, int geomid, const mjtNum pnt[3], const mjtNum vec[3]) {
+  return mj_rayMesh(m, d, geomid, pnt, vec);
 }
 
 MJWF_API_IMPL int mjwf_mj_recompile(mjSpec * s, const mjVFS * vfs, mjModel * m, mjData * d) {
@@ -573,7 +545,7 @@ MJWF_API_IMPL int mjwf_mj_setLengthRange(mjModel * m, mjData * d, int index, con
   return mj_setLengthRange(m, d, index, opt, error, error_sz);
 }
 
-MJWF_API_IMPL void mjwf_mj_setState(const mjModel * m, mjData * d, const mjtNum * state, int sig) {
+MJWF_API_IMPL void mjwf_mj_setState(const mjModel * m, mjData * d, const mjtNum * state, unsigned int sig) {
   mj_setState(m, d, state, sig);
 }
 
@@ -605,7 +577,7 @@ MJWF_API_IMPL mjtNum * mjwf_mj_stackAllocNum(mjData * d, size_t size) {
   return mj_stackAllocNum(d, size);
 }
 
-MJWF_API_IMPL int mjwf_mj_stateSize(const mjModel * m, int sig) {
+MJWF_API_IMPL int mjwf_mj_stateSize(const mjModel * m, unsigned int sig) {
   return mj_stateSize(m, sig);
 }
 
@@ -631,10 +603,6 @@ MJWF_API_IMPL void mjwf_mj_tendon(const mjModel * m, mjData * d) {
 
 MJWF_API_IMPL void mjwf_mj_transmission(const mjModel * m, mjData * d) {
   mj_transmission(m, d);
-}
-
-MJWF_API_IMPL int mjwf_mj_unmountVFS(mjVFS * vfs, const char * filename) {
-  return mj_unmountVFS(vfs, filename);
 }
 
 MJWF_API_IMPL int mjwf_mj_version(void) {
@@ -1321,10 +1289,6 @@ MJWF_API_IMPL mjtNum mjwf_mju_clip(mjtNum x, mjtNum min, mjtNum max) {
   return mju_clip(x, min, max);
 }
 
-MJWF_API_IMPL void mjwf_mju_closeResource(mjResource * resource) {
-  mju_closeResource(resource);
-}
-
 MJWF_API_IMPL void mjwf_mju_copy(mjtNum * res, const mjtNum * vec, int n) {
   mju_copy(res, vec, n);
 }
@@ -1347,10 +1311,6 @@ MJWF_API_IMPL void mjwf_mju_d2n(mjtNum * res, const double * vec, int n) {
 
 MJWF_API_IMPL void mjwf_mju_decodePyramid(mjtNum * force, const mjtNum * pyramid, const mjtNum * mu, int dim) {
   mju_decodePyramid(force, pyramid, mu, dim);
-}
-
-MJWF_API_IMPL mjSpec * mjwf_mju_decodeResource(mjResource * resource, const char * content_type, const mjVFS * vfs) {
-  return mju_decodeResource(resource, content_type, vfs);
 }
 
 MJWF_API_IMPL void mjwf_mju_defaultTask(mjTask * task) {
@@ -1421,10 +1381,6 @@ MJWF_API_IMPL void mjwf_mju_free(void * ptr) {
   mju_free(ptr);
 }
 
-MJWF_API_IMPL void mjwf_mju_getResourceDir(mjResource * resource, const char * * dir, int * ndir) {
-  mju_getResourceDir(resource, dir, ndir);
-}
-
 MJWF_API_IMPL void mjwf_mju_getXMLDependencies(const char * filename, mjStringVec * dependencies) {
   mju_getXMLDependencies(filename, dependencies);
 }
@@ -1439,10 +1395,6 @@ MJWF_API_IMPL void mjwf_mju_insertionSortInt(int * list, int n) {
 
 MJWF_API_IMPL int mjwf_mju_isBad(mjtNum x) {
   return mju_isBad(x);
-}
-
-MJWF_API_IMPL int mjwf_mju_isModifiedResource(const mjResource * resource, const char * timestamp) {
-  return mju_isModifiedResource(resource, timestamp);
 }
 
 MJWF_API_IMPL int mjwf_mju_isZero(const mjtNum * vec, int n) {
@@ -1561,10 +1513,6 @@ MJWF_API_IMPL mjtNum mjwf_mju_normalize4(mjtNum vec[4]) {
   return mju_normalize4(vec);
 }
 
-MJWF_API_IMPL mjResource * mjwf_mju_openResource(const char * dir, const char * name, const mjVFS * vfs, char * error, size_t nerror) {
-  return mju_openResource(dir, name, vfs, error, nerror);
-}
-
 MJWF_API_IMPL void mjwf_mju_printMat(const mjtNum * mat, int nr, int nc) {
   mju_printMat(mat, nr, nc);
 }
@@ -1589,16 +1537,16 @@ MJWF_API_IMPL void mjwf_mju_quatZ2Vec(mjtNum quat[4], const mjtNum vec[3]) {
   mju_quatZ2Vec(quat, vec);
 }
 
-MJWF_API_IMPL mjtNum mjwf_mju_rayGeom(const mjtNum pos[3], const mjtNum mat[9], const mjtNum size[3], const mjtNum pnt[3], const mjtNum vec[3], int geomtype, mjtNum normal[3]) {
-  return mju_rayGeom(pos, mat, size, pnt, vec, geomtype, normal);
+MJWF_API_IMPL mjtNum mjwf_mju_rayFlex(const mjModel * m, const mjData * d, int flex_layer, mjtByte flg_vert, mjtByte flg_edge, mjtByte flg_face, mjtByte flg_skin, int flexid, const mjtNum pnt[3], const mjtNum vec[3], int vertid[1]) {
+  return mju_rayFlex(m, d, flex_layer, flg_vert, flg_edge, flg_face, flg_skin, flexid, pnt, vec, vertid);
+}
+
+MJWF_API_IMPL mjtNum mjwf_mju_rayGeom(const mjtNum pos[3], const mjtNum mat[9], const mjtNum size[3], const mjtNum pnt[3], const mjtNum vec[3], int geomtype) {
+  return mju_rayGeom(pos, mat, size, pnt, vec, geomtype);
 }
 
 MJWF_API_IMPL mjtNum mjwf_mju_raySkin(int nface, int nvert, const int * face, const float * vert, const mjtNum pnt[3], const mjtNum vec[3], int vertid[1]) {
   return mju_raySkin(nface, nvert, face, vert, pnt, vec, vertid);
-}
-
-MJWF_API_IMPL int mjwf_mju_readResource(mjResource * resource, const void * * buffer) {
-  return mju_readResource(resource, buffer);
 }
 
 MJWF_API_IMPL void mjwf_mju_rotVecQuat(mjtNum res[3], const mjtNum vec[3], const mjtNum quat[4]) {
