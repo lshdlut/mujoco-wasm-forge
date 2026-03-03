@@ -982,6 +982,11 @@ def _sanitize_meta(dist_dir: Path) -> None:
         text,
     )
     text = re.sub(
+        r'"clang": *"[^"]*"',
+        '"clang": "NORMALIZED_CLANG"',
+        text,
+    )
+    text = re.sub(
         r'"header": *"[^"]*"',
         '"header": "NORMALIZED_HEADER"',
         text,
