@@ -1,8 +1,15 @@
 # mujoco-wasm-forge documentation
 
-`mujoco-wasm-forge` is a toolchain for producing MuJoCo WebAssembly builds and keeping their exports/ABI under control.
-It builds a specific upstream MuJoCo ref into `dist/<ver>/mujoco.js` + `dist/<ver>/mujoco.wasm`, plus audit artifacts
-under `dist/<ver>/abi/`.
+`mujoco-wasm-forge` is a **reproducible MuJoCo→WebAssembly toolchain** that keeps the exported ABI as an explicit,
+auditable contract. It builds a specific upstream MuJoCo ref into `dist/<ver>/mujoco.js` + `dist/<ver>/mujoco.wasm`,
+plus ABI artifacts under `dist/<ver>/abi/`.
+
+**Jump to**
+- Quickstart: `quickstart`
+- How-to: `howto_build_version`
+- ABI contract: `reference_abi_contract`
+- Bench: `bench`
+- Simulate-style demo: `mujoco-wasm-play` ([GitHub](https://github.com/lshdlut/mujoco-wasm-play))
 
 ## 30-second summary
 
@@ -65,6 +72,7 @@ reference_env_vars
 reference_dist_layout
 reference_abi_contract
 reference_checks_gates
+bench
 supported_versions
 glossary
 ```
@@ -79,4 +87,3 @@ developer_add_version
 developer_modify_generation
 developer_ci_release
 ```
-

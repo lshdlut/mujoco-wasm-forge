@@ -2,39 +2,58 @@
 
 中文 | [English](README.md)
 
-## 概览
+## 这是什么
 
-mujoco-wasm-forge 是生成 MuJoCo WASM 包并验证其导出的流水线。若要为某个版本构建，推荐在仓库根目录运行 `python forge_cli.py build --version <mjver>`。该 CLI 会准备好 `dist/<ver>`，依次走完 introspect、ABI、导出、Emscripten 构建以及门控检查。`dist_version.py` 与 `check/dist_paths.mjs` 会告诉其他脚本当前生效的是哪一套 `dist/<ver>`，让整个流水线在不同版本间切换时无需额外改动。
+`mujoco-wasm-forge` 是一套 **可复现的 MuJoCo→WebAssembly 构建流水线**，把“导出 ABI”当作可审计契约来管理。
+它输出稳定命名的运行时产物（`mujoco.js` / `mujoco.wasm`），并在 `dist/<ver>/abi/` 下产出 ABI 审计材料。
 
-如需构建线程版本，可使用 `--pthreads`。线程版运行时产物会写到 `dist/<ver>/pthreads/`（ABI 仍共用 `dist/<ver>/abi/`）。
+它面向 **Simulate-style** 的 Web 应用（通过 `mujoco-wasm-play`），同时保证升级时能清楚看到：header、wrapper、exports、实现符号到底改了什么。
 
-## 自动化运行入口
+## 快速开始
 
-根目录下的 `forge_cli.py` 会接管从 prepare、introspect、ABI 生成、`emcmake` 构建、`check/post_build.sh` 到可选 smoke/mesh/gates 测试的全部步骤，并且只需传入 `--version`（可选 `--short` 与 `--with-checks`）。通过 `python forge_cli.py build --version 3.3.7 --with-checks`（或目标 MuJoCo 版本）即可在本地或 CI 中复刻完整的、版本无关流程。
+```bash
+python forge_cli.py build --version 3.5.0 --with-checks
+```
 
-## 版本切换
+产物位置：
+- `dist/3.5.0/mujoco.js`, `dist/3.5.0/mujoco.wasm`
+- `dist/3.5.0/abi/exports.lst` 等 ABI 产物
+- 可选 pthreads 运行时：`dist/3.5.0/pthreads/`
 
-切换目标 MuJoCo 版本只需运行 `python forge_cli.py build --version <mjver>`。该命令会拉取或检出对应的 `external/mujoco` 版本，依次执行 introspect、ABI、导出、构建并将结果写入 `dist/<ver>`。`dist_version.py`、`check/dist_paths.mjs` 与 `check/tests/*.mjs` 都会基于 `MJVER`/`DIST_VERSION` 或已存在的 `dist/<ver>` 读取版本，因而后续的校验逻辑直接消费同一目录。需要快速复核时，在现有 dist 下执行 `node check/tests/*.mjs` 即可，它们会自动使用当前版本。
+## 为什么需要 forge
 
-### 设计思想
+- **导出可控**：`dist/<ver>/abi/exports.lst` 作为唯一导出清单（传给 `-sEXPORTED_FUNCTIONS=@...`）。
+- **ABI 可审计**：`dist/<ver>/abi/` 同时保存 introspect、wrapper、`nm` 视角，升级差异可解释可复核。
+- **变体不改对外命名**：`dist/<ver>/mujoco.{js,wasm}`（single）与 `dist/<ver>/pthreads/mujoco.{js,wasm}`（pthreads）。
+- **默认带插件**（例如 `mujoco.sensor.touch_grid`），避免 Simulate 工作负载“静默退化”。
+- **质量门控**：smoke + mesh-smoke + 导出/ABI 检查可在本地与 CI 中跑。
 
-- **自动化主导** – introspect、ABI 生成以及导出检查工具自动产出 JSON/源代码，确保每个阶段只消费上一个阶段的权威产物，无需人工干预。
-- **版本无依赖** – 切换到任何 MuJoCo 版本只需设置 `MJVER`/`DIST_VERSION`（或在 `dist/` 下准备对应目录），所有脚本会自动对齐该目录。
-- **扁平导出（A ∩ B = C）** – `abi_exports/gen_funcs.py` 同时输出 A（introspect 声明）、B（`nm_symbols.json` 实现）和 C（wrapper）集合，`exports.lst` 作为 `-sEXPORTED_FUNCTIONS=@dist/<ver>/abi/exports.lst` 的输入，给链接器提供完整的可控导出列表。
-- **ABI 门控** – `check/post_build.sh`、`check/check_exports.mjs` 与 smoke/mesh/gates 脚本统一读取上述导出清单，以 A/B/C 差异及时发现接口变更。
+## 官方 embind vs forge（要点快照）
 
-## 流程
+下面是一个“你实际会拿到什么”的视角。具体测量数据请看 `bench/results/summary.md`。
 
-- **构建** – 在 WSL 中使用 Node ≥20 和 emsdk 4.0.10，通过 `emcmake`/`em++` 将 MuJoCo 与自动生成的封装、`MJWF_PROFILE` 配置链接，传入 `-sEXPORTED_FUNCTIONS=@dist/<ver>/abi/exports.lst`，输出 `dist/<ver>/mujoco.js` 与 `.wasm`。
-- **Introspect** – `introspect/forge/scan_clang_introspect.py` 为 `external/mujoco/include/mujoco/mujoco.h` 生成 clang AST，调用官方 introspect codegen 生成 `FUNCTIONS/STRUCTS/ENUMS`，并将结果写成 JSON 存入 `dist/<ver>/abi/`。
-- **ABI 实现** – `abi_exports/gen_structs.py` 依据 `structs_introspect_like.json` 产出 `mjwf_abi_structs.*` 与 `mjwf_abi_structs.lst`。`abi_exports/gen_funcs.py` 把 introspect 声明、`nm_symbols.json`、额外导出整合成 `mjwf_abi_funcs.*`、`wrapper_exports_funcs.json` 与 `exports.lst`。
-- **ABI 导出** – `check/post_build.sh` 验证 `wrapper_exports.json`、`exports_check.json` 和可选 `nm_coverage.json` 与本地构建一致，并让 `check_exports.mjs` 使用该 manifest，保障导出符号符合 A/B/C 关系。
-- **App 层** – `app/` 中含自动生成包装、`mjwf_handles.c`、`mjwf_stubs.c`，CMake 将它们与 MuJoCo 源码编译成 `_wasm/mjwasm_forge.js`，导出 `mjwf_*` API。
-- **校验** – `check/tests` 下的 `smoke.mjs`、`mesh-smoke.mjs`、`gates.mjs` 统一调用 `distDir()`/`distVersion()`，CI 在构建后运行这些脚本，验证导出、smoke/mesh 运行及质量门与 `exports.lst`、nm 扫描保持一致。
+| 维度 | 官方 embind（MuJoCo wasm/） | Forge |
+| --- | --- | --- |
+| 导出契约 | Embind 生成的 JS API；不产出 `exports.lst` | 显式 `dist/<ver>/abi/exports.lst` 驱动 `-sEXPORTED_FUNCTIONS` |
+| ABI 审计产物 | 不随构建产出一个可审计包 | `dist/<ver>/abi/*`（introspect、wrappers、`nm` 视角、报告） |
+| 线程默认（3.5.0） | `-pthread` + `PTHREAD_POOL_SIZE=navigator.hardwareConcurrency` | single 版本仍是一级产物；pthreads 作为可选变体 |
+| 插件可用性（touch_grid） | 我们的 3.4.0/3.5.0 embind 构建中缺失 | 默认包含 |
+
+## Bench（官方 embind vs forge + Play/Simulate HUD）
+
+Bench 工具与汇总结果：
+- `bench/README.md`
+- `bench/results/summary.md`（由 `node bench/node/report.mjs` 生成）
+
+## 流程（概览）
+
+- 入口：`forge_cli.py`（`prepare → introspect → ABI → build → post-build checks`）。
+- 输出：`dist/<ver>/mujoco.{js,wasm}` + `dist/<ver>/abi/*`。
+- 可选 pthreads 运行时：`dist/<ver>/pthreads/`（ABI 仍共用 `dist/<ver>/abi/`）。
 
 ## 备注
 
-- 前端示例（进行中）：https://github.com/lshdlut/mujoco-wasm-play
+- Simulate-style Web demo / 下游使用方：https://github.com/lshdlut/mujoco-wasm-play
 
 ## 致谢
 

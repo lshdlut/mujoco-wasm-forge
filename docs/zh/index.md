@@ -1,7 +1,14 @@
 # mujoco-wasm-forge 文档
 
-`mujoco-wasm-forge` 是一套用于生成 MuJoCo WebAssembly 构建产物，并把导出符号/ABI 变成“可控、可审计”的工具链。
-它会把指定的上游 MuJoCo ref 构建成 `dist/<ver>/mujoco.js` + `dist/<ver>/mujoco.wasm`，并在 `dist/<ver>/abi/` 下产出审计产物。
+`mujoco-wasm-forge` 是一套 **可复现的 MuJoCo→WebAssembly 工具链**，把“导出 ABI”作为显式、可审计的契约来管理。
+它会把指定的上游 MuJoCo ref 构建成 `dist/<ver>/mujoco.js` + `dist/<ver>/mujoco.wasm`，并在 `dist/<ver>/abi/` 下产出 ABI 审计产物。
+
+**快速入口**
+- Quickstart：`quickstart`
+- How-to：`howto_build_version`
+- ABI 契约：`reference_abi_contract`
+- Bench：`bench`
+- Simulate-style demo：`mujoco-wasm-play`（[GitHub](https://github.com/lshdlut/mujoco-wasm-play)）
 
 ## 给使用者的 30 秒版本
 
@@ -64,6 +71,7 @@ reference_env_vars
 reference_dist_layout
 reference_abi_contract
 reference_checks_gates
+bench
 supported_versions
 glossary
 ```
@@ -78,4 +86,3 @@ developer_add_version
 developer_modify_generation
 developer_ci_release
 ```
-
