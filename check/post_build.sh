@@ -3,12 +3,13 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: scripts/ci/post_build.sh --version <mjver> --short <short>" >&2
+  echo "Usage: scripts/ci/post_build.sh --version <mjver> --short <short> [--variant <name>]" >&2
   exit 2
 }
 
 MJVER=""
 SHORT=""
+VARIANT=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,6 +23,11 @@ while [[ $# -gt 0 ]]; do
       SHORT="$2"
       shift 2
       ;;
+    --variant)
+      [[ $# -ge 2 ]] || usage
+      VARIANT="$2"
+      shift 2
+      ;;
     *)
       usage
       ;;
@@ -31,8 +37,12 @@ done
 [[ -n "$MJVER" && -n "$SHORT" ]] || usage
 
 ABI_DIR="dist/${MJVER}/abi"
-DIST_JS="dist/${MJVER}/mujoco.js"
-DIST_WASM="dist/${MJVER}/mujoco.wasm"
+DIST_ROOT="dist/${MJVER}"
+if [[ -n "${VARIANT}" ]]; then
+  DIST_ROOT="dist/${MJVER}/${VARIANT}"
+fi
+DIST_JS="${DIST_ROOT}/mujoco.js"
+DIST_WASM="${DIST_ROOT}/mujoco.wasm"
 LIBMUJOCO="build/${SHORT}/lib/libmujoco.a"
 NODE_BIN="${NODE:-node}"
 
@@ -46,10 +56,16 @@ if [[ ! -f "${EXPECTED_JSON}" ]]; then
   EXPECTED_JSON="${ABI_DIR}/wrapper_exports_funcs.json"
 fi
 
+EXPORTS_CHECK_OUT="${ABI_DIR}/exports_check.json"
+if [[ -n "${VARIANT}" ]]; then
+  EXPORTS_CHECK_OUT="${ABI_DIR}/exports_check.${VARIANT}.json"
+fi
+
 "${NODE_BIN}" check/check_exports.mjs \
   --abi "${ABI_DIR}" \
   --wasm "${DIST_WASM}" \
-  --expected "${EXPECTED_JSON}"
+  --expected "${EXPECTED_JSON}" \
+  --out "${EXPORTS_CHECK_OUT}"
 
 if [[ -f "$LIBMUJOCO" ]]; then
   "${NODE_BIN}" abi_impl/nm_coverage.mjs \

@@ -5,9 +5,13 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import fs from 'node:fs';
 import { distDir, distVersion } from '../dist_paths.mjs';
+import { ensureNodeEnv } from './node_env.mjs';
 
-const wasmPath = path.join(distDir(), 'mujoco.wasm');
-const jsPath = path.join(distDir(), 'mujoco.js');
+ensureNodeEnv();
+
+const distRoot = distDir();
+const wasmPath = path.join(distRoot, 'mujoco.wasm');
+const jsPath = path.join(distRoot, 'mujoco.js');
 const versionLabel = distVersion();
 console.log(`quality gates: using dist/${versionLabel}`);
 
@@ -26,7 +30,13 @@ if (!wasmSize || !jsSize) {
 
 const modFactory = (await import(pathToFileURL(jsPath).href)).default;
 const t0 = Date.now();
-await modFactory({ locateFile: (p) => (p.endsWith('.wasm') ? wasmPath : p) });
+await modFactory({
+  locateFile: (p) => {
+    if (p.endsWith(".wasm")) return wasmPath;
+    const cand = path.join(distRoot, p);
+    return fs.existsSync(cand) ? cand : p;
+  },
+});
 const initMs = Date.now() - t0;
 
 const breaches = [];

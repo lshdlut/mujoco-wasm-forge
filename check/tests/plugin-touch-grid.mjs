@@ -3,9 +3,13 @@ import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { distDir, distVersion } from "../dist_paths.mjs";
+import { ensureNodeEnv } from "./node_env.mjs";
 
-const wasmURL = path.join(distDir(), "mujoco.wasm");
-const jsURL = path.join(distDir(), "mujoco.js");
+ensureNodeEnv();
+
+const distRoot = distDir();
+const wasmURL = path.join(distRoot, "mujoco.wasm");
+const jsURL = path.join(distRoot, "mujoco.js");
 
 const versionLabel = distVersion();
 console.log(`plugin-touch-grid: using dist/${versionLabel}`);
@@ -14,7 +18,12 @@ assert.ok(fs.existsSync(jsURL), `dist/${versionLabel}/mujoco.js missing`);
 assert.ok(fs.existsSync(wasmURL), `dist/${versionLabel}/mujoco.wasm missing`);
 
 const modFactory = (await import(pathToFileURL(jsURL).href)).default;
-const Module = await modFactory({ locateFile: (p) => (p.endsWith(".wasm") ? wasmURL : p) });
+const locateFile = (p) => {
+  if (p.endsWith(".wasm")) return wasmURL;
+  const cand = path.join(distRoot, p);
+  return fs.existsSync(cand) ? cand : p;
+};
+const Module = await modFactory({ locateFile });
 if (Module.ready) await Module.ready;
 
 const parseXMLString = Module.cwrap(
@@ -69,4 +78,3 @@ deleteModel(modelPtr);
 Module.stackRestore(stackTop);
 
 console.log("touch_grid plugin OK");
-

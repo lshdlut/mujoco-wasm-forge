@@ -7,6 +7,7 @@ const repoRoot = path.resolve(__dirname, '..');
 const distRoot = path.join(repoRoot, 'dist');
 
 let cachedVersion = null;
+let cachedVariant = null;
 
 function listDistVersions() {
   if (!fs.existsSync(distRoot)) {
@@ -35,11 +36,25 @@ function resolveDistVersion() {
   return cachedVersion;
 }
 
-function distDir(version) {
+function resolveDistVariant() {
+  if (cachedVariant !== null) return cachedVariant;
+  const raw = process.env.MJWF_DIST_VARIANT ?? process.env.DIST_VARIANT ?? '';
+  cachedVariant = raw.trim();
+  return cachedVariant;
+}
+
+function distDir(version, variant) {
   const ver = version ?? resolveDistVersion();
-  const dir = path.join(distRoot, ver);
+  const base = path.join(distRoot, ver);
+  if (!fs.existsSync(base) || !fs.statSync(base).isDirectory()) {
+    throw new Error(`Dist directory not found for version "${ver}" (expected at ${base}).`);
+  }
+
+  const v = (variant ?? resolveDistVariant()).trim();
+  const dir = v ? path.join(base, v) : base;
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
-    throw new Error(`Dist directory not found for version "${ver}" (expected at ${dir}).`);
+    const suffix = v ? `/${v}` : '';
+    throw new Error(`Dist directory not found for version "${ver}${suffix}" (expected at ${dir}).`);
   }
   return dir;
 }

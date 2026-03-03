@@ -28,6 +28,7 @@ scripts\mujoco_abi\introspect\__pycache__
 ## Tests temp files
 tests/tmp_model.xml
 test-results/
+.playwright-cli/
 
 ## Internal files (must never be committed)
 AGENTS.md

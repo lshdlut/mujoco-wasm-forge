@@ -52,17 +52,24 @@ const ALLOWED_RUNTIME = new Set([
   '_strerror',
 ]);
 
+const ALLOWED_RUNTIME_PREFIXES = [
+  // WebAssembly threads / runtime support exports injected by Emscripten when linking with -pthread.
+  "_emscripten_",
+];
+
 function parseArgs(argv) {
   const opts = {
     abiDir: null,
     expectedJson: null,
     wasmPath: null,
+    outPath: null,
   };
   for (let i = 2; i < argv.length; ++i) {
     const arg = argv[i];
     if (arg === '--abi') opts.abiDir = pathResolve(argv[++i]);
     else if (arg === '--expected') opts.expectedJson = pathResolve(argv[++i]);
     else if (arg === '--wasm') opts.wasmPath = pathResolve(argv[++i]);
+    else if (arg === '--out') opts.outPath = pathResolve(argv[++i]);
     else {
       console.error(`Unknown argument: ${arg}`);
       process.exit(2);
@@ -116,6 +123,8 @@ function main() {
     }
     if (runtimeKeep.has(norm) || runtimeKeep.has(rawName)) continue;
     if (ALLOWED_RUNTIME.has(norm) || ALLOWED_RUNTIME.has(rawName)) continue;
+    if (ALLOWED_RUNTIME_PREFIXES.some((prefix) => rawName.startsWith(prefix))) continue;
+    if (rawName === "pthread_self") continue;
     if (/^_?mj(v|r|ui|p|c)_/.test(rawName)) {
       forbiddenPrefixExports.add(rawName);
       continue;
@@ -147,8 +156,8 @@ function main() {
     ok: missingRequired.length === 0 && unexpectedList.length === 0 && forbiddenList.length === 0,
   };
 
-  ensureDir(opts.abiDir);
-  const outPath = pathJoin(opts.abiDir, 'exports_check.json');
+  const outPath = opts.outPath ?? pathJoin(opts.abiDir, 'exports_check.json');
+  ensureDir(dirname(outPath));
   writeFileSync(outPath, JSON.stringify(report, null, 2));
   console.log(`[exports-check] wrote ${outPath}`);
   console.log(`[exports-check] status ok=${report.ok}`);
