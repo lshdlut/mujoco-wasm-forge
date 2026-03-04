@@ -46,6 +46,7 @@ quickstart
 :caption: 用户指南
 
 user_guide_overview
+bench
 user_guide_pipeline
 user_guide_artifacts
 user_guide_compatibility
@@ -72,7 +73,6 @@ reference_env_vars
 reference_dist_layout
 reference_abi_contract
 reference_checks_gates
-bench
 supported_versions
 glossary
 ```

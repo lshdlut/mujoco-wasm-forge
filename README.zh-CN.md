@@ -2,6 +2,8 @@
 
 中文 | [English](README.md)
 
+RTD: [EN](https://mujoco-wasm-forge.readthedocs.io/en/latest/) | [中文](https://mujoco-wasm-forge.readthedocs.io/zh-cn/latest/index.html)
+
 ## 这是什么
 
 `mujoco-wasm-forge` 是一套 **可复现的 MuJoCo→WebAssembly 构建流水线**，把“导出 ABI”当作可审计契约来管理。

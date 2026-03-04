@@ -2,6 +2,8 @@
 
 English | [简体中文](README.zh-CN.md)
 
+RTD: [EN](https://mujoco-wasm-forge.readthedocs.io/en/latest/) | [中文](https://mujoco-wasm-forge.readthedocs.io/zh-cn/latest/index.html)
+
 ## What it is
 
 `mujoco-wasm-forge` is a **reproducible MuJoCo→WebAssembly build pipeline** that treats the exported ABI as a first-class, auditable contract.
