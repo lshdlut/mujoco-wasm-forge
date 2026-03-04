@@ -68,6 +68,34 @@ function rssBytes() {
   return process.memoryUsage().rss;
 }
 
+function startRssSampler({ intervalMs = 20 } = {}) {
+  let peak = rssBytes();
+  const timer = setInterval(() => {
+    const r = rssBytes();
+    if (r > peak) peak = r;
+  }, intervalMs);
+  return {
+    stop: () => {
+      clearInterval(timer);
+      const r = rssBytes();
+      if (r > peak) peak = r;
+      return { rssPeakBytes: peak };
+    },
+  };
+}
+
+function benchFnCalls(fn, calls) {
+  let acc = 0;
+  const t0 = performance.now();
+  for (let i = 0; i < calls; i += 1) {
+    // eslint-disable-next-line no-bitwise
+    acc = (acc + (fn() | 0)) | 0;
+  }
+  const dt = performance.now() - t0;
+  const nsPerCall = (dt / calls) * 1e6;
+  return { calls, totalMs: dt, nsPerCall, acc };
+}
+
 function ensureFsDir(Module, fsDir) {
   if (Module.FS.analyzePath(fsDir).exists) return;
   if (typeof Module.FS.mkdirTree === 'function') {
@@ -145,12 +173,16 @@ function benchSteps(stepFn, modelPtr, dataPtr, count) {
   return { stepCount: count, stepMs: dt, stepsPerSec: (count / dt) * 1000.0 };
 }
 
+function nowMs() {
+  return performance.now();
+}
+
 async function loadModule(distRoot) {
   ensureNavigator();
   const jsPath = path.join(distRoot, 'mujoco.js');
   const wasmPath = path.join(distRoot, 'mujoco.wasm');
   const modFactory = (await import(pathToFileURL(jsPath).href)).default;
-  const t0 = performance.now();
+  const t0 = nowMs();
   const Module = await modFactory({
     locateFile: (p) => {
       if (p.endsWith('.wasm')) return wasmPath;
@@ -159,7 +191,7 @@ async function loadModule(distRoot) {
     },
   });
   if (Module.ready) await Module.ready;
-  const initMs = performance.now() - t0;
+  const initMs = nowMs() - t0;
   return { Module, initMs };
 }
 
@@ -180,43 +212,100 @@ function discoverPlayRoot(explicit) {
   return fs.existsSync(path.join(sibling, 'model')) ? sibling : '';
 }
 
+function makeFsStager(Module) {
+  const staged = new Set();
+  return {
+    stageFileOnce: (id, hostPath, fsPath) => {
+      if (staged.has(id)) return 0;
+      const ms = stageHostFileToFS(Module, hostPath, fsPath);
+      staged.add(id);
+      return ms;
+    },
+    stageDirOnce: (id, hostDir, fsDir) => {
+      if (staged.has(id)) return 0;
+      const ms = stageHostDirToFS(Module, hostDir, fsDir);
+      staged.add(id);
+      return ms;
+    },
+  };
+}
+
+function benchOneHandleModel(fns, { fsMountMs = null, fsCopyMs = null, pathInFs, stepCount }) {
+  const t0 = nowMs();
+  const h = fns.makeFromXml(pathInFs) | 0;
+  const compileMs = nowMs() - t0;
+  const errno = fns.errnoLast() | 0;
+  const errmsg = fns.errmsgLast() ?? '';
+  if (h <= 0) {
+    return { status: 'error', fsMountMs, fsCopyMs, compileMs, errno, errmsg };
+  }
+  const mp = fns.modelPtrOf(h);
+  const dp = fns.dataPtrOf(h);
+  const tFirst0 = nowMs();
+  fns.step(mp, dp);
+  const firstStepMs = nowMs() - tFirst0;
+  const stepped = benchSteps(fns.step, mp, dp, stepCount);
+  fns.freeHandle(h);
+  return {
+    status: 'ok',
+    fsMountMs,
+    fsCopyMs,
+    compileMs,
+    firstStepMs,
+    ttfsMs: compileMs + firstStepMs + (fsCopyMs ?? 0),
+    errno,
+    errmsg,
+    ...stepped,
+  };
+}
+
 async function main() {
   const { dist, label, playRoot: playRootRaw } = parseArgs(process.argv.slice(2));
   const distRoot = path.resolve(dist);
   const distSizes = collectDistSizes(distRoot);
 
-  const rssBefore = rssBytes();
-  const { Module, initMs } = await loadModule(distRoot);
-  const rssAfterInit = rssBytes();
+  const rssSampler = startRssSampler();
+  let results = null;
+  try {
+    const rssBefore = rssBytes();
+    const { Module, initMs } = await loadModule(distRoot);
+    const rssAfterInit = rssBytes();
 
-  const wasmMemBytes = Module.HEAPU8?.buffer?.byteLength ?? 0;
-  const fns = makeFromXmlFns(Module);
+    const wasmMemBytes = Module.HEAPU8?.buffer?.byteLength ?? 0;
+    const fns = makeFromXmlFns(Module);
+    const stager = makeFsStager(Module);
 
-  const results = {
-    schemaVersion: 1,
-    kind: 'node',
-    target: 'forge',
-    label,
-    distRoot,
-    distSizes,
-    env: {
-      timestamp: new Date().toISOString(),
-      node: process.version,
-      platform: process.platform,
-      arch: process.arch,
-      cpus: os.cpus().length,
-    },
-    metrics: {
-      initMs,
-      wasmMemBytes,
-      rssBefore,
-      rssAfterInit,
-      rssAfterBench: null,
-    },
-    models: {},
-  };
+    results = {
+      schemaVersion: 1,
+      kind: 'node',
+      target: 'forge',
+      label,
+      distRoot,
+      distSizes,
+      env: {
+        timestamp: new Date().toISOString(),
+        node: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        cpus: os.cpus().length,
+      },
+      metrics: {
+        initMs,
+        wasmMemBytes,
+        rssBefore,
+        rssAfterInit,
+        rssPeakBytes: null,
+        rssAfterBench: null,
+        ffi: {},
+        reload: {},
+      },
+      models: {},
+    };
 
-  const pendulumXml = `<?xml version="1.0"?>
+    const mjVersion = Module.cwrap('mjwf_mj_version', 'number', []);
+    results.metrics.ffi.mj_version = benchFnCalls(mjVersion, 1_000_000);
+
+    const pendulumXml = `<?xml version="1.0"?>
 <mujoco model="pendulum">
   <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
@@ -226,39 +315,30 @@ async function main() {
     </body>
   </worldbody>
 </mujoco>`;
-  const pendulumPath = '/bench/pendulum.xml';
-  const tPendFs0 = performance.now();
-  writeTextFileToFS(Module, pendulumPath, pendulumXml);
-  const pendulumFsMs = performance.now() - tPendFs0;
-
-  const tPend0 = performance.now();
-  const pendH = fns.makeFromXml(pendulumPath) | 0;
-  const pendCompileMs = performance.now() - tPend0;
-  const pendErrno = fns.errnoLast() | 0;
-  const pendErrmsg = fns.errmsgLast() ?? '';
-  if (pendH > 0) {
-    const m = fns.modelPtrOf(pendH);
-    const d = fns.dataPtrOf(pendH);
-    results.models.pendulum = {
-      status: 'ok',
+    const pendulumPath = '/bench/pendulum.xml';
+    const tPendFs0 = nowMs();
+    writeTextFileToFS(Module, pendulumPath, pendulumXml);
+    const pendulumFsMs = nowMs() - tPendFs0;
+    results.models.pendulum = benchOneHandleModel(fns, {
       fsCopyMs: pendulumFsMs,
-      compileMs: pendCompileMs,
-      errno: pendErrno,
-      errmsg: pendErrmsg,
-      ...benchSteps(fns.step, m, d, 20_000),
-    };
-    fns.freeHandle(pendH);
-  } else {
-    results.models.pendulum = {
-      status: 'error',
-      fsCopyMs: pendulumFsMs,
-      compileMs: pendCompileMs,
-      errno: pendErrno,
-      errmsg: pendErrmsg,
-    };
-  }
+      pathInFs: pendulumPath,
+      stepCount: 20_000,
+    });
 
-  const touchXml = `<?xml version="1.0"?>
+    {
+      const helperValid = Module.cwrap('mjwf_helper_valid', 'number', ['number']);
+      const modelNq = Module.cwrap('mjwf_model_nq', 'number', ['number']);
+      const h = fns.makeFromXml(pendulumPath) | 0;
+      if (h <= 0) {
+        throw new Error(`ffi(pendulum): make_from_xml returned ${h}; errno=${fns.errnoLast()} msg=${String(fns.errmsgLast() || '')}`);
+      }
+      results.metrics.ffi.helper_valid = benchFnCalls(() => helperValid(h), 1_000_000);
+      results.metrics.ffi.helper_model_ptr = benchFnCalls(() => fns.modelPtrOf(h), 1_000_000);
+      results.metrics.ffi.model_nq = benchFnCalls(() => modelNq(h), 1_000_000);
+      fns.freeHandle(h);
+    }
+
+    const touchXml = `<?xml version="1.0"?>
 <mujoco model="touch_grid_smoke">
   <compiler autolimits="true"/>
   <extension>
@@ -279,155 +359,132 @@ async function main() {
     </plugin>
   </sensor>
 </mujoco>`;
-  const touchPath = '/bench/touch_grid.xml';
-  const tTouchFs0 = performance.now();
-  writeTextFileToFS(Module, touchPath, touchXml);
-  const touchFsMs = performance.now() - tTouchFs0;
+    const touchPath = '/bench/touch_grid.xml';
+    const tTouchFs0 = nowMs();
+    writeTextFileToFS(Module, touchPath, touchXml);
+    const touchFsMs = nowMs() - tTouchFs0;
+    results.models.touch_grid = benchOneHandleModel(fns, {
+      fsCopyMs: touchFsMs,
+      pathInFs: touchPath,
+      stepCount: 1,
+    });
 
-  const tTouch0 = performance.now();
-  const touchH = fns.makeFromXml(touchPath) | 0;
-  const touchCompileMs = performance.now() - tTouch0;
-  const touchErrno = fns.errnoLast() | 0;
-  const touchErrmsg = fns.errmsgLast() ?? '';
-  if (touchH > 0) fns.freeHandle(touchH);
-  results.models.touch_grid = {
-    status: touchH > 0 ? 'ok' : 'error',
-    fsCopyMs: touchFsMs,
-    compileMs: touchCompileMs,
-    errno: touchErrno,
-    errmsg: touchErrmsg,
-  };
-
-  const hostMjModelDir = path.resolve('external/mujoco/model');
-  const hostBunny = path.join(hostMjModelDir, 'flex', 'bunny.xml');
-  if (fs.existsSync(hostBunny)) {
-    const mount = mountNodefsIfAvailable(Module, '/host_mj_model', hostMjModelDir);
-    let bunnyPath = '/host_mj_model/flex/bunny.xml';
-    let bunnyFsCopyMs = null;
-    if (!mount.mounted) {
-      const hostFlexDir = path.join(hostMjModelDir, 'flex');
-      const fsFlexDir = '/bench/mj_model/flex';
-      const tStage0 = performance.now();
-      stageHostFileToFS(Module, path.join(hostFlexDir, 'bunny.xml'), `${fsFlexDir}/bunny.xml`);
-      stageHostFileToFS(Module, path.join(hostFlexDir, 'scene.xml'), `${fsFlexDir}/scene.xml`);
-      stageHostFileToFS(Module, path.join(hostFlexDir, 'asset', 'bunny.obj'), `${fsFlexDir}/asset/bunny.obj`);
-      bunnyFsCopyMs = performance.now() - tStage0;
-      bunnyPath = `${fsFlexDir}/bunny.xml`;
-    }
-    const tBunny0 = performance.now();
-    const bunnyH = fns.makeFromXml(bunnyPath) | 0;
-    const bunnyCompileMs = performance.now() - tBunny0;
-    const bunnyErrno = fns.errnoLast() | 0;
-    const bunnyErrmsg = fns.errmsgLast() ?? '';
-    if (bunnyH > 0) {
-      const m = fns.modelPtrOf(bunnyH);
-      const d = fns.dataPtrOf(bunnyH);
-      results.models.flex_bunny = {
-        status: 'ok',
-        fsMountMs: mount.mounted ? mount.mountMs : null,
-        fsCopyMs: bunnyFsCopyMs,
-        compileMs: bunnyCompileMs,
-        errno: bunnyErrno,
-        errmsg: bunnyErrmsg,
-        ...benchSteps(fns.step, m, d, 2_000),
-      };
-      fns.freeHandle(bunnyH);
-    } else {
-      results.models.flex_bunny = {
-        status: 'error',
-        fsMountMs: mount.mounted ? mount.mountMs : null,
-        fsCopyMs: bunnyFsCopyMs,
-        compileMs: bunnyCompileMs,
-        errno: bunnyErrno,
-        errmsg: bunnyErrmsg,
-      };
-    }
-  } else {
-    results.models.flex_bunny = { status: 'skipped', reason: `Missing host model: ${hostBunny}` };
-  }
-
-  const playRoot = discoverPlayRoot(playRootRaw);
-  const playModelDir = playRoot ? path.join(playRoot, 'model') : '';
-  if (playModelDir && fs.existsSync(playModelDir)) {
-    const mount = mountNodefsIfAvailable(Module, '/host_play_model', playModelDir);
-    let stage = null;
-    if (!mount.mounted) {
-      stage = {};
-      stage.rajMs = stageHostFileToFS(
-        Module,
-        path.join(playModelDir, 'mujoco_Rajagopal2015_simple.xml'),
-        '/bench/play_model/mujoco_Rajagopal2015_simple.xml',
-      );
-      stage.cardsMs = stageHostDirToFS(Module, path.join(playModelDir, 'cards'), '/bench/play_model/cards');
-      stage.humanoidMs = stageHostDirToFS(Module, path.join(playModelDir, 'humanoid'), '/bench/play_model/humanoid');
-      stage.sensorMs = stageHostDirToFS(Module, path.join(playModelDir, 'plugin', 'sensor'), '/bench/play_model/plugin/sensor');
-    }
-    const playModels = [
-      {
-        id: 'raj',
-        fsPath: mount.mounted ? '/host_play_model/mujoco_Rajagopal2015_simple.xml' : '/bench/play_model/mujoco_Rajagopal2015_simple.xml',
-        stepCount: 2_000,
-        fsCopyMs: stage?.rajMs ?? null,
-      },
-      {
-        id: 'cards',
-        fsPath: mount.mounted ? '/host_play_model/cards/cards.xml' : '/bench/play_model/cards/cards.xml',
-        stepCount: 2_000,
-        fsCopyMs: stage?.cardsMs ?? null,
-      },
-      {
-        id: 'humanoid',
-        fsPath: mount.mounted ? '/host_play_model/humanoid/humanoid.xml' : '/bench/play_model/humanoid/humanoid.xml',
-        stepCount: 2_000,
-        fsCopyMs: stage?.humanoidMs ?? null,
-      },
-      {
-        id: 'sensor',
-        fsPath: mount.mounted ? '/host_play_model/plugin/sensor/touch_grid.xml' : '/bench/play_model/plugin/sensor/touch_grid.xml',
-        stepCount: 500,
-        fsCopyMs: stage?.sensorMs ?? null,
-      },
-    ];
-    for (const m of playModels) {
-      const hostPath = path.join(playModelDir, m.fsPath.replace('/host_play_model/', ''));
-      if (mount.mounted && !fs.existsSync(hostPath)) {
-        results.models[m.id] = { status: 'skipped', reason: `Missing host file: ${hostPath}` };
-        continue;
+    const hostMjModelDir = path.resolve('external/mujoco/model');
+    const hostBunny = path.join(hostMjModelDir, 'flex', 'bunny.xml');
+    if (fs.existsSync(hostBunny)) {
+      const mount = mountNodefsIfAvailable(Module, '/host_mj_model', hostMjModelDir);
+      let bunnyPath = '/host_mj_model/flex/bunny.xml';
+      let bunnyFsCopyMs = null;
+      if (!mount.mounted) {
+        const hostFlexDir = path.join(hostMjModelDir, 'flex');
+        const fsFlexDir = '/bench/mj_model/flex';
+        const tStage0 = nowMs();
+        stageHostFileToFS(Module, path.join(hostFlexDir, 'bunny.xml'), `${fsFlexDir}/bunny.xml`);
+        stageHostFileToFS(Module, path.join(hostFlexDir, 'scene.xml'), `${fsFlexDir}/scene.xml`);
+        stageHostFileToFS(Module, path.join(hostFlexDir, 'asset', 'bunny.obj'), `${fsFlexDir}/asset/bunny.obj`);
+        bunnyFsCopyMs = nowMs() - tStage0;
+        bunnyPath = `${fsFlexDir}/bunny.xml`;
       }
-      const t0 = performance.now();
-      const h = fns.makeFromXml(m.fsPath) | 0;
-      const compileMs = performance.now() - t0;
-      const errno = fns.errnoLast() | 0;
-      const errmsg = fns.errmsgLast() ?? '';
-      if (h > 0) {
+      results.models.flex_bunny = benchOneHandleModel(fns, {
+        fsMountMs: mount.mounted ? mount.mountMs : null,
+        fsCopyMs: bunnyFsCopyMs,
+        pathInFs: bunnyPath,
+        stepCount: 2_000,
+      });
+    } else {
+      results.models.flex_bunny = { status: 'skipped', reason: `Missing host model: ${hostBunny}` };
+    }
+
+    const playRoot = discoverPlayRoot(playRootRaw);
+    const playModelDir = playRoot ? path.join(playRoot, 'model') : '';
+    if (playModelDir && fs.existsSync(playModelDir)) {
+      const mount = mountNodefsIfAvailable(Module, '/host_play_model', playModelDir);
+      const baseFsDir = '/bench/play_model';
+      const models = [
+        {
+          id: 'raj',
+          host: path.join(playModelDir, 'mujoco_Rajagopal2015_simple.xml'),
+          fs: mount.mounted ? '/host_play_model/mujoco_Rajagopal2015_simple.xml' : `${baseFsDir}/mujoco_Rajagopal2015_simple.xml`,
+          stage: () => (mount.mounted ? 0 : stager.stageFileOnce('play_raj', path.join(playModelDir, 'mujoco_Rajagopal2015_simple.xml'), `${baseFsDir}/mujoco_Rajagopal2015_simple.xml`)),
+          stepCount: 2_000,
+        },
+        {
+          id: 'cards',
+          host: path.join(playModelDir, 'cards', 'cards.xml'),
+          fs: mount.mounted ? '/host_play_model/cards/cards.xml' : `${baseFsDir}/cards/cards.xml`,
+          stage: () => (mount.mounted ? 0 : stager.stageDirOnce('play_cards', path.join(playModelDir, 'cards'), `${baseFsDir}/cards`)),
+          stepCount: 2_000,
+        },
+        {
+          id: 'humanoid',
+          host: path.join(playModelDir, 'humanoid', 'humanoid.xml'),
+          fs: mount.mounted ? '/host_play_model/humanoid/humanoid.xml' : `${baseFsDir}/humanoid/humanoid.xml`,
+          stage: () => (mount.mounted ? 0 : stager.stageDirOnce('play_humanoid', path.join(playModelDir, 'humanoid'), `${baseFsDir}/humanoid`)),
+          stepCount: 2_000,
+        },
+        {
+          id: 'sensor',
+          host: path.join(playModelDir, 'plugin', 'sensor', 'touch_grid.xml'),
+          fs: mount.mounted ? '/host_play_model/plugin/sensor/touch_grid.xml' : `${baseFsDir}/plugin/sensor/touch_grid.xml`,
+          stage: () => (mount.mounted ? 0 : stager.stageDirOnce('play_sensor', path.join(playModelDir, 'plugin', 'sensor'), `${baseFsDir}/plugin/sensor`)),
+          stepCount: 500,
+        },
+      ];
+
+      for (const m of models) {
+        if (!fs.existsSync(m.host)) {
+          results.models[m.id] = { status: 'skipped', reason: `Missing host file: ${m.host}` };
+          continue;
+        }
+        const fsCopyMs = m.stage();
+        results.models[m.id] = benchOneHandleModel(fns, {
+          fsMountMs: mount.mounted ? mount.mountMs : null,
+          fsCopyMs,
+          pathInFs: m.fs,
+          stepCount: m.stepCount,
+        });
+      }
+    } else {
+      results.models.play_models = { status: 'skipped', reason: 'mujoco-wasm-play not found; pass --play-root' };
+    }
+
+    {
+      const iters = 50;
+      const rss0 = rssBytes();
+      const sampler = startRssSampler({ intervalMs: 10 });
+      const t0 = nowMs();
+      let ok = 0;
+      for (let i = 0; i < iters; i += 1) {
+        const h = fns.makeFromXml(pendulumPath) | 0;
+        if (h <= 0) {
+          throw new Error(`reload(pendulum): make_from_xml returned ${h}; errno=${fns.errnoLast()} msg=${String(fns.errmsgLast() || '')}`);
+        }
         const mp = fns.modelPtrOf(h);
         const dp = fns.dataPtrOf(h);
-        results.models[m.id] = {
-          status: 'ok',
-          fsMountMs: mount.mounted ? mount.mountMs : null,
-          fsCopyMs: m.fsCopyMs ?? null,
-          compileMs,
-          errno,
-          errmsg,
-          ...benchSteps(fns.step, mp, dp, m.stepCount),
-        };
+        fns.step(mp, dp);
         fns.freeHandle(h);
-      } else {
-        results.models[m.id] = {
-          status: 'error',
-          fsMountMs: mount.mounted ? mount.mountMs : null,
-          fsCopyMs: m.fsCopyMs ?? null,
-          compileMs,
-          errno,
-          errmsg,
-        };
+        ok += 1;
       }
+      const totalMs = nowMs() - t0;
+      const { rssPeakBytes } = sampler.stop();
+      const rss1 = rssBytes();
+      results.metrics.reload.pendulum = {
+        iterations: iters,
+        ok,
+        totalMs,
+        msPerIter: totalMs / iters,
+        rssBefore: rss0,
+        rssAfter: rss1,
+        rssPeakBytes,
+      };
     }
-  } else {
-    results.models.play_models = { status: 'skipped', reason: 'mujoco-wasm-play not found; pass --play-root' };
+
+    results.metrics.rssAfterBench = rssBytes();
+  } finally {
+    const { rssPeakBytes } = rssSampler.stop();
+    if (results?.metrics) results.metrics.rssPeakBytes = rssPeakBytes;
   }
 
-  results.metrics.rssAfterBench = rssBytes();
   process.stdout.write(`${JSON.stringify(results)}\n`);
   process.exit(0);
 }

@@ -29,6 +29,8 @@ Push-Location $playRoot
 try {
   $env:MJWF_BENCH_OUT_DIR = $outDir
   $env:MJWF_PLAY_BENCH = "1"
+  # Required for pthreads variants: enables COOP/COEP headers in Play dev server.
+  if (-not $env:PLAY_DEV_SERVER_COI) { $env:PLAY_DEV_SERVER_COI = "1" }
   if (-not $env:MJWF_BENCH_RUNS) { $env:MJWF_BENCH_RUNS = "3" }
   & $nodeExe $pwCli test --config tests/playwright.config.mjs tests/e2e/bench-forge-variants.local.spec.ts
 } finally {

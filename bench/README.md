@@ -48,7 +48,10 @@ EMSDK_ROOT=$HOME/emsdk bash tools/build_official_embind.sh --ref 3.5.0 --out /mn
 This runs the matrix (5 runs per row by default) and writes:
 
 - raw JSON runs to `bench/results/raw/`
-- a markdown summary to `bench/results/summary.md`
+- aggregated summaries to `bench/results/`:
+  - `summary.md` (human-readable tables)
+  - `summary.json` (machine-readable aggregates)
+  - `tables/*.csv` (report-friendly exports)
 
 ```bash
 node bench/node/run_matrix.mjs \
@@ -59,6 +62,22 @@ node bench/node/run_matrix.mjs \
 Notes:
 - `bench/node/run_matrix.mjs` clears `bench/results/raw/` by default. Use `--append` to keep prior JSON runs.
 - The Node bench stages required model assets into Emscripten FS (MEMFS) to avoid relying on `NODEFS` support in the wasm build.
+
+> `bench/results/` is intended as a local output directory and is gitignored.
+
+### Variable control (and known confounders)
+
+What the Node bench tries to control:
+- same host machine / OS / Node binary (run the whole matrix from the same `node`)
+- same model inputs (same XML + assets staged into MEMFS)
+- same measurement points (module init, XML compile/load, stepping loop)
+
+Known confounders (must be stated when interpreting results):
+- Official embind and forge use different JS-level APIs to load XML (embind types vs forge helper wrappers).
+- Official builds may enable pthreads by default in 3.5.0; we approximate pool behavior by overriding `navigator.hardwareConcurrency` (`--hc`).
+- Plugin availability is a **product difference** (official may fail plugin-based models; forge is expected to pass).
+
+The generated summary includes an “apples-to-apples” table that only compares the common `status=ok` subset for selected pairs.
 
 ## 3) Browser bench (Play/Simulate workflow via Playwright)
 
@@ -91,3 +110,10 @@ The Playwright bench is driven by env vars (set before running `bench/browser/ru
   OneDrive (e.g. `C:/dev/...`). This avoids file-lock churn and sync overhead.
 - The Node bench mounts host model directories via Emscripten `NODEFS` when
   available, so large model assets do not inflate wasm heap usage.
+
+## Helper checks (Simulate-critical)
+
+Forge ships helper entrypoints that Play/Simulate relies on (e.g. `mjwf_helper_make_from_xml`).
+These are exercised by `--with-checks` during `forge_cli.py build`:
+
+- `check/tests/helper-make-from-xml.mjs` validates that invalid XML / missing plugin errors are reported via `errno/errmsg` and do not throw raw wasm exceptions.
