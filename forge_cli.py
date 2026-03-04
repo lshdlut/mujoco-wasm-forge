@@ -374,6 +374,193 @@ def _patch_mujoco_disable_pthreads_emscripten(mujoco_dir: Path) -> None:
     print("[forge-cli] patched MuJoCo to disable -pthread under Emscripten", file=sys.stderr)
 
 
+def _patch_mujoco_340_disable_mesh_threads_non_pthreads_emscripten(mujoco_dir: Path) -> None:
+  """Patch MuJoCo <3.5.0 to avoid std::thread in non-pthreads Emscripten builds.
+
+  MuJoCo <3.5.0 has an inverted compiler.usethread check around mesh
+  compilation in mjCModel::Compile(), which can call CompileMeshes()
+  (std::thread) when compiler.usethread==0. In single-threaded wasm builds (no
+  __EMSCRIPTEN_PTHREADS__), that can fail at runtime with:
+
+    thread constructor failed: Resource temporarily unavailable
+
+  We force serial mesh compilation under __EMSCRIPTEN__ && !__EMSCRIPTEN_PTHREADS__
+  without changing native behavior.
+  """
+  src = mujoco_dir / "src" / "user" / "user_model.cc"
+  if not src.is_file():
+    return
+
+  text = src.read_text(encoding="utf-8")
+  marker = "Single-threaded Emscripten builds cannot use std::thread"
+  if marker in text:
+    return
+
+  old_block = (
+      "  // compile meshes (needed for geom compilation)\n"
+      "  if (!compiler.usethread && meshes_.size() > 1) {\n"
+      "    // multi-threaded mesh compile\n"
+      "    CompileMeshes(vfs);\n"
+      "  } else {\n"
+      "    // single-threaded mesh compile\n"
+      "    for (int i=0; i < meshes_.size(); i++) {\n"
+      "      meshes_[i]->Compile(vfs);\n"
+      "    }\n"
+      "  }\n"
+  )
+  new_block = (
+      "  // compile meshes (needed for geom compilation)\n"
+      "#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)\n"
+      "  // Single-threaded Emscripten builds cannot use std::thread (pthreads); force serial compilation.\n"
+      "  for (int i=0; i < meshes_.size(); i++) {\n"
+      "    meshes_[i]->Compile(vfs);\n"
+      "  }\n"
+      "#else\n"
+      "  if (!compiler.usethread && meshes_.size() > 1) {\n"
+      "    // multi-threaded mesh compile\n"
+      "    CompileMeshes(vfs);\n"
+      "  } else {\n"
+      "    // single-threaded mesh compile\n"
+      "    for (int i=0; i < meshes_.size(); i++) {\n"
+      "      meshes_[i]->Compile(vfs);\n"
+      "    }\n"
+      "  }\n"
+      "#endif\n"
+  )
+  if old_block not in text:
+    if "CompileMeshes(vfs)" in text and "compile meshes (needed for geom compilation)" in text:
+      raise SystemExit(
+          "[forge-cli] MuJoCo<3.5.0 mesh-thread patch failed: expected mesh compilation block in src/user/user_model.cc; "
+          "please update _patch_mujoco_340_disable_mesh_threads_non_pthreads_emscripten() to match upstream formatting."
+      )
+    return
+
+  src.write_text(text.replace(old_block, new_block, 1), encoding="utf-8")
+  print(
+      "[forge-cli] patched MuJoCo<3.5.0 mesh compilation to avoid threads under non-pthreads Emscripten (upstream bug workaround)",
+      file=sys.stderr,
+  )
+
+
+def _parse_semver_triplet(version: str) -> tuple[int, int, int] | None:
+  m = re.match(r"^(\d+)\.(\d+)\.(\d+)$", version.strip())
+  if not m:
+    return None
+  return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+
+
+def _semver_lt(version: str, target: tuple[int, int, int]) -> bool:
+  parsed = _parse_semver_triplet(version)
+  return parsed is not None and parsed < target
+
+
+def _patch_mujoco_350_clamp_compiler_threads_pthreads_emscripten(mujoco_dir: Path, max_threads: int) -> None:
+  """Clamp MuJoCo 3.5.0 compiler thread count in Emscripten pthreads builds.
+
+  MuJoCo 3.5.0 uses std::thread::hardware_concurrency()/2 to size compiler
+  thread pools. Under Emscripten pthreads each thread maps to a WebWorker, and
+  large pools can be slow or unstable for heavy models (e.g. Rajagopal) in
+  constrained environments.
+  """
+  if max_threads < 1:
+    raise ValueError(f"max_threads must be >=1, got {max_threads}")
+
+  src = mujoco_dir / "src" / "user" / "user_model.cc"
+  if not src.is_file():
+    return
+
+  text = src.read_text(encoding="utf-8")
+  marker = "MJWF: clamp compiler threads for Emscripten pthreads"
+  if marker in text:
+    return
+
+  pattern = re.compile(
+      r"^(?P<indent>[ \t]*)unsigned int nthreads = std::thread::hardware_concurrency\(\) / 2;\s*$",
+      re.MULTILINE,
+  )
+  m = pattern.search(text)
+  if not m:
+    raise SystemExit(
+        "[forge-cli] MuJoCo 3.5.0 clamp patch failed: expected NumCompilerThreads() hardware_concurrency() line in "
+        "src/user/user_model.cc; please update _patch_mujoco_350_clamp_compiler_threads_pthreads_emscripten()."
+    )
+
+  indent = m.group("indent")
+  replacement = (
+      f"{indent}unsigned int nthreads = std::thread::hardware_concurrency() / 2;\n"
+      f"{indent}#if defined(__EMSCRIPTEN__) && defined(__EMSCRIPTEN_PTHREADS__)\n"
+      f"{indent}// {marker}\n"
+      f"{indent}nthreads = std::min(nthreads, static_cast<unsigned int>({max_threads}));\n"
+      f"{indent}#endif"
+  )
+  new_text = pattern.sub(replacement, text, count=1)
+  if new_text == text:
+    raise SystemExit(
+        "[forge-cli] MuJoCo 3.5.0 clamp patch failed: replacement produced no changes; "
+        "please update _patch_mujoco_350_clamp_compiler_threads_pthreads_emscripten()."
+    )
+
+  src.write_text(new_text, encoding="utf-8")
+  print(
+      f"[forge-cli] patched MuJoCo 3.5.0 to clamp compiler threads to <= {max_threads} under Emscripten pthreads",
+      file=sys.stderr,
+  )
+
+
+def _resolve_pthreads_pool_size() -> int:
+  """Return the Emscripten pthread pool size used by the build.
+
+  The value is sourced from MJWF_PTHREAD_POOL_SIZE (environment variable) and
+  defaults to 4 when unset. Keep this in sync with app/CMakeLists.txt.
+  """
+  raw = os.environ.get("MJWF_PTHREAD_POOL_SIZE", "").strip()
+  if not raw:
+    return 4
+  try:
+    value = int(raw, 10)
+  except ValueError as e:
+    raise SystemExit(f"MJWF_PTHREAD_POOL_SIZE must be an integer >=1, got {raw!r}") from e
+  if value < 1:
+    raise SystemExit(f"MJWF_PTHREAD_POOL_SIZE must be an integer >=1, got {value}")
+  return value
+
+
+def _resolve_pthreads_compiler_max_threads(version: str) -> int | None:
+  """Return the max compiler thread cap for pthreads builds, or None to disable.
+
+  Used for experiments / stability. Defaults to 4 for MuJoCo 3.5.0 due to
+  observed hangs on heavy models (e.g. Rajagopal) when using the upstream
+  hardware_concurrency()/2 heuristic under Emscripten pthreads.
+
+  By default, this clamp is bound to the Emscripten worker pool size
+  (MJWF_PTHREAD_POOL_SIZE / -sPTHREAD_POOL_SIZE) to avoid requesting more
+  threads than the prewarmed pool can satisfy.
+
+  Override via MJWF_PTHREADS_COMPILER_MAX_THREADS:
+    - unset / empty: use default
+    - 0: disable clamp (use upstream behavior)
+    - N>=1: clamp to N
+  """
+  raw = os.environ.get("MJWF_PTHREADS_COMPILER_MAX_THREADS", "").strip()
+  if not raw:
+    return _resolve_pthreads_pool_size() if version == "3.5.0" else None
+  try:
+    value = int(raw, 10)
+  except ValueError as e:
+    raise SystemExit(
+        "MJWF_PTHREADS_COMPILER_MAX_THREADS must be an integer (0 to disable clamp, >=1 to clamp), "
+        f"got {raw!r}"
+    ) from e
+  if value < 0:
+    raise SystemExit(
+        "MJWF_PTHREADS_COMPILER_MAX_THREADS must be 0 to disable clamp, or >=1 to clamp, "
+        f"got {value}"
+    )
+  if value == 0:
+    return None
+  return value
+
+
 def _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir: Path) -> None:
   """Disable multi-threaded XML compilation by default when wasm threads are unavailable."""
   src = mujoco_dir / "src" / "user" / "user_init.c"
@@ -507,6 +694,12 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
   _patch_mujoco_qhull_emscripten(mujoco_dir)
   _patch_mujoco_localtime_emscripten(mujoco_dir)
   _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir)
+  if not enable_pthreads and _semver_lt(version, (3, 5, 0)):
+    _patch_mujoco_340_disable_mesh_threads_non_pthreads_emscripten(mujoco_dir)
+  if enable_pthreads and version == "3.5.0":
+    max_threads = _resolve_pthreads_compiler_max_threads(version)
+    if max_threads is not None:
+      _patch_mujoco_350_clamp_compiler_threads_pthreads_emscripten(mujoco_dir, max_threads=max_threads)
   if not enable_pthreads:
     _patch_mujoco_disable_pthreads_emscripten(mujoco_dir)
 
@@ -854,9 +1047,12 @@ def _run_checks(env: Mapping[str, str]) -> None:
       "set -euo pipefail; "
       + emsdk_env_snippet +
       "node check/tests/smoke.mjs; "
+      "node check/tests/helper-make-from-xml.mjs; "
+      "node check/tests/helper-handle-lifecycle.mjs; "
       "node check/tests/mesh-smoke.mjs; "
       "node check/tests/mesh-texture-smoke.mjs; "
       "node check/tests/plugin-touch-grid.mjs; "
+      "node check/tests/xml-missing-ref.mjs; "
       "node check/tests/gates.mjs"
   )
   subprocess.run(

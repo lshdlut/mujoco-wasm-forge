@@ -69,8 +69,30 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   set(MJWF_PTHREAD_POOL_FLAG "")
   if (MJWF_ENABLE_PTHREADS)
     set(MJWF_PTHREAD_FLAG "-pthread")
-    # Fixed-size default pool to limit init-time prewarming cost.
-    set(MJWF_PTHREAD_POOL_FLAG "-sPTHREAD_POOL_SIZE=4")
+    # Emscripten prewarms the worker pool to allow synchronous thread creation.
+    # If the pool is exhausted, additional thread creation may require JS event
+    # loop progress, which can deadlock with synchronous native waits (e.g.
+    # model compilation in MuJoCo). Keep the default small and allow override.
+    set(
+      MJWF_PTHREAD_POOL_SIZE
+      ""
+      CACHE STRING
+      "Emscripten pthread worker pool size for -sPTHREAD_POOL_SIZE (empty uses MJWF_PTHREAD_POOL_SIZE env or defaults to 4)."
+    )
+    set(_mjwf_pthread_pool_size "4")
+    if (MJWF_PTHREAD_POOL_SIZE)
+      set(_mjwf_pthread_pool_size "${MJWF_PTHREAD_POOL_SIZE}")
+    elseif (DEFINED ENV{MJWF_PTHREAD_POOL_SIZE} AND NOT "$ENV{MJWF_PTHREAD_POOL_SIZE}" STREQUAL "")
+      set(_mjwf_pthread_pool_size "$ENV{MJWF_PTHREAD_POOL_SIZE}")
+    endif()
+    string(REGEX MATCH "^[0-9]+$" _mjwf_pthread_pool_size_is_int "${_mjwf_pthread_pool_size}")
+    if (NOT _mjwf_pthread_pool_size_is_int)
+      message(FATAL_ERROR "MJWF_PTHREAD_POOL_SIZE must be an integer >=1, got '${_mjwf_pthread_pool_size}'")
+    endif()
+    if (_mjwf_pthread_pool_size LESS 1)
+      message(FATAL_ERROR "MJWF_PTHREAD_POOL_SIZE must be an integer >=1, got '${_mjwf_pthread_pool_size}'")
+    endif()
+    set(MJWF_PTHREAD_POOL_FLAG "-sPTHREAD_POOL_SIZE=${_mjwf_pthread_pool_size}")
   endif()
   set(MJWF_OPT_FLAG "-Oz")
   set(MJWF_ASSERT_FLAG "-sASSERTIONS=1")

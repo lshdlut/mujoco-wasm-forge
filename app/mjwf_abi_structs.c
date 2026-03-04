@@ -740,11 +740,11 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_cam_mat0_ptr(int h) {
   if (!m) return NULL;
   return (double*)(m->cam_mat0);
 }
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_cam_orthographic_ptr(int h) {
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_cam_projection_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
-  return (int32_t*)(m->cam_orthographic);
+  return (int32_t*)(m->cam_projection);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_cam_fovy_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -763,6 +763,12 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_cam_resolution_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (int32_t*)(m->cam_resolution);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_cam_output_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->cam_output);
 }
 EMSCRIPTEN_KEEPALIVE float* mjwf_model_cam_sensorsize_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -1118,6 +1124,24 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_vertbodyid_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->flex_vertbodyid);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_vertedgeadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_vertedgeadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_vertedgenum_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_vertedgenum);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_vertedge_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_vertedge);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_edge_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -1178,6 +1202,12 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_vert0_ptr(int h) {
   if (!m) return NULL;
   return (double*)(m->flex_vert0);
 }
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_vertmetric_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->flex_vertmetric);
+}
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_node_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -1207,6 +1237,12 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_radius_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (double*)(m->flex_radius);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_size_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->flex_size);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_stiffness_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -1238,11 +1274,11 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_flex_edgedamping_ptr(int h) {
   if (!m) return NULL;
   return (double*)(m->flex_edgedamping);
 }
-EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_model_flex_edgeequality_ptr(int h) {
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_edgeequality_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
-  return (uint8_t*)(m->flex_edgeequality);
+  return (int32_t*)(m->flex_edgeequality);
 }
 EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_model_flex_rigid_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -1279,6 +1315,42 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_bvhnum_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (int32_t*)(m->flex_bvhnum);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flexedge_J_rownnz_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flexedge_J_rownnz);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flexedge_J_rowadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flexedge_J_rowadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flexedge_J_colind_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flexedge_J_colind);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flexvert_J_rownnz_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flexvert_J_rownnz);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flexvert_J_rowadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flexvert_J_rowadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flexvert_J_colind_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flexvert_J_colind);
 }
 EMSCRIPTEN_KEEPALIVE float* mjwf_model_flex_rgba_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -2096,6 +2168,24 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_actuator_group_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->actuator_group);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_actuator_history_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->actuator_history);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_actuator_historyadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->actuator_historyadr);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_actuator_delay_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->actuator_delay);
+}
 EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_model_actuator_ctrllimited_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -2269,6 +2359,30 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_sensor_noise_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (double*)(m->sensor_noise);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_sensor_history_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->sensor_history);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_sensor_historyadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->sensor_historyadr);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_sensor_delay_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->sensor_delay);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_sensor_interval_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->sensor_interval);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_sensor_user_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -2738,6 +2852,30 @@ EMSCRIPTEN_KEEPALIVE mjTimerStat* mjwf_data_timer_ptr(int h) {
   if (!d) return NULL;
   return (mjTimerStat*)(d->timer);
 }
+EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_data_flg_energypos_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (uint8_t*)(&d->flg_energypos);
+}
+EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_data_flg_energyvel_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (uint8_t*)(&d->flg_energyvel);
+}
+EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_data_flg_subtreevel_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (uint8_t*)(&d->flg_subtreevel);
+}
+EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_data_flg_rnepost_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (uint8_t*)(&d->flg_rnepost);
+}
 EMSCRIPTEN_KEEPALIVE double* mjwf_data_time_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjData* d = _mjwf_data_of(h);
@@ -2779,6 +2917,12 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_data_act_ptr(int h) {
   mjData* d = _mjwf_data_of(h);
   if (!d) return NULL;
   return (double*)(d->act);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_data_history_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (double*)(d->history);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_data_qacc_warmstart_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -2990,24 +3134,6 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_data_flexelem_aabb_ptr(int h) {
   if (!d) return NULL;
   return (double*)(d->flexelem_aabb);
 }
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_flexedge_J_rownnz_ptr(int h) {
-  if (!mjwf_helper_valid(h)) return NULL;
-  mjData* d = _mjwf_data_of(h);
-  if (!d) return NULL;
-  return (int32_t*)(d->flexedge_J_rownnz);
-}
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_flexedge_J_rowadr_ptr(int h) {
-  if (!mjwf_helper_valid(h)) return NULL;
-  mjData* d = _mjwf_data_of(h);
-  if (!d) return NULL;
-  return (int32_t*)(d->flexedge_J_rowadr);
-}
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_flexedge_J_colind_ptr(int h) {
-  if (!mjwf_helper_valid(h)) return NULL;
-  mjData* d = _mjwf_data_of(h);
-  if (!d) return NULL;
-  return (int32_t*)(d->flexedge_J_colind);
-}
 EMSCRIPTEN_KEEPALIVE double* mjwf_data_flexedge_J_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjData* d = _mjwf_data_of(h);
@@ -3019,6 +3145,18 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_data_flexedge_length_ptr(int h) {
   mjData* d = _mjwf_data_of(h);
   if (!d) return NULL;
   return (double*)(d->flexedge_length);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_data_flexvert_J_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (double*)(d->flexvert_J);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_data_flexvert_length_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjData* d = _mjwf_data_of(h);
+  if (!d) return NULL;
+  return (double*)(d->flexvert_length);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_data_bvh_aabb_dyn_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -4298,6 +4436,18 @@ EMSCRIPTEN_KEEPALIVE int mjwf_model_nflextexcoord(int h) {
   if (!m) return 0;
   return (int)(m->nflextexcoord);
 }
+EMSCRIPTEN_KEEPALIVE int mjwf_model_nJfe(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return 0;
+  return (int)(m->nJfe);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_model_nJfv(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return 0;
+  return (int)(m->nJfv);
+}
 EMSCRIPTEN_KEEPALIVE int mjwf_model_nmesh(int h) {
   if (!mjwf_helper_valid(h)) return 0;
   mjModel* m = _mjwf_model_of(h);
@@ -4627,6 +4777,12 @@ EMSCRIPTEN_KEEPALIVE int mjwf_model_npluginstate(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return 0;
   return (int)(m->npluginstate);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_model_nhistory(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return 0;
+  return (int)(m->nhistory);
 }
 EMSCRIPTEN_KEEPALIVE int mjwf_model_narena(int h) {
   if (!mjwf_helper_valid(h)) return 0;
