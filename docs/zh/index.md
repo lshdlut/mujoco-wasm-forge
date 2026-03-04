@@ -16,6 +16,7 @@
 - 导出符号由 `dist/<ver>/abi/exports.lst` 显式定义，并在链接阶段强制执行。
 - `--with-checks` 会在构建后跑 smoke + 质量门控（`check/tests/*.mjs`）。
 - 维护者可以用 `dist/<ver>/abi/*` 快速审计升级时的接口变化与差异来源。
+- Bench：可复现的对位测试套件，用于验证“可定制/可审计”前提下的性能与 Simulate TTFS（`bench`）。
 
 ## 术语小抄
 

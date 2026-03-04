@@ -17,6 +17,7 @@ plus ABI artifacts under `dist/<ver>/abi/`.
 - Exports are explicitly defined by `dist/<ver>/abi/exports.lst` and enforced at link time.
 - `--with-checks` runs smoke + quality gates (`check/tests/*.mjs`) against the produced dist.
 - Maintainers can use the ABI artifacts to audit diffs when upgrading MuJoCo.
+- Bench: a reproducible suite that validates forge's flexibility/variant model against performance and Simulate TTFS (`bench`).
 
 ## Mini glossary
 

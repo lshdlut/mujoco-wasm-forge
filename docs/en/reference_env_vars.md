@@ -32,6 +32,16 @@ They are consumed by `dist_version.py` and `check/dist_paths.mjs`.
 
 Profiles mainly change optimization/debug flags, filesystem settings, and related link options.
 
+## pthreads (WebAssembly threads)
+
+These variables control pthread worker pool sizing and stability knobs for the `--pthreads` variant:
+
+- `MJWF_PTHREAD_POOL_SIZE`: integer >=1 (default: 4). Sets Emscripten `-sPTHREAD_POOL_SIZE=<n>` to prewarm a fixed WebWorker pool.
+- `MJWF_PTHREADS_COMPILER_MAX_THREADS`: cap MuJoCo XML compiler threads:
+  - unset / empty: use default (for MuJoCo 3.5.0 pthreads, defaults to `MJWF_PTHREAD_POOL_SIZE`).
+  - `0`: disable clamp (use upstream `hardware_concurrency()/2` behavior).
+  - `N>=1`: clamp to `<=N`.
+
 ## Quality gates (`check/tests/gates.mjs`)
 
 `gates.mjs` checks wasm/js size and init time.
@@ -40,4 +50,3 @@ Profiles mainly change optimization/debug flags, filesystem settings, and relate
 - `WASM_MAX_BYTES` (default: 16_000_000)
 - `JS_MAX_BYTES` (default: 2_000_000)
 - `MAX_INIT_MS` (default: 8000)
-

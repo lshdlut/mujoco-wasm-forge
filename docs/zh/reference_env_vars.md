@@ -32,6 +32,16 @@
 
 它主要影响优化/调试 flags、filesystem 设置以及相关 link options。
 
+## pthreads（WebAssembly threads）
+
+这些变量主要影响 `--pthreads` 变体的线程池 sizing 与稳定性策略：
+
+- `MJWF_PTHREAD_POOL_SIZE`：整数 >=1（默认：4）。用于设置 Emscripten 的 `-sPTHREAD_POOL_SIZE=<n>`，控制预热的 WebWorker 线程池大小。
+- `MJWF_PTHREADS_COMPILER_MAX_THREADS`：MuJoCo XML compiler 线程数上限：
+  - 未设置/空：使用默认（MuJoCo 3.5.0 pthreads 下默认跟随 `MJWF_PTHREAD_POOL_SIZE`）。
+  - `0`：禁用 clamp（使用上游 `hardware_concurrency()/2` 行为）。
+  - `N>=1`：clamp 到 `<=N`。
+
 ## 质量门控（`check/tests/gates.mjs`）
 
 `gates.mjs` 会检查 wasm/js 体积和初始化耗时。
@@ -40,4 +50,3 @@
 - `WASM_MAX_BYTES`（默认：16_000_000）
 - `JS_MAX_BYTES`（默认：2_000_000）
 - `MAX_INIT_MS`（默认：8000）
-

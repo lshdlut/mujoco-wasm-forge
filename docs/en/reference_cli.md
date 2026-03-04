@@ -10,6 +10,12 @@ Build `dist/<ver>`:
 python3 forge_cli.py build --version 3.5.0
 ```
 
+Build the pthreads variant (browsers require COOP/COEP + `SharedArrayBuffer`):
+
+```bash
+python3 forge_cli.py build --version 3.5.0 --pthreads
+```
+
 Run smoke + quality gates after building:
 
 ```bash
@@ -41,4 +47,3 @@ python3 forge_cli.py verify-dist --version 3.5.0 --ci-build-dir ci-build
 ## Exit status
 
 The CLI exits non-zero if any stage fails (toolchain errors, build failures, or gate/check failures).
-

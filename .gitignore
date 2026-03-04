@@ -13,6 +13,7 @@ dist-ci/
 external/
 _tools/
 local_tools/
+forge/
 
 ## Docs build outputs
 docs/_build/
@@ -21,7 +22,6 @@ docs/zh/_build/
 
 ## Bench outputs
 bench/results/**
-!bench/results/summary.md
 bench/results/raw/
 bench/results/raw_browser/
 

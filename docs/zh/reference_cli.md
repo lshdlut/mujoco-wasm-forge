@@ -10,6 +10,12 @@
 python3 forge_cli.py build --version 3.5.0
 ```
 
+构建 pthreads 变体（浏览器端需要 COOP/COEP + `SharedArrayBuffer`）：
+
+```bash
+python3 forge_cli.py build --version 3.5.0 --pthreads
+```
+
 构建后执行 smoke + quality gates：
 
 ```bash
@@ -41,4 +47,3 @@ python3 forge_cli.py verify-dist --version 3.5.0 --ci-build-dir ci-build
 ## 退出码
 
 任意阶段失败（工具链/构建/门控/检查）都会让 CLI 返回非 0。
-
