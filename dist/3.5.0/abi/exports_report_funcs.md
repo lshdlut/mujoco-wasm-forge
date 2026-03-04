@@ -13,7 +13,7 @@
 
 ## Totals
 - A: 518
-- B: 2913
+- B: 2911
 - C (functions only): 468
 - Prefix breakdown: mj=160, mju=131, mjs=140, mjd=4
 
@@ -71,7 +71,7 @@
 - mjui_themeColor
 - mjui_themeSpacing
 - mjui_update
-- B - A (implemented only): 2429
+- B - A (implemented only): 2427
 - MJCF
 - RK4_A
 - RK4_B
@@ -122,7 +122,7 @@
 - Z15mjuu_mulvecmatTPdPKdS1_
 - Z15mjuu_rotVecQuatPdPKdS1_
 - Z15mjuu_trnVecPosePdPKdS1_S1_
-- ... (+2379 more)
+- ... (+2377 more)
 - (A ∩ B) - C (should be zero): 0
 - none
 
