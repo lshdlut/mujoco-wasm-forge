@@ -2,15 +2,16 @@
 
 中文 | [English](README.md)
 
-RTD: [EN](https://mujoco-wasm-forge.readthedocs.io/en/latest/) | [中文](https://mujoco-wasm-forge.readthedocs.io/zh-cn/latest/index.html)
-
 ## 这是什么
 
 `mujoco-wasm-forge` 是一套 **可复现的 MuJoCo→WebAssembly 构建流水线**，把“导出 ABI”当作可审计契约来管理。
 它输出稳定命名的运行时产物（`mujoco.js` / `mujoco.wasm`），并在 `dist/<ver>/abi/` 下产出 ABI 审计材料。
 
 它面向 **Simulate-style** 的 Web 应用（通过 `mujoco-wasm-play`），同时保证升级时能清楚看到：header、wrapper、exports、实现符号到底改了什么。
-文档（Sphinx/RTD）见 `docs/`；bench 方法论与参考快照见 `docs/zh/bench.md`。
+
+**在线文档（Read the Docs）：** [English](https://mujoco-wasm-forge.readthedocs.io/en/latest/) | [简体中文](https://mujoco-wasm-forge.readthedocs.io/zh-cn/latest/index.html)
+
+文档请以在线文档为准（上面链接；Sphinx 源文件在 `docs/`）。Bench 方法论与参考快照请见在线文档的 Bench 章节（源文件：`docs/zh/bench.md`）。
 
 ## 快速开始
 

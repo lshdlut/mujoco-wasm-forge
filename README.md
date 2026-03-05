@@ -2,15 +2,16 @@
 
 English | [简体中文](README.zh-CN.md)
 
-RTD: [EN](https://mujoco-wasm-forge.readthedocs.io/en/latest/) | [中文](https://mujoco-wasm-forge.readthedocs.io/zh-cn/latest/index.html)
-
 ## What it is
 
 `mujoco-wasm-forge` is a **reproducible MuJoCo→WebAssembly build pipeline** that treats the exported ABI as a first-class, auditable contract.
 It produces stable runtime artifacts (`mujoco.js` / `mujoco.wasm`) plus ABI audit outputs under `dist/<ver>/abi/`.
 
 It is designed to support **Simulate-style** web apps (via `mujoco-wasm-play`) while keeping upgrades safe: when upstream MuJoCo changes, you can see *exactly* what moved in headers, wrappers, exports, and implementations.
-Docs (Sphinx/RTD) live under `docs/`; bench methodology and reference snapshots are in `docs/en/bench.md`.
+
+**Documentation (Read the Docs):** [English](https://mujoco-wasm-forge.readthedocs.io/en/latest/) | [简体中文](https://mujoco-wasm-forge.readthedocs.io/zh-cn/latest/index.html)
+
+Docs are published on Read the Docs (links above; Sphinx sources live under `docs/`). Bench methodology and reference snapshots are in the online Bench chapter (source: `docs/en/bench.md`).
 
 ## Quickstart
 
