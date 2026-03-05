@@ -4,8 +4,9 @@
   "type": "module",
   "version": "0.0.0",
   "scripts": {
-    "build:forge": "node build/build-forge.mjs",
-    "test:smoke-325": "node check/tests/smoke-325.mjs",
+    "build:forge": "python forge_cli.py build",
+    "test:smoke": "node check/tests/smoke.mjs",
+    "test:smoke-325": "node check/tests/smoke.mjs",
     "bench:node": "node bench/node/run_matrix.mjs",
     "bench:report": "node bench/node/report.mjs"
   }

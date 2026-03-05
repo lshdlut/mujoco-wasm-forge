@@ -9,6 +9,29 @@ const distRoot = path.join(repoRoot, 'dist');
 let cachedVersion = null;
 let cachedVariant = null;
 
+const SEMVER_RE = /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/;
+
+function versionSortKey(version) {
+  const match = SEMVER_RE.exec(version);
+  if (!match) return [0, version];
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  const patch = Number(match[3]);
+  const prerelease = version.includes('-') ? version.split('-', 2)[1] : '';
+  const isRelease = prerelease ? 0 : 1;
+  return [1, major, minor, patch, isRelease, prerelease];
+}
+
+function compareVersions(a, b) {
+  const ka = versionSortKey(a);
+  const kb = versionSortKey(b);
+  for (let i = 0; i < Math.max(ka.length, kb.length); i++) {
+    if (ka[i] < kb[i]) return -1;
+    if (ka[i] > kb[i]) return 1;
+  }
+  return 0;
+}
+
 function listDistVersions() {
   if (!fs.existsSync(distRoot)) {
     return [];
@@ -17,7 +40,7 @@ function listDistVersions() {
     .readdirSync(distRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    .sort(compareVersions);
 }
 
 function resolveDistVersion() {
@@ -30,9 +53,11 @@ function resolveDistVersion() {
 
   const versions = listDistVersions();
   if (!versions.length) {
-    throw new Error('No dist/<ver> directory was found; run `npm run build:forge -- <ver>` first.');
+    throw new Error(
+      'No dist/<ver> directory was found; run `python forge_cli.py build --version <ver>` (or `npm run build:forge -- --version <ver>`) first.'
+    );
   }
-  cachedVersion = versions[0];
+  cachedVersion = versions[versions.length - 1];
   return cachedVersion;
 }
 
