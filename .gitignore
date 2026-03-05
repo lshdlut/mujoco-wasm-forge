@@ -12,6 +12,7 @@ emsdk-cache/
 dist-ci/
 external/
 _tools/
+_qa*/
 local_tools/
 forge/
 

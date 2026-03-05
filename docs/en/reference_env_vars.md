@@ -12,6 +12,11 @@ They are consumed by `dist_version.py` and `check/dist_paths.mjs`.
 ## Toolchain
 
 - `EMSDK`: path to your emsdk directory (must contain `emsdk_env.sh`). Required by the Emscripten CMake build.
+- `MJWF_BASH`: override the `bash` executable used by `forge_cli.py` for `bash -lc ...` invocations (useful on Windows).
+
+## Upstream checkout hygiene
+
+- `MJWF_GIT_CLEAN_IGNORED=1`: enable `git clean -fdx` when refreshing `external/mujoco` (default is `git clean -fd` to avoid OneDrive permission issues).
 
 ## Build tree placement
 
@@ -20,6 +25,10 @@ They are consumed by `dist_version.py` and `check/dist_paths.mjs`.
 ## Export list override
 
 - `MJWF_EXPORTS_LIST`: override the export list path passed to the link step (defaults to `dist/<ver>/abi/exports.lst`).
+
+## Dist variant selection
+
+- `MJWF_DIST_VARIANT`: optional dist subdirectory selector consumed by `check/dist_paths.mjs` (e.g. `pthreads`).
 
 ## CMake profile
 

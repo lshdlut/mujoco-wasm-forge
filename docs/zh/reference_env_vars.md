@@ -12,6 +12,11 @@
 ## 工具链
 
 - `EMSDK`：emsdk 目录路径（需包含 `emsdk_env.sh`）。Emscripten 的 CMake 构建需要它。
+- `MJWF_BASH`：覆盖 `forge_cli.py` 在执行 `bash -lc ...` 时使用的 `bash` 可执行文件路径（Windows 上常用）。
+
+## 上游检出清理策略
+
+- `MJWF_GIT_CLEAN_IGNORED=1`：在刷新 `external/mujoco` 时启用 `git clean -fdx`（默认 `git clean -fd`，用于规避 OneDrive 权限问题）。
 
 ## build tree 放置
 
@@ -20,6 +25,10 @@
 ## 导出清单覆盖
 
 - `MJWF_EXPORTS_LIST`：覆盖链接阶段使用的导出清单路径（默认 `dist/<ver>/abi/exports.lst`）。
+
+## dist 变体选择
+
+- `MJWF_DIST_VARIANT`：可选的 dist 子目录选择器，由 `check/dist_paths.mjs` 消费（例如 `pthreads`）。
 
 ## CMake profile
 

@@ -1,0 +1,45 @@
+name: arch-review
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch: {}
+
+jobs:
+  arch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run architecture review
+        id: arch
+        run: |
+          set +e
+          python tools/qa.py arch --mode gate --out "${RUNNER_TEMP}/arch"
+          code=$?
+          echo "exit_code=${code}" >> "${GITHUB_OUTPUT}"
+          exit 0
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arch-review
+          path: |
+            ${{ runner.temp }}/arch/arch_report.json
+            ${{ runner.temp }}/arch/arch_report.md
+
+      - name: Fail if gate failed
+        if: steps.arch.outputs.exit_code != '0'
+        run: exit 1
+
