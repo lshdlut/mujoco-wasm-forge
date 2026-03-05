@@ -110,7 +110,7 @@ Ensure-WorkspaceDir $workRoot
 
 if (-not (Test-Path (Join-Path $mujocoDir ".git"))) {
   Write-Host "[official-embind] Cloning MuJoCo -> $mujocoDir"
-  & git clone $MujocoRepo $mujocoDir | Out-Null
+  Invoke-Native -Name "git clone" -Action { git clone $MujocoRepo $mujocoDir | Out-Null }
 }
 
 Write-Host "[official-embind] Ensuring emsdk $EmsdkVersion"
