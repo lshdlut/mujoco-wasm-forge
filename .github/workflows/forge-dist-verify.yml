@@ -199,3 +199,80 @@ jobs:
         run: |
           set -euxo pipefail
           python3 forge_cli.py verify-dist --version "${{ matrix.ver }}"
+
+  release-dist:
+    needs: [select-dist-versions, verify-dist]
+    if: startsWith(github.ref, 'refs/tags/forge-') && needs.select-dist-versions.outputs.has_versions == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout baseline (with committed dist/)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Package dist.zip (+ version.json)
+        shell: bash
+        env:
+          DIST_VERSION: ${{ fromJson(needs.select-dist-versions.outputs.versions)[0] }}
+          DIST_ID: ${{ github.ref_name }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ver="${DIST_VERSION}"
+          dist_id="${DIST_ID#forge-}"
+          if [[ ! -d "dist/${ver}" ]]; then
+            echo "[release] dist/${ver} missing" >&2
+            exit 1
+          fi
+
+          rm -rf release-root dist.zip
+          mkdir -p release-root
+          cp -a "dist/${ver}/." release-root/
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          dist_tag = os.environ["DIST_ID"]
+          dist_id = dist_tag[len("forge-") :] if dist_tag.startswith("forge-") else dist_tag
+          payload = {
+            "schemaVersion": 1,
+            "git_sha": os.environ["GIT_SHA"],
+            "distId": dist_id,
+            "mujocoVersion": os.environ["DIST_VERSION"],
+          }
+          Path("release-root/version.json").write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+          )
+          PY
+
+          if [[ -d release-root/pthreads ]]; then
+            cp release-root/version.json release-root/pthreads/version.json
+          fi
+
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+
+          root = Path("release-root")
+          out = Path("dist.zip")
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for path in sorted(root.rglob("*")):
+              if path.is_dir():
+                continue
+              zf.write(path, path.relative_to(root).as_posix())
+          PY
+
+          echo "[release] packaged dist.zip for distId=${dist_id} ver=${ver}"
+
+      - name: Publish dist.zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist.zip
+          fail_on_unmatched_files: true
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
