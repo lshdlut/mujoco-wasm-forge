@@ -1018,12 +1018,19 @@ def _copy_wasm_artifacts(build_dir: Path, dist_dir: Path, enable_pthreads: bool)
     shutil.copy2(worker_map_src, dist_dir / worker_map_src.name)
 
 
-def _run_post_build(version: str, short: str, env: Mapping[str, str], variant: str = "") -> None:
+def _run_post_build(
+    version: str,
+    short: str,
+    build_dir: Path,
+    env: Mapping[str, str],
+    variant: str = "",
+) -> None:
   """Run check/post_build.sh for the built version."""
   post = REPO_ROOT / "check" / "post_build.sh"
   env_for_sh = dict(env)
   env_for_sh["NODE"] = _resolve_node_executable(env_for_sh)
-  argv = [str(post), "--version", version, "--short", short]
+  build_dir_arg = str(build_dir).replace("\\", "/")
+  argv = [str(post), "--version", version, "--short", short, "--build-dir", build_dir_arg]
   if variant:
     argv.extend(["--variant", variant])
   subprocess.run(
@@ -1123,6 +1130,38 @@ def _python_diff_dirs(left: Path, right: Path) -> int:
     return 1
 
   return 0
+
+
+_SANITIZE_ABI_FILES = (
+    "exports_report.md",
+    "mjapi.json",
+    "wrapper_exports.json",
+    "wrapper_exports_funcs.json",
+    "enums.json",
+    "nm_coverage.json",
+    "nm_symbols.json",
+    "enums_introspect_like.json",
+    "functions_introspect_like.json",
+    "structs_introspect_like.json",
+    "mujoco_ast.json",
+)
+
+
+def _backup_sanitize_files(dist_dir: Path) -> dict[Path, bytes]:
+  abi_dir = dist_dir / "abi"
+  if not abi_dir.is_dir():
+    return {}
+  backups: dict[Path, bytes] = {}
+  for name in _SANITIZE_ABI_FILES:
+    path = abi_dir / name
+    if path.is_file():
+      backups[path] = path.read_bytes()
+  return backups
+
+
+def _restore_sanitize_files(backups: Mapping[Path, bytes]) -> None:
+  for path, data in backups.items():
+    path.write_bytes(data)
 
 
 def _sanitize_meta(dist_dir: Path) -> None:
@@ -1253,28 +1292,34 @@ def cmd_verify_dist(args: argparse.Namespace) -> int:
       raise SystemExit(f"ci-build dist/{ver} not found at {ci_copy}")
 
     print(f"[forge-cli] verifying dist/{ver} vs {args.ci_build_dir}/dist/{ver}", file=sys.stderr)
-    _sanitize_meta(base)
-    _sanitize_meta(ci_copy)
-
-    # Prefer diff -ru for CI; fall back to a Python diff on platforms
-    # where `diff` is not available (e.g. Windows).
+    base_backups = _backup_sanitize_files(base)
+    ci_backups = _backup_sanitize_files(ci_copy)
     try:
-      proc = subprocess.run(
-          ["diff", "-ru", str(base), str(ci_copy)],
-          cwd=str(REPO_ROOT),
-      )
-      returncode = proc.returncode
-    except FileNotFoundError:
-      returncode = _python_diff_dirs(base, ci_copy)
+      _sanitize_meta(base)
+      _sanitize_meta(ci_copy)
 
-    if returncode not in (0, 1):
-      # Propagate unexpected diff or tool errors.
-      raise SystemExit(returncode)
-    if returncode == 1:
-      # Differences found.
-      raise SystemExit(
-          f"dist/{ver} differs from {args.ci_build_dir}/dist/{ver}"
-      )
+      # Prefer diff -ru for CI; fall back to a Python diff on platforms
+      # where `diff` is not available (e.g. Windows).
+      try:
+        proc = subprocess.run(
+            ["diff", "-ru", str(base), str(ci_copy)],
+            cwd=str(REPO_ROOT),
+        )
+        returncode = proc.returncode
+      except FileNotFoundError:
+        returncode = _python_diff_dirs(base, ci_copy)
+
+      if returncode not in (0, 1):
+        # Propagate unexpected diff or tool errors.
+        raise SystemExit(returncode)
+      if returncode == 1:
+        # Differences found.
+        raise SystemExit(
+            f"dist/{ver} differs from {args.ci_build_dir}/dist/{ver}"
+        )
+    finally:
+      _restore_sanitize_files(ci_backups)
+      _restore_sanitize_files(base_backups)
 
   return 0
 
@@ -1309,7 +1354,7 @@ def cmd_build(args: argparse.Namespace) -> int:
   _run_abi_generators(version, env)
   _build_wasm(build_dir, env)
   _copy_wasm_artifacts(build_dir, dist_dir, enable_pthreads)
-  _run_post_build(version, short, env, variant=variant)
+  _run_post_build(version, short, build_dir, env, variant=variant)
 
   if args.with_checks:
     _run_checks(env)

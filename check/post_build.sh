@@ -3,13 +3,14 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: scripts/ci/post_build.sh --version <mjver> --short <short> [--variant <name>]" >&2
+  echo "Usage: check/post_build.sh --version <mjver> --short <short> [--variant <name>] [--build-dir <path>]" >&2
   exit 2
 }
 
 MJVER=""
 SHORT=""
 VARIANT=""
+BUILD_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -26,6 +27,11 @@ while [[ $# -gt 0 ]]; do
     --variant)
       [[ $# -ge 2 ]] || usage
       VARIANT="$2"
+      shift 2
+      ;;
+    --build-dir)
+      [[ $# -ge 2 ]] || usage
+      BUILD_DIR="$2"
       shift 2
       ;;
     *)
@@ -59,6 +65,18 @@ fi
 
 find_libmujoco() {
   local cand
+  if [[ -n "${BUILD_DIR}" ]]; then
+    local build_dir_candidates=(
+      "${BUILD_DIR}/lib/libmujoco.a"
+      "${BUILD_DIR}/lib/mujoco.a"
+    )
+    for cand in "${build_dir_candidates[@]}"; do
+      if [[ -f "${cand}" ]]; then
+        echo "${cand}"
+        return 0
+      fi
+    done
+  fi
   local candidates=(
     "${BUILD_ROOT}/forge/${SHORT}/${BUILD_VARIANT}/lib/libmujoco.a"
     "${BUILD_ROOT}/forge/${SHORT}/${BUILD_VARIANT}/lib/mujoco.a"
