@@ -212,7 +212,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Package dist.zip (+ version.json)
+      - name: Package release assets
         shell: bash
         env:
           DIST_VERSION: ${{ fromJson(needs.select-dist-versions.outputs.versions)[0] }}
@@ -227,52 +227,22 @@ jobs:
             exit 1
           fi
 
-          rm -rf release-root dist.zip
-          mkdir -p release-root
-          cp -a "dist/${ver}/." release-root/
+          rm -rf release-root dist-runtime.zip dist-audit.zip
+          python3 tools/package_release_assets.py \
+            --dist-dir dist \
+            --version "${ver}" \
+            --dist-id "${dist_id}" \
+            --git-sha "${GIT_SHA}" \
+            --out-dir .
 
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
+          echo "[release] packaged dist-runtime.zip + dist-audit.zip for distId=${dist_id} ver=${ver}"
 
-          dist_tag = os.environ["DIST_ID"]
-          dist_id = dist_tag[len("forge-") :] if dist_tag.startswith("forge-") else dist_tag
-          payload = {
-            "schemaVersion": 1,
-            "git_sha": os.environ["GIT_SHA"],
-            "distId": dist_id,
-            "mujocoVersion": os.environ["DIST_VERSION"],
-          }
-          Path("release-root/version.json").write_text(
-            json.dumps(payload, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-          )
-          PY
-
-          if [[ -d release-root/pthreads ]]; then
-            cp release-root/version.json release-root/pthreads/version.json
-          fi
-
-          python3 - <<'PY'
-          import zipfile
-          from pathlib import Path
-
-          root = Path("release-root")
-          out = Path("dist.zip")
-          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-            for path in sorted(root.rglob("*")):
-              if path.is_dir():
-                continue
-              zf.write(path, path.relative_to(root).as_posix())
-          PY
-
-          echo "[release] packaged dist.zip for distId=${dist_id} ver=${ver}"
-
-      - name: Publish dist.zip to GitHub Release
+      - name: Publish release assets to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist.zip
+          files: |
+            dist-runtime.zip
+            dist-audit.zip
           fail_on_unmatched_files: true
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}

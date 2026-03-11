@@ -18,6 +18,19 @@ Tags matching `forge-*` are treated as release-like triggers. Examples:
 - `forge-3.4.0-r1`
 - `forge-3.5.0-r1`
 
+## Release assets
+
+For release-like tags, CI publishes two assets under the same GitHub Release:
+
+- `dist-runtime.zip`
+  - runtime-only payload for downstream web hosts / apps
+  - zip root matches the forge webroot (`mujoco.js`, `mujoco.wasm`, optional `pthreads/`, `version.json`)
+  - excludes `abi/`
+
+- `dist-audit.zip`
+  - audit/debug payload for maintainers
+  - zip root contains `abi/` plus `version.json`
+
 ## Local reproduction of the CI verify step
 
 Create a second clean checkout (or directory) and build into it, then run:
@@ -25,4 +38,3 @@ Create a second clean checkout (or directory) and build into it, then run:
 ```bash
 python3 forge_cli.py verify-dist --version <ver> --ci-build-dir ci-build
 ```
-

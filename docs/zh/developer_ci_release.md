@@ -18,6 +18,19 @@ GitHub Actions 工作流 `.github/workflows/forge-dist-verify.yml` 用于验证�
 - `forge-3.4.0-r1`
 - `forge-3.5.0-r1`
 
+## Release 产物
+
+对于 release-like tag，CI 会在同一个 GitHub Release 下发布两个 asset：
+
+- `dist-runtime.zip`
+  - 面向下游站点 / 应用的 runtime 产物
+  - zip 根目录保持 forge webroot 形状（`mujoco.js`、`mujoco.wasm`、可选 `pthreads/`、`version.json`）
+  - 不包含 `abi/`
+
+- `dist-audit.zip`
+  - 面向维护者的审计 / 调试产物
+  - zip 根目录包含 `abi/` 和 `version.json`
+
 ## 本地复现 CI 的 verify 步骤
 
 准备第二份干净检出（或目录）构建后，执行：
@@ -25,4 +38,3 @@ GitHub Actions 工作流 `.github/workflows/forge-dist-verify.yml` 用于验证�
 ```bash
 python3 forge_cli.py verify-dist --version <ver> --ci-build-dir ci-build
 ```
-
