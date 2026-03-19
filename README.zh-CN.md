@@ -78,6 +78,11 @@ Bench 工具与输出：
   - `MJWF_PTHREAD_POOL_SIZE`（整数 >=1，默认：4）控制 `-sPTHREAD_POOL_SIZE=<n>`。
   - `MJWF_PTHREADS_COMPILER_MAX_THREADS`（`0` 禁用 clamp；MuJoCo 3.5.0 默认跟随 `MJWF_PTHREAD_POOL_SIZE`）用于限制 MuJoCo 的 XML 编译线程数，避免请求超过预分配 pool 导致卡死/死锁。
 
+## 许可证
+
+- 本仓库采用 [Apache-2.0](LICENSE) 许可证。
+- Forge 包含位于 MuJoCo Apache-2.0 许可链下游的代码与生成接口；再分发时请保留许可证文本和适用的 notices。
+
 ## 致谢
 
 本项目受到早期 MuJoCo→WASM 试验的启发，感谢他们验证可行性并总结经验：

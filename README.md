@@ -78,6 +78,11 @@ Bench harness and generated outputs live in:
   - `MJWF_PTHREAD_POOL_SIZE` (integer >=1, default: 4) sets `-sPTHREAD_POOL_SIZE=<n>`.
   - `MJWF_PTHREADS_COMPILER_MAX_THREADS` (0 disables clamp; default follows `MJWF_PTHREAD_POOL_SIZE` for MuJoCo 3.5.0) caps MuJoCo's XML compiler thread pool.
 
+## License
+
+- This repo is licensed under [Apache-2.0](LICENSE).
+- Forge includes code and generated interfaces that operate downstream of MuJoCo's Apache-2.0-licensed surfaces; keep the license text and applicable notices when redistributing.
+
 ## Acknowledgements
 
 This project draws inspiration from earlier MuJoCo-to-WASM experiments that proved the concept and documented key pitfalls:
