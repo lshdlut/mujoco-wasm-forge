@@ -58,3 +58,4 @@ wrappers/auto/*
 
 ## Local legacy scratch / migration parking
 del_temp/**
+/.agents_arena/
