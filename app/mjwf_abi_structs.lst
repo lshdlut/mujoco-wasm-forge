@@ -204,10 +204,7 @@ data_solver_ptr
 data_subtree_angmom_ptr
 data_subtree_com_ptr
 data_subtree_linvel_ptr
-data_ten_J_colind_ptr
 data_ten_J_ptr
-data_ten_J_rowadr_ptr
-data_ten_J_rownnz_ptr
 data_ten_length_ptr
 data_ten_velocity_ptr
 data_ten_wrapadr_ptr
@@ -251,11 +248,14 @@ model_actuator_actearly_ptr
 model_actuator_actlimited_ptr
 model_actuator_actnum_ptr
 model_actuator_actrange_ptr
+model_actuator_armature_ptr
 model_actuator_biasprm_ptr
 model_actuator_biastype_ptr
 model_actuator_cranklength_ptr
 model_actuator_ctrllimited_ptr
 model_actuator_ctrlrange_ptr
+model_actuator_damping_ptr
+model_actuator_dampingpoly_ptr
 model_actuator_delay_ptr
 model_actuator_dynprm_ptr
 model_actuator_dyntype_ptr
@@ -328,6 +328,7 @@ model_dof_Madr_ptr
 model_dof_armature_ptr
 model_dof_bodyid_ptr
 model_dof_damping_ptr
+model_dof_dampingpoly_ptr
 model_dof_frictionloss_ptr
 model_dof_invweight0_ptr
 model_dof_jntid_ptr
@@ -347,9 +348,12 @@ model_eq_solref_ptr
 model_eq_type_ptr
 model_exclude_signature_ptr
 model_flex_activelayers_ptr
+model_flex_bandwidth_ptr
 model_flex_bending_ptr
+model_flex_bendingadr_ptr
 model_flex_bvhadr_ptr
 model_flex_bvhnum_ptr
+model_flex_cellnum_ptr
 model_flex_centered_ptr
 model_flex_conaffinity_ptr
 model_flex_condim_ptr
@@ -401,6 +405,7 @@ model_flex_solimp_ptr
 model_flex_solmix_ptr
 model_flex_solref_ptr
 model_flex_stiffness_ptr
+model_flex_stiffnessadr_ptr
 model_flex_texcoord_ptr
 model_flex_texcoordadr_ptr
 model_flex_vert0_ptr
@@ -455,6 +460,7 @@ model_hfield_size_ptr
 model_jnt_actfrclimited_ptr
 model_jnt_actfrcrange_ptr
 model_jnt_actgravcomp_ptr
+model_jnt_actuatorid_ptr
 model_jnt_axis_ptr
 model_jnt_bodyid_ptr
 model_jnt_dofadr_ptr
@@ -467,6 +473,7 @@ model_jnt_range_ptr
 model_jnt_solimp_ptr
 model_jnt_solref_ptr
 model_jnt_stiffness_ptr
+model_jnt_stiffnesspoly_ptr
 model_jnt_type_ptr
 model_jnt_user_ptr
 model_key_act_ptr
@@ -549,6 +556,7 @@ model_nD
 model_nJfe
 model_nJfv
 model_nJmom
+model_nJten
 model_nM
 model_na
 model_name_actuatoradr_ptr
@@ -588,6 +596,7 @@ model_nemax
 model_neq
 model_nexclude
 model_nflex
+model_nflexbending
 model_nflexedge
 model_nflexelem
 model_nflexelemdata
@@ -595,6 +604,7 @@ model_nflexelemedge
 model_nflexevpair
 model_nflexnode
 model_nflexshelldata
+model_nflexstiffness
 model_nflextexcoord
 model_nflexvert
 model_ngeom
@@ -766,11 +776,16 @@ model_stat_extent_ptr
 model_stat_meaninertia_ptr
 model_stat_meanmass_ptr
 model_stat_meansize_ptr
+model_ten_J_colind_ptr
+model_ten_J_rowadr_ptr
+model_ten_J_rownnz_ptr
 model_tendon_actfrclimited_ptr
 model_tendon_actfrcrange_ptr
+model_tendon_actuatorid_ptr
 model_tendon_adr_ptr
 model_tendon_armature_ptr
 model_tendon_damping_ptr
+model_tendon_dampingpoly_ptr
 model_tendon_frictionloss_ptr
 model_tendon_group_ptr
 model_tendon_invweight0_ptr
@@ -787,6 +802,7 @@ model_tendon_solimp_lim_ptr
 model_tendon_solref_fri_ptr
 model_tendon_solref_lim_ptr
 model_tendon_stiffness_ptr
+model_tendon_stiffnesspoly_ptr
 model_tendon_treeid_ptr
 model_tendon_treenum_ptr
 model_tendon_user_ptr

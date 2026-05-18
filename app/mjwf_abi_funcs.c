@@ -89,6 +89,14 @@ MJWF_API_IMPL void mjwf_mj_contactForce(const mjModel * m, const mjData * d, int
   mj_contactForce(m, d, id, result);
 }
 
+MJWF_API_IMPL int mjwf_mj_containsBufferVFS(mjVFS * vfs, const char * name) {
+  return mj_containsBufferVFS(vfs, name);
+}
+
+MJWF_API_IMPL int mjwf_mj_containsFileVFS(mjVFS * vfs, const char * directory, const char * filename) {
+  return mj_containsFileVFS(vfs, directory, filename);
+}
+
 MJWF_API_IMPL int mjwf_mj_copyBack(mjSpec * s, const mjModel * m) {
   return mj_copyBack(s, m);
 }
@@ -157,6 +165,10 @@ MJWF_API_IMPL void mjwf_mj_differentiatePos(const mjModel * m, mjtNum * qvel, mj
   mj_differentiatePos(m, qvel, dt, qpos1, qpos2);
 }
 
+MJWF_API_IMPL int mjwf_mj_encode(const mjSpec * s, const mjModel * m, const char * filename, const char * content_type, const mjVFS * vfs, char * error, int error_sz) {
+  return mj_encode(s, m, filename, content_type, vfs, error, error_sz);
+}
+
 MJWF_API_IMPL void mjwf_mj_energyPos(const mjModel * m, mjData * d) {
   mj_energyPos(m, d);
 }
@@ -221,7 +233,7 @@ MJWF_API_IMPL void mjwf_mj_fwdVelocity(const mjModel * m, mjData * d) {
   mj_fwdVelocity(m, d);
 }
 
-MJWF_API_IMPL mjtNum mjwf_mj_geomDistance(const mjModel * m, const mjData * d, int geom1, int geom2, mjtNum distmax, mjtNum fromto[6]) {
+MJWF_API_IMPL mjtNum mjwf_mj_geomDistance(const mjModel * m, mjData * d, int geom1, int geom2, mjtNum distmax, mjtNum fromto[6]) {
   return mj_geomDistance(m, d, geom1, geom2, distmax, fromto);
 }
 
@@ -383,6 +395,10 @@ MJWF_API_IMPL mjSpec * mjwf_mj_makeSpec(void) {
 
 MJWF_API_IMPL void mjwf_mj_markStack(mjData * d) {
   mj_markStack(d);
+}
+
+MJWF_API_IMPL int mjwf_mj_maxContact(const mjModel * m, int g1, int g2, int has_margin) {
+  return mj_maxContact(m, g1, g2, has_margin);
 }
 
 MJWF_API_IMPL int mjwf_mj_mountVFS(mjVFS * vfs, const char * filepath, const mjpResourceProvider * provider) {
@@ -997,39 +1013,43 @@ MJWF_API_IMPL void mjwf_mjs_deleteUserValue(mjsElement * element, const char * k
   mjs_deleteUserValue(element, key);
 }
 
-MJWF_API_IMPL mjsBody * mjwf_mjs_findBody(mjSpec * s, const char * name) {
+MJWF_API_IMPL mjsBody * mjwf_mjs_findBody(const mjSpec * s, const char * name) {
   return mjs_findBody(s, name);
 }
 
-MJWF_API_IMPL mjsBody * mjwf_mjs_findChild(mjsBody * body, const char * name) {
+MJWF_API_IMPL mjsBody * mjwf_mjs_findChild(const mjsBody * body, const char * name) {
   return mjs_findChild(body, name);
 }
 
-MJWF_API_IMPL mjsDefault * mjwf_mjs_findDefault(mjSpec * s, const char * classname) {
+MJWF_API_IMPL mjsDefault * mjwf_mjs_findDefault(const mjSpec * s, const char * classname) {
   return mjs_findDefault(s, classname);
 }
 
-MJWF_API_IMPL mjsElement * mjwf_mjs_findElement(mjSpec * s, mjtObj type, const char * name) {
+MJWF_API_IMPL mjsElement * mjwf_mjs_findElement(const mjSpec * s, mjtObj type, const char * name) {
   return mjs_findElement(s, type, name);
 }
 
-MJWF_API_IMPL mjsFrame * mjwf_mjs_findFrame(mjSpec * s, const char * name) {
+MJWF_API_IMPL mjsFrame * mjwf_mjs_findFrame(const mjSpec * s, const char * name) {
   return mjs_findFrame(s, name);
 }
 
-MJWF_API_IMPL mjSpec * mjwf_mjs_findSpec(mjSpec * spec, const char * name) {
+MJWF_API_IMPL mjSpec * mjwf_mjs_findSpec(const mjSpec * spec, const char * name) {
   return mjs_findSpec(spec, name);
 }
 
-MJWF_API_IMPL mjsElement * mjwf_mjs_firstChild(mjsBody * body, mjtObj type, int recurse) {
+MJWF_API_IMPL mjsElement * mjwf_mjs_firstChild(const mjsBody * body, mjtObj type, int recurse) {
   return mjs_firstChild(body, type, recurse);
 }
 
-MJWF_API_IMPL mjsElement * mjwf_mjs_firstElement(mjSpec * s, mjtObj type) {
+MJWF_API_IMPL mjsElement * mjwf_mjs_firstElement(const mjSpec * s, mjtObj type) {
   return mjs_firstElement(s, type);
 }
 
-MJWF_API_IMPL mjsDefault * mjwf_mjs_getDefault(mjsElement * element) {
+MJWF_API_IMPL mjsCompiler * mjwf_mjs_getCompiler(const mjsElement * element) {
+  return mjs_getCompiler(element);
+}
+
+MJWF_API_IMPL mjsDefault * mjwf_mjs_getDefault(const mjsElement * element) {
   return mjs_getDefault(element);
 }
 
@@ -1041,11 +1061,11 @@ MJWF_API_IMPL const char * mjwf_mjs_getError(mjSpec * s) {
   return mjs_getError(s);
 }
 
-MJWF_API_IMPL mjsFrame * mjwf_mjs_getFrame(mjsElement * element) {
+MJWF_API_IMPL mjsFrame * mjwf_mjs_getFrame(const mjsElement * element) {
   return mjs_getFrame(element);
 }
 
-MJWF_API_IMPL int mjwf_mjs_getId(mjsElement * element) {
+MJWF_API_IMPL int mjwf_mjs_getId(const mjsElement * element) {
   return mjs_getId(element);
 }
 
@@ -1053,7 +1073,11 @@ MJWF_API_IMPL mjString * mjwf_mjs_getName(mjsElement * element) {
   return mjs_getName(element);
 }
 
-MJWF_API_IMPL mjsBody * mjwf_mjs_getParent(mjsElement * element) {
+MJWF_API_IMPL mjSpec * mjwf_mjs_getOriginSpec(const mjsElement * element) {
+  return mjs_getOriginSpec(element);
+}
+
+MJWF_API_IMPL mjsBody * mjwf_mjs_getParent(const mjsElement * element) {
   return mjs_getParent(element);
 }
 
@@ -1061,11 +1085,11 @@ MJWF_API_IMPL const void * mjwf_mjs_getPluginAttributes(const mjsPlugin * plugin
   return mjs_getPluginAttributes(plugin);
 }
 
-MJWF_API_IMPL mjSpec * mjwf_mjs_getSpec(mjsElement * element) {
+MJWF_API_IMPL mjSpec * mjwf_mjs_getSpec(const mjsElement * element) {
   return mjs_getSpec(element);
 }
 
-MJWF_API_IMPL mjsDefault * mjwf_mjs_getSpecDefault(mjSpec * s) {
+MJWF_API_IMPL mjsDefault * mjwf_mjs_getSpecDefault(const mjSpec * s) {
   return mjs_getSpecDefault(s);
 }
 
@@ -1081,11 +1105,11 @@ MJWF_API_IMPL mjsWrap * mjwf_mjs_getWrap(const mjsTendon * tendonspec, int i) {
   return mjs_getWrap(tendonspec, i);
 }
 
-MJWF_API_IMPL double mjwf_mjs_getWrapCoef(mjsWrap * wrap) {
+MJWF_API_IMPL double mjwf_mjs_getWrapCoef(const mjsWrap * wrap) {
   return mjs_getWrapCoef(wrap);
 }
 
-MJWF_API_IMPL double mjwf_mjs_getWrapDivisor(mjsWrap * wrap) {
+MJWF_API_IMPL double mjwf_mjs_getWrapDivisor(const mjsWrap * wrap) {
   return mjs_getWrapDivisor(wrap);
 }
 
@@ -1093,11 +1117,11 @@ MJWF_API_IMPL int mjwf_mjs_getWrapNum(const mjsTendon * tendonspec) {
   return mjs_getWrapNum(tendonspec);
 }
 
-MJWF_API_IMPL mjsSite * mjwf_mjs_getWrapSideSite(mjsWrap * wrap) {
+MJWF_API_IMPL mjsSite * mjwf_mjs_getWrapSideSite(const mjsWrap * wrap) {
   return mjs_getWrapSideSite(wrap);
 }
 
-MJWF_API_IMPL mjsElement * mjwf_mjs_getWrapTarget(mjsWrap * wrap) {
+MJWF_API_IMPL mjsElement * mjwf_mjs_getWrapTarget(const mjsWrap * wrap) {
   return mjs_getWrapTarget(wrap);
 }
 
@@ -1109,11 +1133,11 @@ MJWF_API_IMPL int mjwf_mjs_makeMesh(mjsMesh * mesh, mjtMeshBuiltin builtin, doub
   return mjs_makeMesh(mesh, builtin, params, nparams);
 }
 
-MJWF_API_IMPL mjsElement * mjwf_mjs_nextChild(mjsBody * body, mjsElement * child, int recurse) {
+MJWF_API_IMPL mjsElement * mjwf_mjs_nextChild(const mjsBody * body, const mjsElement * child, int recurse) {
   return mjs_nextChild(body, child, recurse);
 }
 
-MJWF_API_IMPL mjsElement * mjwf_mjs_nextElement(mjSpec * s, mjsElement * element) {
+MJWF_API_IMPL mjsElement * mjwf_mjs_nextElement(const mjSpec * s, const mjsElement * element) {
   return mjs_nextElement(s, element);
 }
 
@@ -1179,6 +1203,10 @@ MJWF_API_IMPL const char * mjwf_mjs_setToAdhesion(mjsActuator * actuator, double
 
 MJWF_API_IMPL const char * mjwf_mjs_setToCylinder(mjsActuator * actuator, double timeconst, double bias, double area, double diameter) {
   return mjs_setToCylinder(actuator, timeconst, bias, area, diameter);
+}
+
+MJWF_API_IMPL const char * mjwf_mjs_setToDCMotor(mjsActuator * actuator, double motorconst[2], double resistance, double nominal[3], double saturation[3], double inductance[2], double cogging[3], double controller[6], double thermal[6], double lugre[5], int input_mode) {
+  return mjs_setToDCMotor(actuator, motorconst, resistance, nominal, saturation, inductance, cogging, controller, thermal, lugre, input_mode);
 }
 
 MJWF_API_IMPL const char * mjwf_mjs_setToDamper(mjsActuator * actuator, double kv) {
@@ -1671,6 +1699,10 @@ MJWF_API_IMPL void mjwf_mju_subQuat(mjtNum res[3], const mjtNum qa[4], const mjt
 
 MJWF_API_IMPL mjtNum mjwf_mju_sum(const mjtNum * vec, int n) {
   return mju_sum(vec, n);
+}
+
+MJWF_API_IMPL void mjwf_mju_sym2dense(mjtNum * res, const mjtNum * mat, int n, const int * rownnz, const int * rowadr, const int * colind) {
+  mju_sym2dense(res, mat, n, rownnz, rowadr, colind);
 }
 
 MJWF_API_IMPL void mjwf_mju_symmetrize(mjtNum * res, const mjtNum * mat, int n) {

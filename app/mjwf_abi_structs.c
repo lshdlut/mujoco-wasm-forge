@@ -290,6 +290,12 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_jnt_bodyid_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->jnt_bodyid);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_jnt_actuatorid_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->jnt_actuatorid);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_jnt_group_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -343,6 +349,12 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_jnt_stiffness_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (double*)(m->jnt_stiffness);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_jnt_stiffnesspoly_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->jnt_stiffnesspoly);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_jnt_range_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -433,6 +445,12 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_dof_damping_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (double*)(m->dof_damping);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_dof_dampingpoly_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->dof_dampingpoly);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_dof_invweight0_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -1022,6 +1040,18 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_interp_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->flex_interp);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_bandwidth_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_bandwidth);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_cellnum_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_cellnum);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_nodeadr_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -1076,11 +1106,23 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_elemdataadr_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->flex_elemdataadr);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_stiffnessadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_stiffnessadr);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_elemedgeadr_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (int32_t*)(m->flex_elemedgeadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_bendingadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->flex_bendingadr);
 }
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_flex_shellnum_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -1970,6 +2012,12 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_matid_ptr(int h) {
   if (!m) return NULL;
   return (int32_t*)(m->tendon_matid);
 }
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_actuatorid_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->tendon_actuatorid);
+}
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_group_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
@@ -1987,6 +2035,24 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_tendon_treeid_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (int32_t*)(m->tendon_treeid);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_ten_J_rownnz_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->ten_J_rownnz);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_ten_J_rowadr_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->ten_J_rowadr);
+}
+EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_ten_J_colind_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (int32_t*)(m->ten_J_colind);
 }
 EMSCRIPTEN_KEEPALIVE uint8_t* mjwf_model_tendon_limited_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -2054,11 +2120,23 @@ EMSCRIPTEN_KEEPALIVE double* mjwf_model_tendon_stiffness_ptr(int h) {
   if (!m) return NULL;
   return (double*)(m->tendon_stiffness);
 }
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_tendon_stiffnesspoly_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->tendon_stiffnesspoly);
+}
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_tendon_damping_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (double*)(m->tendon_damping);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_tendon_dampingpoly_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->tendon_dampingpoly);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_model_tendon_armature_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -2149,6 +2227,24 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_actuator_trnid_ptr(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return NULL;
   return (int32_t*)(m->actuator_trnid);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_actuator_damping_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->actuator_damping);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_actuator_dampingpoly_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->actuator_dampingpoly);
+}
+EMSCRIPTEN_KEEPALIVE double* mjwf_model_actuator_armature_ptr(int h) {
+  if (!mjwf_helper_valid(h)) return NULL;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return NULL;
+  return (double*)(m->actuator_armature);
 }
 EMSCRIPTEN_KEEPALIVE int32_t* mjwf_model_actuator_actadr_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -3175,24 +3271,6 @@ EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_ten_wrapnum_ptr(int h) {
   mjData* d = _mjwf_data_of(h);
   if (!d) return NULL;
   return (int32_t*)(d->ten_wrapnum);
-}
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_ten_J_rownnz_ptr(int h) {
-  if (!mjwf_helper_valid(h)) return NULL;
-  mjData* d = _mjwf_data_of(h);
-  if (!d) return NULL;
-  return (int32_t*)(d->ten_J_rownnz);
-}
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_ten_J_rowadr_ptr(int h) {
-  if (!mjwf_helper_valid(h)) return NULL;
-  mjData* d = _mjwf_data_of(h);
-  if (!d) return NULL;
-  return (int32_t*)(d->ten_J_rowadr);
-}
-EMSCRIPTEN_KEEPALIVE int32_t* mjwf_data_ten_J_colind_ptr(int h) {
-  if (!mjwf_helper_valid(h)) return NULL;
-  mjData* d = _mjwf_data_of(h);
-  if (!d) return NULL;
-  return (int32_t*)(d->ten_J_colind);
 }
 EMSCRIPTEN_KEEPALIVE double* mjwf_data_ten_J_ptr(int h) {
   if (!mjwf_helper_valid(h)) return NULL;
@@ -4412,6 +4490,18 @@ EMSCRIPTEN_KEEPALIVE int mjwf_model_nflexelemdata(int h) {
   if (!m) return 0;
   return (int)(m->nflexelemdata);
 }
+EMSCRIPTEN_KEEPALIVE int mjwf_model_nflexstiffness(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return 0;
+  return (int)(m->nflexstiffness);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_model_nflexbending(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return 0;
+  return (int)(m->nflexbending);
+}
 EMSCRIPTEN_KEEPALIVE int mjwf_model_nflexelemedge(int h) {
   if (!mjwf_helper_valid(h)) return 0;
   mjModel* m = _mjwf_model_of(h);
@@ -4591,6 +4681,12 @@ EMSCRIPTEN_KEEPALIVE int mjwf_model_ntendon(int h) {
   mjModel* m = _mjwf_model_of(h);
   if (!m) return 0;
   return (int)(m->ntendon);
+}
+EMSCRIPTEN_KEEPALIVE int mjwf_model_nJten(int h) {
+  if (!mjwf_helper_valid(h)) return 0;
+  mjModel* m = _mjwf_model_of(h);
+  if (!m) return 0;
+  return (int)(m->nJten);
 }
 EMSCRIPTEN_KEEPALIVE int mjwf_model_nwrap(int h) {
   if (!mjwf_helper_valid(h)) return 0;

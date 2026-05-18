@@ -1,0 +1,133 @@
+# MuJoCo WASM Function Export Report (ver 3.6.0)
+
+## Special Rules
+- Prefix whitelist: export only `mj_`, `mju_`, `mjs_`, `mjd_` symbols; rendering/UI/thread helpers (mjv_/mjr_/mjui_/mjthread_) are excluded.
+- Variadic: introspect treats varargs functions as fixed signatures, so gen_funcs.py does not synthesise *_v adapters; mju_error/mju_warning are exported with their introspect-declared parameter lists.
+- Runtime helpers: `_malloc`, `_free`, `_realloc` are kept via runtime_keep and not wrapped as mjwf_*.
+
+## A, B, C Overview
+- A: declarations from dist/<ver>/abi/functions_introspect_like.json (introspect).
+- B: implemented symbols from dist/<ver>/abi/nm_symbols.json (llvm-nm -g --defined-only).
+- C: A ∩ B after applying prefix whitelist and any future exclusions, emitted as mjwf_* wrappers.
+- Hard gate: (A ∩ B) - C must be empty.
+
+## Totals
+- A: 519
+- B: 2802
+- C (functions only): 469
+- Prefix breakdown: mj=160, mju=131, mjs=141, mjd=4
+
+## Special Exclusions (by name → reason)
+- mjc_distance -> non_core_prefix
+- mjc_getSDF -> non_core_prefix
+- mjc_gradient -> non_core_prefix
+- mjp_defaultDecoder -> non_core_prefix
+- mjp_defaultPlugin -> non_core_prefix
+- mjp_defaultResourceProvider -> non_core_prefix
+- mjp_findDecoder -> non_core_prefix
+- mjp_getPlugin -> non_core_prefix
+- mjp_getPluginAtSlot -> non_core_prefix
+- mjp_getResourceProvider -> non_core_prefix
+- mjp_getResourceProviderAtSlot -> non_core_prefix
+- mjp_pluginCount -> non_core_prefix
+- mjp_registerDecoder -> non_core_prefix
+- mjp_registerPlugin -> non_core_prefix
+- mjp_registerResourceProvider -> non_core_prefix
+- mjp_resourceProviderCount -> non_core_prefix
+
+## Set Differences (for auditing)
+- A - B (declared only): 34
+- mjr_addAux
+- mjr_blitAux
+- mjr_blitBuffer
+- mjr_changeFont
+- mjr_defaultContext
+- mjr_drawPixels
+- mjr_figure
+- mjr_findRect
+- mjr_finish
+- mjr_freeContext
+- mjr_getError
+- mjr_label
+- mjr_makeContext
+- mjr_maxViewport
+- mjr_overlay
+- mjr_readPixels
+- mjr_rectangle
+- mjr_render
+- mjr_resizeOffscreen
+- mjr_restoreBuffer
+- mjr_setAux
+- mjr_setBuffer
+- mjr_text
+- mjr_uploadHField
+- mjr_uploadMesh
+- mjr_uploadTexture
+- mjui_add
+- mjui_addToSection
+- mjui_event
+- mjui_render
+- mjui_resize
+- mjui_themeColor
+- mjui_themeSpacing
+- mjui_update
+- B - A (implemented only): 2317
+- MJCF
+- RK4_A
+- RK4_B
+- TFAuto_map
+- Z10mjuu_dist3PKdS0_
+- Z11mjCopyErrorPcPKci
+- Z11mjuu_getextNSt3__217basic_string_viewIcNS_11char_traitsIcEEEE
+- Z11mjuu_matadriii
+- Z11mjuu_mulmatPdPKdS1_
+- Z11mjuu_setvecPddd
+- Z11mjuu_setvecPdddd
+- Z11mjuu_setvecPddddd
+- Z11mjuu_setvecPfddd
+- Z11mjuu_setvecPfdddd
+- Z11mjuu_z2quatPdPKd
+- Z12ComputeBasisI9Stencil2DEvPdPKdPKiS5_S5_d
+- Z12ComputeBasisI9Stencil3DEvPdPKdPKiS5_S5_d
+- Z12MetricTensorI9Stencil2DEvPdiddPA9_Kd
+- Z12MetricTensorI9Stencil3DEvPdiddPA9_Kd
+- Z12mjuu_definedd
+- Z12mjuu_mulRMRTPdPKdS1_
+- Z12mjuu_mulquatPdPKdS1_
+- Z12mjuu_normvecPdi
+- Z12mjuu_normvecPfi
+- Z12mjuu_zerovecPdi
+- Z12mjuu_zerovecPfi
+- Z13mjuu_addtovecPdPKdi
+- Z13mjuu_crossvecPdPKdS1_
+- Z13mjuu_localposPdPKdS1_S1_
+- Z13mjuu_quat2matPdPKd
+- Z13mjuu_scalevecPdPKddi
+- Z13mjuu_stripextNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z13mjuu_visccoefPddPKdd
+- Z14ComputeBendingI11StencilFlapEvPdS1_PKidd
+- Z14MeshPolygonKeyRNSt3__24pairIddEEPKdS4_S4_d
+- Z14mjuu_isabspathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14mjuu_localaxisPdPKdS1_
+- Z14mjuu_localquatPdPKdS1_
+- Z14mjuu_mulvecmatPdPKdS1_
+- Z14mjuu_offcenterPddPKd
+- Z14mjuu_strippathNSt3__212basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE
+- Z14sensorDatatype10mjtSensor_
+- Z15mjuu_dirnamelenPKc
+- Z15mjuu_frame2quatPdPKdS1_S1_
+- Z15mjuu_frameaccumPdS_PKdS1_
+- Z15mjuu_makenormalIdEdPdPKT_S3_S3_
+- Z15mjuu_makenormalIfEdPdPKT_S3_S3_
+- Z15mjuu_mulvecmatTPdPKdS1_
+- Z15mjuu_rotVecQuatPdPKdS1_
+- Z15mjuu_trnVecPosePdPKdS1_S1_
+- ... (+2267 more)
+- (A ∩ B) - C (should be zero): 0
+- none
+
+## Baseline Comparison (wrapper_exports.json)
+- Baseline-only (present in snapshot, missing now): 0
+- none
+- Current-only (new in this run vs baseline): 0
+- none
