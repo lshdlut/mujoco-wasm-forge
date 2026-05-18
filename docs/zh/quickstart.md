@@ -15,25 +15,24 @@
 在仓库根目录执行：
 
 ```bash
-python3 forge_cli.py build --version 3.5.0 --with-checks
+python3 forge_cli.py build --version 3.8.1 --with-checks
 ```
 
 如果你希望把中间 build tree 放到仓库外（强烈建议在同步盘/OneDrive 上这样做），设置 `MJWF_BUILD_ROOT`：
 
 ```bash
-MJWF_BUILD_ROOT=/tmp/mjwf_build python3 forge_cli.py build --version 3.5.0 --with-checks
+MJWF_BUILD_ROOT=/tmp/mjwf_build python3 forge_cli.py build --version 3.8.1 --with-checks
 ```
 
 ## 产物在哪里
 
 - 主要产物：
-  - `dist/3.5.0/mujoco.js`
-  - `dist/3.5.0/mujoco.wasm`
+  - `dist/3.8.1/mujoco.js`
+  - `dist/3.8.1/mujoco.wasm`
 - 审计/ABI 产物：
-  - `dist/3.5.0/abi/`（导出清单、introspect JSON、符号清单、报告等）
+  - `dist/3.8.1/abi/`（导出清单、introspect JSON、符号清单、报告等）
 
 ## 下一步
 
 - 想切版本/ref：看 `howto_build_version`。
 - 想集成到 worker/Node：看 `howto_web_worker` / `howto_node`。
-

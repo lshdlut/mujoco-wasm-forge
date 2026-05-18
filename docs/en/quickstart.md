@@ -15,25 +15,24 @@ This page shows the shortest path to a working `dist/<ver>/mujoco.js` + `dist/<v
 From the repo root:
 
 ```bash
-python3 forge_cli.py build --version 3.5.0 --with-checks
+python3 forge_cli.py build --version 3.8.1 --with-checks
 ```
 
 If you want build trees outside the repo (recommended on synced filesystems), set `MJWF_BUILD_ROOT`:
 
 ```bash
-MJWF_BUILD_ROOT=/tmp/mjwf_build python3 forge_cli.py build --version 3.5.0 --with-checks
+MJWF_BUILD_ROOT=/tmp/mjwf_build python3 forge_cli.py build --version 3.8.1 --with-checks
 ```
 
 ## Find the outputs
 
 - Primary artifacts:
-  - `dist/3.5.0/mujoco.js`
-  - `dist/3.5.0/mujoco.wasm`
+  - `dist/3.8.1/mujoco.js`
+  - `dist/3.8.1/mujoco.wasm`
 - ABI/audit artifacts:
-  - `dist/3.5.0/abi/` (export list, introspection JSON, symbol inventory, reports)
+  - `dist/3.8.1/abi/` (export list, introspection JSON, symbol inventory, reports)
 
 ## Next
 
 - If you need another version/ref: `howto_build_version`.
 - If you want to consume it in a worker or Node: `howto_web_worker` / `howto_node`.
-

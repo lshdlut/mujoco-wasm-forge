@@ -13,6 +13,12 @@ For convenience (and for CI `verify-dist`), some `dist/<ver>/` outputs are commi
 - `3.3.7`
 - `3.4.0`
 - `3.5.0`
+- `3.6.0`
+- `3.7.0`
+- `3.8.0`
+- `3.8.1`
+
+Optional pthreads artifacts are currently committed for `3.5.0` and `3.8.1`.
 
 ## Release tags (convention)
 
@@ -21,3 +27,9 @@ CI treats tags matching `forge-*` as release-like triggers, e.g.:
 - `forge-3.4.0-r1`
 - `forge-3.5.0-r1`
 
+The current MuJoCo 3.6+ release batch uses:
+
+- `forge-3.6.0-r1`
+- `forge-3.7.0-r1`
+- `forge-3.8.0-r1`
+- `forge-3.8.1-r1`

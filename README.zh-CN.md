@@ -16,13 +16,15 @@
 ## 快速开始
 
 ```bash
-python forge_cli.py build --version 3.5.0 --with-checks
+python forge_cli.py build --version 3.8.1 --with-checks
 ```
 
 产物位置：
-- `dist/3.5.0/mujoco.js`, `dist/3.5.0/mujoco.wasm`
-- `dist/3.5.0/abi/exports.lst` 等 ABI 产物
-- 可选 pthreads 运行时：`dist/3.5.0/pthreads/`
+- `dist/3.8.1/mujoco.js`, `dist/3.8.1/mujoco.wasm`
+- `dist/3.8.1/abi/exports.lst` 等 ABI 产物
+- 可选 pthreads 运行时：`dist/3.8.1/pthreads/`
+
+当前已提交的 release 产物覆盖 MuJoCo `3.3.7`、`3.4.0`、`3.5.0`、`3.6.0`、`3.7.0`、`3.8.0`、`3.8.1`。
 
 ## 为什么需要 forge
 
@@ -70,6 +72,7 @@ Bench 工具与输出：
 - 入口：`forge_cli.py`（`prepare → introspect → ABI → build → post-build checks`）。
 - 输出：`dist/<ver>/mujoco.{js,wasm}` + `dist/<ver>/abi/*`。
 - 可选 pthreads 运行时：`dist/<ver>/pthreads/`（ABI 仍共用 `dist/<ver>/abi/`）。
+- Release tag 使用 `forge-<mujoco-version>-rN`，CI 会发布 `dist-runtime.zip` 和 `dist-audit.zip`。
 
 ## 备注
 

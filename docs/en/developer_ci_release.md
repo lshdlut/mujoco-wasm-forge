@@ -18,6 +18,23 @@ Tags matching `forge-*` are treated as release-like triggers. Examples:
 - `forge-3.4.0-r1`
 - `forge-3.5.0-r1`
 
+For a committed `dist/<ver>/` release, tag the already-verified commit:
+
+```bash
+git tag forge-<ver>-r1
+git push origin forge-<ver>-r1
+```
+
+For the MuJoCo 3.6+ batch:
+
+```bash
+git tag forge-3.6.0-r1
+git tag forge-3.7.0-r1
+git tag forge-3.8.0-r1
+git tag forge-3.8.1-r1
+git push origin forge-3.6.0-r1 forge-3.7.0-r1 forge-3.8.0-r1 forge-3.8.1-r1
+```
+
 ## Release assets
 
 For release-like tags, CI publishes two assets under the same GitHub Release:
@@ -26,6 +43,7 @@ For release-like tags, CI publishes two assets under the same GitHub Release:
   - runtime-only payload for downstream web hosts / apps
   - zip root matches the forge webroot (`mujoco.js`, `mujoco.wasm`, optional `pthreads/`, `version.json`)
   - excludes `abi/`
+  - includes `pthreads/` only when that variant exists under `dist/<ver>/`
 
 - `dist-audit.zip`
   - audit/debug payload for maintainers

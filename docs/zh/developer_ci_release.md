@@ -18,6 +18,23 @@ GitHub Actions 工作流 `.github/workflows/forge-dist-verify.yml` 用于验证�
 - `forge-3.4.0-r1`
 - `forge-3.5.0-r1`
 
+发布一个已提交的 `dist/<ver>/` 时，应在已经通过 verify 的 commit 上打 tag：
+
+```bash
+git tag forge-<ver>-r1
+git push origin forge-<ver>-r1
+```
+
+本轮 MuJoCo 3.6+ 批次：
+
+```bash
+git tag forge-3.6.0-r1
+git tag forge-3.7.0-r1
+git tag forge-3.8.0-r1
+git tag forge-3.8.1-r1
+git push origin forge-3.6.0-r1 forge-3.7.0-r1 forge-3.8.0-r1 forge-3.8.1-r1
+```
+
 ## Release 产物
 
 对于 release-like tag，CI 会在同一个 GitHub Release 下发布两个 asset：
@@ -26,6 +43,7 @@ GitHub Actions 工作流 `.github/workflows/forge-dist-verify.yml` 用于验证�
   - 面向下游站点 / 应用的 runtime 产物
   - zip 根目录保持 forge webroot 形状（`mujoco.js`、`mujoco.wasm`、可选 `pthreads/`、`version.json`）
   - 不包含 `abi/`
+  - 只有当 `dist/<ver>/` 下存在 pthreads 变体时才包含 `pthreads/`
 
 - `dist-audit.zip`
   - 面向维护者的审计 / 调试产物

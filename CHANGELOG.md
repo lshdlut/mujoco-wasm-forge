@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## forge-3.8.1-r1 / forge-3.8.0-r1 / forge-3.7.0-r1 / forge-3.6.0-r1
+
+- Added committed runtime and ABI audit artifacts for MuJoCo `3.6.0`, `3.7.0`, `3.8.0`, and `3.8.1`.
+- Added the optional pthreads runtime for `3.8.1`.
+- Fixed MuJoCo 3.6+ external OBJ/STL mesh loading in static WASM builds by retaining resource decoder registrars without patching upstream MuJoCo.
+- Added external OBJ and STL runtime smoke tests, while keeping the existing OBJ + texture smoke coverage.
+- Aligned `dist/3.6.0/mujoco.wasm` with the Linux/CI reproducible build output.
+
 ## forge-3.2.5-r1
 
 - First release of MuJoCo 3.2.5 to WASM artifacts

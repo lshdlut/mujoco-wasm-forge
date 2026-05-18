@@ -16,13 +16,15 @@ Docs are published on Read the Docs (links above; Sphinx sources live under `doc
 ## Quickstart
 
 ```bash
-python forge_cli.py build --version 3.5.0 --with-checks
+python forge_cli.py build --version 3.8.1 --with-checks
 ```
 
 Artifacts:
-- `dist/3.5.0/mujoco.js`, `dist/3.5.0/mujoco.wasm`
-- `dist/3.5.0/abi/exports.lst` and other ABI artifacts
-- optional pthreads runtime under `dist/3.5.0/pthreads/`
+- `dist/3.8.1/mujoco.js`, `dist/3.8.1/mujoco.wasm`
+- `dist/3.8.1/abi/exports.lst` and other ABI artifacts
+- optional pthreads runtime under `dist/3.8.1/pthreads/`
+
+Committed release artifacts currently cover MuJoCo `3.3.7`, `3.4.0`, `3.5.0`, `3.6.0`, `3.7.0`, `3.8.0`, and `3.8.1`.
 
 ## Why forge
 
@@ -70,6 +72,7 @@ Bench harness and generated outputs live in:
 - Entry point: `forge_cli.py` (`prepare → introspect → ABI → build → post-build checks`).
 - Output: `dist/<ver>/mujoco.{js,wasm}` + `dist/<ver>/abi/*`.
 - Optional pthreads runtime: `dist/<ver>/pthreads/` (shared ABI under `dist/<ver>/abi/`).
+- Release tags use `forge-<mujoco-version>-rN` and publish `dist-runtime.zip` plus `dist-audit.zip`.
 
 ## Notes
 
