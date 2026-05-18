@@ -138,7 +138,35 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   target_include_directories(mjwasm_forge PRIVATE "${MJWF_ROOT}/external/mujoco/src")
   # user/user_objects.h pulls in tiny_obj_loader.h, so ensure the include path
   # for the tinyobjloader dependency is available to the wrapper translation unit.
-  target_link_libraries(mjwasm_forge PRIVATE mujoco tinyobjloader)
+  target_link_libraries(mjwasm_forge PRIVATE tinyobjloader)
+
+  function(mjwf_force_static_registrars target)
+    # MuJoCo 3.6+ resource decoders register via static constructors. Under
+    # Emscripten static linking, archive members that only provide constructor
+    # side effects can be stripped unless the archive/object is force-loaded.
+    target_link_libraries(
+      ${target}
+      PRIVATE
+      "-Wl,--whole-archive"
+      mujoco
+      "-Wl,--no-whole-archive"
+    )
+
+    set(_mjwf_object_registrar_targets "")
+    foreach(_mjwf_decoder_target obj_decoder stl_decoder)
+      if (TARGET ${_mjwf_decoder_target})
+        get_target_property(_mjwf_decoder_type ${_mjwf_decoder_target} TYPE)
+        if (_mjwf_decoder_type STREQUAL "OBJECT_LIBRARY")
+          target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${_mjwf_decoder_target}>")
+          list(APPEND _mjwf_object_registrar_targets ${_mjwf_decoder_target})
+        endif()
+      endif()
+    endforeach()
+    set(MJWF_STATIC_REGISTRAR_OBJECT_TARGETS "${_mjwf_object_registrar_targets}" PARENT_SCOPE)
+  endfunction()
+
+  set(MJWF_STATIC_REGISTRAR_OBJECT_TARGETS "")
+  mjwf_force_static_registrars(mjwasm_forge)
   set(_mjwf_plugin_targets "")
   cmake_path(SET _mjwf_plugin_root NORMALIZE "${MJWF_ROOT}/external/mujoco/plugin")
   get_property(_mjwf_mujoco_subdirs DIRECTORY "${MJWF_ROOT}/external/mujoco" PROPERTY SUBDIRECTORIES)
@@ -197,7 +225,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   # Ensure exception catching is enabled consistently at compile+link time; MuJoCo relies on
   # try/catch for load-time fallbacks (e.g., namespaced refs in <replicate>/<attach>).
   target_compile_options(mjwasm_forge PRIVATE ${MJWF_EXC_FLAG})
-  foreach(_target mujoco ${_mjwf_plugin_targets})
+  foreach(_target mujoco ${_mjwf_plugin_targets} ${MJWF_STATIC_REGISTRAR_OBJECT_TARGETS})
     if (TARGET ${_target})
       target_compile_options(${_target} PRIVATE ${MJWF_EXC_FLAG} ${MJWF_SIMD_FLAG})
     endif()

@@ -59,6 +59,11 @@ def _bash_argv(*args: str) -> List[str]:
   return [_resolve_bash_executable(), *args]
 
 
+def _sh_quote(value: str) -> str:
+  """Return a POSIX-shell single-quoted string."""
+  return "'" + value.replace("'", "'\"'\"'") + "'"
+
+
 def _resolve_node_executable(env: Mapping[str, str]) -> str:
   """Return a node executable suitable for running check scripts."""
   for key in ("NODE", "EMSDK_NODE"):
@@ -1043,6 +1048,7 @@ def _run_post_build(
 
 def _run_checks(env: Mapping[str, str]) -> None:
   """Run smoke/mesh/gates checks against the active dist/<ver> tree."""
+  node_exe = _sh_quote(_resolve_node_executable(env).replace("\\", "/"))
   emsdk_env_snippet = (
       'if [ -n "${EMSDK:-}" ] && [ -f "${EMSDK}/emsdk_env.sh" ]; then '
       '  . "${EMSDK}/emsdk_env.sh"; '
@@ -1053,14 +1059,16 @@ def _run_checks(env: Mapping[str, str]) -> None:
   cmd = (
       "set -euo pipefail; "
       + emsdk_env_snippet +
-      "node check/tests/smoke.mjs; "
-      "node check/tests/helper-make-from-xml.mjs; "
-      "node check/tests/helper-handle-lifecycle.mjs; "
-      "node check/tests/mesh-smoke.mjs; "
-      "node check/tests/mesh-texture-smoke.mjs; "
-      "node check/tests/plugin-touch-grid.mjs; "
-      "node check/tests/xml-missing-ref.mjs; "
-      "node check/tests/gates.mjs"
+      f"{node_exe} check/tests/smoke.mjs; "
+      f"{node_exe} check/tests/helper-make-from-xml.mjs; "
+      f"{node_exe} check/tests/helper-handle-lifecycle.mjs; "
+      f"{node_exe} check/tests/mesh-smoke.mjs; "
+      f"{node_exe} check/tests/external-obj-smoke.mjs; "
+      f"{node_exe} check/tests/external-stl-smoke.mjs; "
+      f"{node_exe} check/tests/mesh-texture-smoke.mjs; "
+      f"{node_exe} check/tests/plugin-touch-grid.mjs; "
+      f"{node_exe} check/tests/xml-missing-ref.mjs; "
+      f"{node_exe} check/tests/gates.mjs"
   )
   subprocess.run(
       _bash_argv("-lc", cmd),
