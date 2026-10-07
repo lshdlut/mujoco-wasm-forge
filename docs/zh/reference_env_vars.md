@@ -21,6 +21,7 @@
 ## build tree 放置
 
 - `MJWF_BUILD_ROOT`：中间构建目录的根（默认 `<repo>/build`）。
+- `MJWF_BROWSER_RUNTIME`：headless 浏览器升级测试的运行目录（默认位于系统临时目录下的 `mujoco-wasm-forge-closeout-browser`）。应放在同步源码目录之外。
 
 ## 导出清单覆盖
 

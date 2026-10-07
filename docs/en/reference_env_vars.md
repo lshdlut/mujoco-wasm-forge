@@ -21,6 +21,7 @@ They are consumed by `dist_version.py` and `check/dist_paths.mjs`.
 ## Build tree placement
 
 - `MJWF_BUILD_ROOT`: root directory for intermediate build trees (defaults to `<repo>/build`).
+- `MJWF_BROWSER_RUNTIME`: runtime directory for the headless browser upgrade runner (defaults to a `mujoco-wasm-forge-closeout-browser` directory under the host temporary directory). Keep it outside synced source trees.
 
 ## Export list override
 
