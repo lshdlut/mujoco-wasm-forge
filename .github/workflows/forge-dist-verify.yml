@@ -287,6 +287,43 @@ jobs:
           set -euxo pipefail
           python3 forge_cli.py verify-dist --version "${{ matrix.ver }}"
 
+      - name: Capture failed reproducibility inputs
+        if: failure()
+        working-directory: ci-build
+        run: |
+          set -euxo pipefail
+          mkdir -p repro-diagnostics
+          emcc --version > repro-diagnostics/compiler-version.txt
+          "${EMSDK}/upstream/bin/wasm-opt" --version > repro-diagnostics/binaryen-version.txt
+          python3 - <<'PY'
+          from pathlib import Path
+
+          records = []
+          for cache in sorted(Path("build/forge").glob("*/*/CMakeCache.txt")):
+              records.append(f"[{cache.as_posix()}]")
+              records.extend(line for line in cache.read_text().splitlines()
+                             if line.startswith(("CMAKE_C_FLAGS:", "CMAKE_CXX_FLAGS:",
+                                                 "CMAKE_C_FLAGS_RELEASE:", "CMAKE_CXX_FLAGS_RELEASE:",
+                                                 "CMAKE_C_COMPILER:", "CMAKE_CXX_COMPILER:",
+                                                 "CMAKE_EXE_LINKER_FLAGS:", "CMAKE_BUILD_TYPE:")))
+          Path("repro-diagnostics/compiler-flags.txt").write_text("\n".join(records) + "\n")
+          PY
+
+      - name: Upload failed reproducibility diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-repro-${{ matrix.ver }}-${{ github.run_id }}
+          retention-days: 3
+          if-no-files-found: error
+          path: |
+            ci-build/repro-diagnostics/
+            ci-build/dist/${{ matrix.ver }}/**/*.wasm
+            ci-build/dist/${{ matrix.ver }}/abi/build_metadata.json
+            ci-build/dist/${{ matrix.ver }}/abi/nm_coverage*.json
+            ci-build/build/forge/*/*/compile_commands.json
+            ci-build/build/forge/*/*/build.ninja
+
   release-dist:
     needs: [select-dist-versions, verify-dist]
     if: startsWith(github.ref, 'refs/tags/forge-') && needs.select-dist-versions.outputs.has_versions == 'true'
