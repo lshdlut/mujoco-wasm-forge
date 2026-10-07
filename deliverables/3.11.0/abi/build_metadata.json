@@ -1,0 +1,34 @@
+{
+  "compilerVersion": "4.0.10",
+  "emsdkVersion": "4.0.10",
+  "flavors": {
+    "pthreads": {
+      "settings": {
+        "cmakeGenerator": "Ninja",
+        "plugins": true,
+        "profile": "fast",
+        "pthreads": true,
+        "simd": true,
+        "sourceLocationPaths": "repository-relative"
+      },
+      "upstreamDirty": true,
+      "upstreamPatchSha256": "19d94f472dbf91420f1877c2ee55d47d408bd25099e62b0dda4879f1bef4655e",
+      "wasmSha256": "83028e8b3cfedddd29771d5c73590b0bdf125a331b69ef921ba9bd970dfc2937"
+    },
+    "single": {
+      "settings": {
+        "cmakeGenerator": "Ninja",
+        "plugins": true,
+        "profile": "fast",
+        "pthreads": false,
+        "simd": true,
+        "sourceLocationPaths": "repository-relative"
+      },
+      "upstreamDirty": true,
+      "upstreamPatchSha256": "19d94f472dbf91420f1877c2ee55d47d408bd25099e62b0dda4879f1bef4655e",
+      "wasmSha256": "dcb33cc74962ff27d24330c62441cde7c7aa0ca09d646ecc20af3f1664f37744"
+    }
+  },
+  "schemaVersion": 1,
+  "upstreamResolvedSHA": "b85fdca54f0e0038b804af146a0b4e94199e00d0"
+}
