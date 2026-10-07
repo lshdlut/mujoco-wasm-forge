@@ -19,16 +19,24 @@ Docs are published on Read the Docs (links above; Sphinx sources live under `doc
 python forge_cli.py build --version 3.15.0 --with-checks
 ```
 
+Run builds from a current, local non-OneDrive checkout (for example,
+`C:\dev\mujoco-wasm-forge\build-checkout` on Windows); the synced source checkout is
+not a build location. Ninja is required by the current recipe; install it or set
+`MJWF_NINJA`.
+
 Artifacts:
 - `dist/3.15.0/mujoco.js`, `dist/3.15.0/mujoco.wasm`
 - `dist/3.15.0/abi/exports.lst` and other ABI artifacts
 - optional pthreads runtime under `dist/3.15.0/pthreads/`
 
-Committed release artifacts live under `deliverables/<ver>/` and currently cover MuJoCo `3.3.7`, `3.4.0`, `3.5.0`, `3.6.0`, `3.7.0`, `3.8.0`, and `3.8.1`. The `dist/<ver>/` tree is dev-only build staging; promote a validated version into `deliverables/<ver>/` before committing it.
+Committed release artifacts live under `deliverables/<ver>/` and currently include the historical
+3.3.7--3.8.1 baselines plus the checked 3.9.0--3.15.0 upgrade batch. The `dist/<ver>/` tree is
+dev-only build staging; promote a validated version into `deliverables/<ver>/` before committing it.
 
 The committed 3.9.0--3.15.0 upgrade batch includes both single and pthreads variants, checked locally and
-byte-for-byte reproduced by fresh Linux CI. These are checked repository baselines, not new GitHub releases:
-the published release sequence still ends at `forge-3.8.1-r1`. See [supported versions](docs/en/supported_versions.md).
+byte-for-byte reproduced by fresh Linux CI. GitHub Release publication is driven by matching
+`forge-<ver>-r1` tags and occurs only after the tag's version-specific verification succeeds. See
+[supported versions](docs/en/supported_versions.md) and [CI & release](docs/en/developer_ci_release.md).
 
 ## Why forge
 

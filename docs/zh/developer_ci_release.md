@@ -25,14 +25,24 @@ git tag forge-<ver>-r1
 git push origin forge-<ver>-r1
 ```
 
-本轮 MuJoCo 3.6+ 批次：
+对于已经检查过的 MuJoCo 3.9+ 批次，应在同一个已验证 commit 上创建 tag，
+并逐个 push，使每个 tag 都产生独立的 workflow event：
 
 ```bash
-git tag forge-3.6.0-r1
-git tag forge-3.7.0-r1
-git tag forge-3.8.0-r1
-git tag forge-3.8.1-r1
-git push origin forge-3.6.0-r1 forge-3.7.0-r1 forge-3.8.0-r1 forge-3.8.1-r1
+git tag forge-3.9.0-r1
+git tag forge-3.10.0-r1
+git tag forge-3.11.0-r1
+git tag forge-3.12.0-r1
+git tag forge-3.13.0-r1
+git tag forge-3.14.0-r1
+git tag forge-3.15.0-r1
+git push origin forge-3.9.0-r1
+git push origin forge-3.10.0-r1
+git push origin forge-3.11.0-r1
+git push origin forge-3.12.0-r1
+git push origin forge-3.13.0-r1
+git push origin forge-3.14.0-r1
+git push origin forge-3.15.0-r1
 ```
 
 ## Release 产物
@@ -66,8 +76,9 @@ python3 tools/package_release_assets.py \
   [--build-metadata deliverables/<ver>/abi/build_metadata.json]
 ```
 
-打包只是 release asset 步骤，不会自动创建 tag 或发布 GitHub Release。3.9.0--3.15.0 升级批次仍是 local 状态，
-必须在 deliverables 提交、验证并有意发布后才能称为 published。
+打包只是 release asset 步骤，不会自动创建 tag 或发布 GitHub Release。3.9.0--3.15.0
+批次已经提交到 `main` 并通过 CI 验证；逐个 push 对应 tag 后，会启动对应版本的验证，
+只有验证和打包都成功，GitHub 才会发布 release 资产。
 
 ## 本地复现 CI 的 verify 步骤
 

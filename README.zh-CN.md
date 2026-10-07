@@ -19,16 +19,22 @@
 python forge_cli.py build --version 3.15.0 --with-checks
 ```
 
+构建应在当前版本的本地、非 OneDrive 开发检出目录中执行（例如 Windows 下的
+`C:\dev\mujoco-wasm-forge\build-checkout`）；同步盘检出不是构建目录。当前
+recipe 要求 Ninja，请安装 Ninja 或设置 `MJWF_NINJA`。
+
 产物位置：
 - `dist/3.15.0/mujoco.js`, `dist/3.15.0/mujoco.wasm`
 - `dist/3.15.0/abi/exports.lst` 等 ABI 产物
 - 可选 pthreads 运行时：`dist/3.15.0/pthreads/`
 
-已提交的 release 产物存放在 `deliverables/<ver>/`，当前覆盖 MuJoCo `3.3.7`、`3.4.0`、`3.5.0`、`3.6.0`、`3.7.0`、`3.8.0`、`3.8.1`。`dist/<ver>/` 只用于 dev 构建暂存；提交前把验证通过的版本提升到 `deliverables/<ver>/`。
+已提交的 release 产物存放在 `deliverables/<ver>/`，当前包括历史的 3.3.7--3.8.1
+基线，以及已经检查过的 3.9.0--3.15.0 升级批次。`dist/<ver>/` 只用于 dev
+构建暂存；提交前把验证通过的版本提升到 `deliverables/<ver>/`。
 
 已提交的 3.9.0--3.15.0 升级批次包含 single 与 pthreads 两路，均通过本地检查和全新 Linux CI 的逐字节复现。
-它们是仓库中的已检查基线，不是新的 GitHub release；已发布序列仍止于 `forge-3.8.1-r1`。
-详见[已支持版本](docs/zh/supported_versions.md)。
+GitHub Release 由匹配的 `forge-<ver>-r1` tag 触发，并且只有对应版本验证成功后才会发布。
+详见[已支持版本](docs/zh/supported_versions.md)与 [CI 与发布](docs/zh/developer_ci_release.md)。
 
 ## 为什么需要 forge
 

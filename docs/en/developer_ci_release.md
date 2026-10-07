@@ -25,14 +25,24 @@ git tag forge-<ver>-r1
 git push origin forge-<ver>-r1
 ```
 
-For the MuJoCo 3.6+ batch:
+For the checked MuJoCo 3.9+ batch, create the tags on the same verified commit and push each
+tag separately so that every tag produces its own workflow event:
 
 ```bash
-git tag forge-3.6.0-r1
-git tag forge-3.7.0-r1
-git tag forge-3.8.0-r1
-git tag forge-3.8.1-r1
-git push origin forge-3.6.0-r1 forge-3.7.0-r1 forge-3.8.0-r1 forge-3.8.1-r1
+git tag forge-3.9.0-r1
+git tag forge-3.10.0-r1
+git tag forge-3.11.0-r1
+git tag forge-3.12.0-r1
+git tag forge-3.13.0-r1
+git tag forge-3.14.0-r1
+git tag forge-3.15.0-r1
+git push origin forge-3.9.0-r1
+git push origin forge-3.10.0-r1
+git push origin forge-3.11.0-r1
+git push origin forge-3.12.0-r1
+git push origin forge-3.13.0-r1
+git push origin forge-3.14.0-r1
+git push origin forge-3.15.0-r1
 ```
 
 ## Release assets
@@ -66,8 +76,10 @@ python3 tools/package_release_assets.py \
   [--build-metadata deliverables/<ver>/abi/build_metadata.json]
 ```
 
-Packaging is a release-asset step; it does not itself publish a tag or GitHub Release. The 3.9.0--3.15.0 upgrade
-batch remains local until its deliverables are committed, verified, and intentionally released.
+Packaging is a release-asset step; it does not itself publish a tag or GitHub Release. The
+3.9.0--3.15.0 batch is committed and CI-verified on `main`; pushing each matching tag starts
+the version-specific verification, and GitHub publishes the release assets only after that
+verification and packaging succeed.
 
 ## Local reproduction of the CI verify step
 
