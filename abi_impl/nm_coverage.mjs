@@ -6,10 +6,11 @@
  * Usage:
  *   node abi_impl/nm_coverage.mjs <libmujoco.a> --out build/mujoco_impl.json
  *
- * The script never exits with failure; errors are captured in the JSON payload.
+ * Failures remain in the JSON payload and also return a nonzero exit status.
  */
 
-import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { resolve as pathResolve, dirname, delimiter as pathDelimiter } from 'node:path';
 
@@ -41,6 +42,8 @@ function parseArgs(argv) {
     artifact: pathResolve(argv[2]),
     nmPath: process.env.LLVM_NM || process.env.EMNM || resolveDefaultNm(),
     out: null,
+    wasm: null,
+    variant: process.env.MJWF_DIST_VARIANT || 'single',
   };
   for (let i = 3; i < argv.length; ++i) {
     const arg = argv[i];
@@ -48,6 +51,10 @@ function parseArgs(argv) {
       opts.nmPath = argv[++i];
     } else if (arg === '--out') {
       opts.out = pathResolve(argv[++i]);
+    } else if (arg === '--wasm') {
+      opts.wasm = pathResolve(argv[++i]);
+    } else if (arg === '--variant') {
+      opts.variant = argv[++i];
     } else {
       console.error(`Unknown argument: ${arg}`);
       process.exit(2);
@@ -150,6 +157,8 @@ function collectSymbols(stdout) {
 function main() {
   const opts = parseArgs(process.argv);
   const report = {
+    schemaVersion: 2,
+    variant: opts.variant,
     artifact: normalizeArtifactPath(opts.artifact),
     nmPath: normalizeNmPath(opts.nmPath),
     ok: false,
@@ -157,8 +166,17 @@ function main() {
     count: 0,
     error: null,
   };
+  if (opts.wasm) {
+    if (!existsSync(opts.wasm)) {
+      report.error = `Wasm artifact not found: ${opts.wasm}`;
+    } else {
+      report.wasmSha256 = createHash('sha256').update(readFileSync(opts.wasm)).digest('hex');
+    }
+  }
 
-  if (!existsSync(opts.artifact)) {
+  if (report.error) {
+    // Keep the original provenance failure visible; do not scan a different artifact.
+  } else if (!existsSync(opts.artifact)) {
     report.error = `Artifact not found: ${opts.artifact}`;
   } else {
     const res = runNm(opts.nmPath, opts.artifact);
@@ -171,9 +189,11 @@ function main() {
       symbols.sort();
       report.symbols = symbols;
       report.count = symbols.length;
-      report.ok = true;
+      report.ok = symbols.includes('mj_version');
+      if (!report.ok) report.error = 'MuJoCo archive scan did not contain mj_version';
     }
   }
+  if (!report.ok) process.exitCode = 1;
 
   if (opts.out) {
     ensureDirFor(opts.out);

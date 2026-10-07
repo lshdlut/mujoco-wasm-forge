@@ -3,29 +3,6 @@
 Thumbs.db
 *.log
 
-## Node / package
-node_modules/
-
-## Build outputs
-build/
-emsdk-cache/
-dist-ci/
-external/
-_tools/
-_qa*/
-local_tools/
-forge/
-
-## Docs build outputs
-docs/_build/
-docs/en/_build/
-docs/zh/_build/
-
-## Bench outputs
-bench/results/**
-bench/results/raw/
-bench/results/raw_browser/
-
 ## Python bytecode / caches
 *.pyc
 __pycache__/
@@ -34,8 +11,6 @@ scripts\mujoco_abi\introspect\__pycache__
 
 ## Tests temp files
 tests/tmp_model.xml
-test-results/
-.playwright-cli/
 
 ## Internal files (must never be committed)
 AGENTS.md
@@ -45,17 +20,11 @@ docs/DEV_NOTES.md
 scripts/*.local.ps1
 scripts/*.local.sh
 scripts/private/
-local_tools/**
 tmp_*
 *.tmp
-coverage/**
 scripts/*_local.*
 wrappers/**/mjwf_exports_generated.*
 wrappers/**/mjwf_auto_exports.*
 
 wrappers/auto/*
 !wrappers/auto/mjwf_stubs.c
-
-## Local legacy scratch / migration parking
-del_temp/**
-/.agents_arena/

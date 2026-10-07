@@ -14,11 +14,65 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "MuJoCo version (dist/<ver>) to verify (optional)."
+        description: "MuJoCo version (deliverables/<ver>) to verify (optional)."
         required: false
         type: string
 
 jobs:
+  unit-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run no-SDK generator and packaging contracts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          import importlib.util
+          import sys
+          import unittest
+          from pathlib import Path
+
+          repo = Path.cwd()
+          sys.path.insert(0, str(repo))
+          test_path = repo / "check" / "tests" / "generator-types.py"
+          spec = importlib.util.spec_from_file_location("generator_types_contract", test_path)
+          if spec is None or spec.loader is None:
+            raise SystemExit(f"cannot load {test_path}")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          all_tests = unittest.TestLoader().loadTestsFromTestCase(module.GeneratorTypes)
+          selected = [
+              test for test in all_tests
+              if not test.id().endswith(".test_checked_narrowing_in_wasm")
+          ]
+          result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(selected))
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
+          python3 -m unittest discover -s tests -p 'test_package_release*.py'
+
+          version="$(python3 - <<'PY'
+          from pathlib import Path
+          from dist_version import version_sort_key
+
+          versions = [path.name for path in Path("deliverables").iterdir() if path.is_dir()]
+          if not versions:
+            raise SystemExit("no deliverables available for the packaging contract")
+          print(max(versions, key=version_sort_key))
+          PY
+          )"
+          out_dir="${RUNNER_TEMP}/forge-packager-contract-${version}"
+          python3 tools/package_release_assets.py \
+            --dist-dir deliverables \
+            --version "${version}" \
+            --dist-id ci-unit-contract \
+            --git-sha "${GITHUB_SHA:-unit-contract}" \
+            --out-dir "${out_dir}"
+          test -s "${out_dir}/dist-runtime.zip"
+          test -s "${out_dir}/dist-audit.zip"
+
   select-dist-versions:
     runs-on: ubuntu-latest
     outputs:
@@ -26,7 +80,7 @@ jobs:
       has_versions: ${{ steps.select.outputs.has_versions }}
       reason: ${{ steps.select.outputs.reason }}
     steps:
-      - name: Checkout baseline (with committed dist/)
+      - name: Checkout baseline (with committed deliverables/)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -41,6 +95,7 @@ jobs:
           from pathlib import Path
           
           from dist_version import version_sort_key
+          from forge_cli import _paths_for_build_selection
           
           
           def _write_output(key: str, value: str) -> None:
@@ -53,18 +108,18 @@ jobs:
           
           def _git_diff_paths(base: str, head: str) -> list[str]:
             res = subprocess.run(
-              ["git", "diff", "--name-only", base, head],
+              ["git", "diff", "--name-status", "-M", base, head],
               check=True,
               stdout=subprocess.PIPE,
               text=True,
             )
-            return [line.strip() for line in res.stdout.splitlines() if line.strip()]
+            return _paths_for_build_selection(res.stdout)
           
           
           def _extract_dist_versions(paths: list[str]) -> list[str]:
             versions: set[str] = set()
             for path in paths:
-              if not path.startswith("dist/"):
+              if not path.startswith("deliverables/"):
                 continue
               parts = path.split("/", 2)
               if len(parts) >= 2 and parts[1]:
@@ -73,7 +128,7 @@ jobs:
           
           
           def _list_dist_versions() -> list[str]:
-            root = Path("dist")
+            root = Path("deliverables")
             if not root.is_dir():
               return []
             return sorted([p.name for p in root.iterdir() if p.is_dir()], key=version_sort_key)
@@ -110,10 +165,10 @@ jobs:
             dist_versions = _extract_dist_versions(paths)
             if dist_versions:
               versions = dist_versions
-              reason = "dist changed"
+              reason = "deliverables changed"
             else:
-              # When pipeline code changes (but dist/ isn't updated yet), run a single
-              # canary verify on the latest committed dist version.
+              # When pipeline code changes (but deliverables/ isn't updated yet), run a single
+              # canary verify on the latest committed deliverable version.
               relevant_prefixes = (
                 "forge_cli.py",
                 "app/",
@@ -159,7 +214,7 @@ jobs:
         ver: ${{ fromJson(needs.select-dist-versions.outputs.versions) }}
 
     steps:
-      - name: Checkout baseline (with committed dist/)
+      - name: Checkout baseline (with committed deliverables/)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -188,12 +243,42 @@ jobs:
         working-directory: ci-build
         env:
           EMSDK_VERSION: ${{ env.EMSDK_VERSION }}
+          QUALITY_ENFORCE: '1'
         run: |
           set -euxo pipefail
-          python3 forge_cli.py build --version ${{ matrix.ver }}
-          if [[ -d "../dist/${{ matrix.ver }}/pthreads" ]]; then
-            python3 forge_cli.py build --version ${{ matrix.ver }} --pthreads
+          PYTHONPATH=. python3 check/tests/generator-types.py
+          python3 forge_cli.py build --version ${{ matrix.ver }} --with-checks
+          if [[ -d "../deliverables/${{ matrix.ver }}/pthreads" ]]; then
+            python3 forge_cli.py build --version ${{ matrix.ver }} --pthreads --fresh-dependency --with-checks
           fi
+
+      - name: Browser upgrade smoke for MuJoCo >= 3.15
+        working-directory: ci-build
+        env:
+          # Stable 1.63.0 is the same Playwright generation as the local
+          # browser-tools module used to validate this runner.
+          PLAYWRIGHT_VERSION: '1.63.0'
+        run: |
+          set -euxo pipefail
+          if ! python3 - "${{ matrix.ver }}" <<'PY'
+          import sys
+
+          major, minor, patch = (int(part) for part in sys.argv[1].split('-', 1)[0].split('.'))
+          raise SystemExit(0 if (major, minor, patch) >= (3, 15, 0) else 1)
+          PY
+          then
+            echo "[browser-smoke] skipped ${{ matrix.ver }}: browser gate requires MuJoCo >= 3.15.0; Node checks still run"
+            exit 0
+          fi
+
+          npm install --no-save --ignore-scripts --package-lock=false "playwright@${PLAYWRIGHT_VERSION}"
+          npx --no-install playwright install --with-deps chromium
+          runtime_root="${RUNNER_TEMP}/mujoco-wasm-forge-browser-${{ matrix.ver }}"
+          node check/browser_upgrade_smoke/runner.mjs \
+            --dist-root "dist/${{ matrix.ver }}" \
+            --version "${{ matrix.ver }}" \
+            --runtime-root "${runtime_root}" \
+            --output "${runtime_root}/browser-upgrade-result.json"
 
       - name: Verify dist matches reproducible build
         run: |
@@ -207,7 +292,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout baseline (with committed dist/)
+      - name: Checkout baseline (with committed deliverables/)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -222,14 +307,14 @@ jobs:
           set -euo pipefail
           ver="${DIST_VERSION}"
           dist_id="${DIST_ID#forge-}"
-          if [[ ! -d "dist/${ver}" ]]; then
-            echo "[release] dist/${ver} missing" >&2
+          if [[ ! -d "deliverables/${ver}" ]]; then
+            echo "[release] deliverables/${ver} missing" >&2
             exit 1
           fi
 
           rm -rf release-root dist-runtime.zip dist-audit.zip
           python3 tools/package_release_assets.py \
-            --dist-dir dist \
+            --dist-dir deliverables \
             --version "${ver}" \
             --dist-id "${dist_id}" \
             --git-sha "${GIT_SHA}" \

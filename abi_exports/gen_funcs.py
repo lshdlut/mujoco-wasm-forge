@@ -13,11 +13,11 @@ Special handling (kept explicit and minimal):
       exported surface introspect-driven and avoid exporting incidental helpers.
   - Variadic functions:
       The official introspect FUNCTION table normalises varargs: functions
-      like mju_error / mju_warning are represented as fixed-signature
+      like mju_error / mju_warning / mju_info are represented as fixed-signature
       declarations, and their _i / _s variants are listed explicitly.
       We therefore treat all functions as non-variadic and do not generate
-      any special *_v adapters; the C headers remain the single source of
-      truth for the true printf-like semantics.
+      any special *_v adapters. The fixed-signature message wrappers accept
+      literal text and use a fixed %s format when calling the variadic API.
   - Runtime helpers:
       Low-level Emscripten runtime helpers (_malloc/_free/_realloc) are not
       wrapped as mjwf_* functions. Instead they are listed separately in the
@@ -58,6 +58,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from dist_version import abi_dir as resolve_abi_dir, dist_version as detect_dist_version
+from abi_exports.signature_caps import generate_capabilities
 
 
 ALLOWED_PREFIXES: Tuple[str, ...] = ("mj_", "mju_", "mjs_", "mjd_", "mjv_")
@@ -72,6 +73,9 @@ class FunctionDecl:
     return_type: str
     param_decls: List[str]
     param_names: List[str]
+    return_meta: Optional[dict] = None
+    param_meta: Optional[List[dict]] = None
+    call_expression: Optional[str] = None
 
 
 def _repo_root() -> Path:
@@ -103,6 +107,8 @@ def load_functions_from_introspect(
             return_type=return_type,
             param_decls=param_decls,
             param_names=param_names,
+            return_meta=entry.get('return_type'),
+            param_meta=[p.get('type', {}) for p in entry.get('params', [])],
         )
 
     names = {str(entry.get("name")) for entry in functions if entry.get("name")}
@@ -175,6 +181,7 @@ def generate_source(funcs: Sequence[FunctionDecl]) -> str:
     lines.append("// AUTO-GENERATED: MuJoCo WASM function wrapper implementations.")
     lines.append("// Source: abi_exports/gen_funcs.py")
     lines.append('#include "mjwf_abi_funcs.h"')
+    lines.append('#include <stddef.h>')
     lines.append("")
     lines.append("#if defined(__EMSCRIPTEN__)")
     lines.append("#  include <emscripten/emscripten.h>")
@@ -194,7 +201,11 @@ def generate_source(funcs: Sequence[FunctionDecl]) -> str:
         names = fn.param_names or []
         param_list = ", ".join(params) if params else "void"
         call_args = ", ".join(names) if names else ""
-        call_expr = f"{fn.name}({call_args})" if call_args else f"{fn.name}()"
+        # The JS-facing fixed signature accepts literal text, not a C varargs
+        # format string. Keep percent characters safe without guessing arguments.
+        if fn.name in ("mju_error", "mju_warning", "mju_info"):
+            call_args = ", ".join([*names[:-1], '\"%s\"', names[-1]])
+        call_expr = fn.call_expression or (f"{fn.name}({call_args})" if call_args else f"{fn.name}()")
         ret_type = fn.return_type.strip() or "void"
         ret_kw = "" if ret_type == "void" else "return "
 
@@ -271,13 +282,13 @@ def format_report(
     lines.append("")
     lines.append("## Special Rules")
     lines.append(
-        "- Prefix whitelist: export only `mj_`, `mju_`, `mjs_`, `mjd_` symbols; "
-        "rendering/UI/thread helpers (mjv_/mjr_/mjui_/mjthread_) are excluded."
+        "- Prefix whitelist: export only `mj_`, `mju_`, `mjs_`, `mjd_`, `mjv_` symbols; "
+        "rendering/UI/legacy thread helpers (mjr_/mjui_/mjthread_) are excluded."
     )
     lines.append(
         "- Variadic: introspect treats varargs functions as fixed signatures, "
-        "so gen_funcs.py does not synthesise *_v adapters; mju_error/mju_warning "
-        "are exported with their introspect-declared parameter lists."
+        "so gen_funcs.py does not synthesise *_v adapters; mju_error/mju_warning/mju_info "
+        "accept literal text and forward it with the fixed %s format."
     )
     lines.append(
         "- Runtime helpers: `_malloc`, `_free`, `_realloc` are kept via "
@@ -441,6 +452,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         final_funcs.append(fn)
 
     final_func_names = [fn.name for fn in final_funcs]
+    structs = json.loads((abi_dir / 'structs_introspect_like.json').read_text(encoding='utf-8'))['structs']
+    enums = json.loads((abi_dir / 'enums_introspect_like.json').read_text(encoding='utf-8'))['enums']
+    capabilities, additive_funcs = generate_capabilities(final_funcs, structs, enums, FunctionDecl)
+    extra_names.extend(fn.name for fn in additive_funcs)
 
     # Sanity sets for the A/B/C report.
     excluded_names = {name for (name, _reason) in special_exclusions}
@@ -479,8 +494,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     out_source.parent.mkdir(parents=True, exist_ok=True)
     abi_dir.mkdir(parents=True, exist_ok=True)
 
-    out_header.write_text(generate_header(final_funcs), encoding="utf-8")
-    out_source.write_text(generate_source(final_funcs), encoding="utf-8")
+    out_header.write_text(generate_header([*final_funcs, *additive_funcs]), encoding="utf-8")
+    out_source.write_text(generate_source([*final_funcs, *additive_funcs]), encoding="utf-8")
+    (abi_dir / 'js_signature_capabilities.json').write_text(json.dumps(capabilities, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     out_manifest.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     out_report.write_text(report_md, encoding="utf-8")
 

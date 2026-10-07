@@ -110,12 +110,16 @@ fi
   --expected "${EXPECTED_JSON}" \
   --out "${EXPORTS_CHECK_OUT}"
 
+NM_VARIANT="${VARIANT:-single}"
 if [[ -n "${LIBMUJOCO}" && -f "${LIBMUJOCO}" ]]; then
   "${NODE_BIN}" abi_impl/nm_coverage.mjs \
     "${LIBMUJOCO}" \
-    --out "${ABI_DIR}/nm_coverage.json"
+    --wasm "${DIST_WASM}" --variant "${NM_VARIANT}" \
+    --out "${ABI_DIR}/nm_coverage.${NM_VARIANT}.json"
+  cp "${ABI_DIR}/nm_coverage.${NM_VARIANT}.json" "${ABI_DIR}/nm_coverage.json"
 else
-  echo "[post-build] warning: libmujoco archive not found (BUILD_ROOT=${BUILD_ROOT} SHORT=${SHORT} VARIANT=${BUILD_VARIANT}), skipping nm coverage" >&2
+  echo "[post-build] error: libmujoco archive not found (BUILD_ROOT=${BUILD_ROOT} SHORT=${SHORT} VARIANT=${BUILD_VARIANT})" >&2
+  exit 1
 fi
 
 echo "[post-build] checks completed for ${MJVER}"

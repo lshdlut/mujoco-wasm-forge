@@ -4,8 +4,8 @@
 This script centralizes small but critical pieces of process logic that were
 previously embedded directly in GitHub Actions or ad-hoc shell one-liners:
 
-  - Collecting available dist versions from ``dist/``.
-  - Normalizing metadata and diffing ``dist/<ver>`` vs ``ci-build/dist/<ver>``.
+  - Collecting committed release baselines from ``deliverables/``.
+  - Normalizing metadata and diffing ``deliverables/<ver>`` vs ``ci-build/dist/<ver>``.
 
 It intentionally stays thin and delegates heavy work (building, introspection,
 ABI generation) to the existing scripts and CMake configuration so that there
@@ -21,13 +21,37 @@ import re
 import shutil
 import subprocess
 import sys
+import uuid
+import hashlib
 from pathlib import Path
 from typing import List, Mapping, MutableMapping, Sequence
 
-from dist_version import list_dist_versions
-
+from dist_version import version_sort_key
 
 REPO_ROOT = Path(__file__).resolve().parent
+DELIVERABLES_ROOT = REPO_ROOT / "deliverables"
+
+
+def _paths_for_build_selection(name_status: str) -> list[str]:
+  """Ignore only byte-identical dist-to-deliverables namespace migrations."""
+  selected: list[str] = []
+  for line in name_status.splitlines():
+    status, *paths = line.split("\t")
+    if status == "R100":
+      old, new = paths
+      if old.startswith("dist/") and new == "deliverables/" + old[len("dist/"):]:
+        continue
+    selected.extend(paths)
+  return selected
+
+
+def _assert_external_runtime_checkout() -> None:
+  """Reject heavy build execution from a OneDrive-backed checkout."""
+  if any(part.casefold().startswith("onedrive") for part in REPO_ROOT.parts):
+    raise SystemExit(
+        "Refusing to build inside OneDrive. Run this command from the dev clone at "
+        "C:\\dev\\mujoco-wasm-forge\\workspace instead."
+    )
 
 
 def _python_executable() -> str:
@@ -242,8 +266,13 @@ target_link_options(tinyxml2 PRIVATE ${MUJOCO_MACOS_LINK_OPTIONS})
 
 
 def _collect_dist_versions() -> List[str]:
-  """Return sorted dist versions based on directories under dist/."""
-  return list_dist_versions()
+  """Return sorted committed versions under deliverables/."""
+  if not DELIVERABLES_ROOT.is_dir():
+    return []
+  return sorted(
+      [entry.name for entry in DELIVERABLES_ROOT.iterdir() if entry.is_dir()],
+      key=version_sort_key,
+  )
 
 
 def _base_env_for_version(version: str, abi_dir: Path) -> MutableMapping[str, str]:
@@ -596,74 +625,49 @@ def _patch_mujoco_disable_default_compiler_threads_emscripten(mujoco_dir: Path) 
     print("[forge-cli] patched MuJoCo to default compiler.usethread=0 for non-pthreads wasm", file=sys.stderr)
 
 
-def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
+def _prepare_mujoco(version: str, enable_pthreads: bool, fresh_dependency: bool = False) -> None:
   """Clone or update external/mujoco for the requested version."""
   mujoco_dir = REPO_ROOT / "external" / "mujoco"
+  if fresh_dependency and mujoco_dir.exists():
+    # Preserve the exact checkout before replacing it. Never delete user edits,
+    # ignored files, or patches from a previous build.
+    if mujoco_dir.resolve() != (REPO_ROOT.resolve() / "external" / "mujoco"):
+      raise SystemExit(f"Refusing to move redirected dependency: {mujoco_dir}")
+    if (mujoco_dir / ".git").is_file():
+      raise SystemExit(f"Refusing to relocate a linked Git worktree dependency: {mujoco_dir}")
+    runtime_root = _resolve_build_root().resolve()
+    snapshots = runtime_root / "dependency-snapshots"
+    snapshot = snapshots / f"mujoco-{uuid.uuid4().hex}"
+    if not snapshot.resolve().is_relative_to(runtime_root):
+      raise SystemExit(f"Dependency snapshot escapes build root: {snapshot}")
+    if snapshot.exists():
+      raise SystemExit(f"Refusing to overwrite dependency snapshot: {snapshot}")
+    snapshot.parent.mkdir(parents=True, exist_ok=True)
+    mujoco_dir.rename(snapshot)
+    print(f"[forge-cli] preserved dependency at {snapshot}", file=sys.stderr)
   git_dir = mujoco_dir / ".git"
   if not git_dir.is_dir():
     # Fresh clone for a detached external/mujoco checkout.
     if mujoco_dir.exists():
-      shutil.rmtree(mujoco_dir)
+      raise SystemExit(f"Refusing to replace existing non-Git dependency: {mujoco_dir}")
     subprocess.run(
-        ["git", "clone", "https://github.com/google-deepmind/mujoco", str(mujoco_dir)],
+        ["git", "clone", "--depth", "1", "https://github.com/google-deepmind/mujoco", str(mujoco_dir)],
         check=True,
         cwd=str(REPO_ROOT),
     )
   else:
-    # Ensure ref switching is deterministic even when prior runs left patches or
-    # build output in the external checkout.
-    subprocess.run(
-        ["git", "-C", str(mujoco_dir), "reset", "--hard"],
-        check=True,
-    )
-    clean_cmd = ["git", "-C", str(mujoco_dir), "clean", "-fd"]
-    # Some platforms (notably OneDrive-backed Windows checkouts) may deny
-    # deleting ignored dependency caches. Enable with MJWF_GIT_CLEAN_IGNORED=1
-    # when a full `git clean -fdx` is required.
-    if os.environ.get("MJWF_GIT_CLEAN_IGNORED", "").strip():
-      clean_cmd.append("-x")
-    for attempt in range(3):
-      clean_proc = subprocess.run(
-          clean_cmd,
-          stdout=subprocess.PIPE,
-          stderr=subprocess.STDOUT,
-          text=True,
+    # Dependency patches and user edits must never be destroyed implicitly.
+    # Use a fresh clone for a different build, or explicitly preserve/resolve
+    # the existing edits before requesting another version.
+    status = subprocess.run(
+        ["git", "-C", str(mujoco_dir), "status", "--porcelain"],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    if status.strip():
+      raise SystemExit(
+          f"Refusing to overwrite dirty MuJoCo dependency at {mujoco_dir}. "
+          "Preserve its changes and use a fresh dependency clone.\n" + status
       )
-      if clean_proc.returncode == 0:
-        break
-
-      out = clean_proc.stdout or ""
-      print(out, file=sys.stderr, end="")
-      failed_paths: List[Path] = []
-      for line in out.splitlines():
-        m = re.search(r"warning: failed to remove ([^:]+): Permission denied", line)
-        if not m:
-          continue
-        rel = m.group(1).strip().rstrip("/").rstrip("\\")
-        if rel:
-          failed_paths.append(mujoco_dir / rel)
-
-      if not failed_paths:
-        clean_proc.check_returncode()
-
-      removed_any = False
-      for path in failed_paths:
-        if not path.exists():
-          continue
-        removed_any = True
-        if path.is_dir():
-          _rmtree_force(path)
-        else:
-          try:
-            os.chmod(path, 0o700)
-          except OSError:
-            pass
-          path.unlink()
-
-      if not removed_any:
-        clean_proc.check_returncode()
-    else:
-      raise SystemExit(f"external/mujoco git clean failed after retries: {clean_cmd}")
 
   ref = version
   # Prefer tags when they exist so that 3.3.7 resolves to refs/tags/3.3.7.
@@ -705,7 +709,7 @@ def _prepare_mujoco(version: str, enable_pthreads: bool) -> None:
     max_threads = _resolve_pthreads_compiler_max_threads(version)
     if max_threads is not None:
       _patch_mujoco_350_clamp_compiler_threads_pthreads_emscripten(mujoco_dir, max_threads=max_threads)
-  if not enable_pthreads:
+  if not enable_pthreads and _semver_lt(version, (3, 8, 0)):
     _patch_mujoco_disable_pthreads_emscripten(mujoco_dir)
 
 
@@ -928,7 +932,8 @@ def _configure_wasm_build_dir(
       f"-DNODE_EXECUTABLE='{node_exe}' "
       "-DMJWF_ENABLE_PLUGINS=ON "
       "-DMJWF_ENABLE_SIMD=ON "
-      + ("-DMJWF_ENABLE_PTHREADS=ON " if enable_pthreads else "")
+      + ("-DMJWF_ENABLE_PTHREADS=ON -DMUJOCO_WASM_THREADS=ON " if enable_pthreads
+         else "-DMJWF_ENABLE_PTHREADS=OFF -DMUJOCO_WASM_THREADS=OFF ")
       + "-DMJWF_PROFILE=fast "
       f"-DMJVER='{version}'"
   )
@@ -1023,6 +1028,49 @@ def _copy_wasm_artifacts(build_dir: Path, dist_dir: Path, enable_pthreads: bool)
     shutil.copy2(worker_map_src, dist_dir / worker_map_src.name)
 
 
+def _write_build_metadata(version: str, build_dir: Path, variant: str) -> None:
+  """Record actual, path-free inputs, including intentional upstream patches."""
+  dependency = REPO_ROOT / "external" / "mujoco"
+  upstream_sha = subprocess.check_output(
+      ["git", "-C", str(dependency), "rev-parse", "HEAD"], text=True).strip()
+  patch_text = subprocess.check_output(
+      ["git", "-C", str(dependency), "diff", "--binary", "--no-ext-diff"], text=True)
+  status = subprocess.check_output(
+      ["git", "-C", str(dependency), "status", "--porcelain"], text=True)
+  cache = (build_dir / "CMakeCache.txt").read_text(encoding="utf-8")
+  compiler_match = re.search(r"^CMAKE_C_COMPILER:(?:FILEPATH|STRING)=(.+)$", cache, re.MULTILINE)
+  if not compiler_match:
+    compiler_files = list((build_dir / "CMakeFiles").glob("*/CMakeCCompiler.cmake"))
+    if len(compiler_files) == 1:
+      compiler_match = re.search(r'^set\(CMAKE_C_COMPILER "([^"]+)"\)',
+                                 compiler_files[0].read_text(encoding="utf-8"), re.MULTILINE)
+  if not compiler_match:
+    raise SystemExit("Build receipt requires the actual configured C compiler")
+  version_file = Path(compiler_match[1].strip()).parent / "emscripten-version.txt"
+  if not version_file.is_file():
+    raise SystemExit("Cannot determine actual Emscripten compiler version for build receipt")
+  compiler_version = version_file.read_text(encoding="utf-8").strip().strip('"')
+  if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+].*)?", compiler_version):
+    raise SystemExit("Invalid actual Emscripten compiler version")
+  flavor = variant or "single"
+  root = REPO_ROOT / "dist" / version
+  artifact = root / variant if variant else root
+  metadata_path = root / "abi" / "build_metadata.json"
+  metadata = dict(schemaVersion=1, upstreamResolvedSHA=upstream_sha,
+                  emsdkVersion=compiler_version, compilerVersion=compiler_version, flavors={})
+  if metadata_path.is_file():
+    previous = json.loads(metadata_path.read_text(encoding="utf-8"))
+    if previous.get("upstreamResolvedSHA") != upstream_sha or previous.get("compilerVersion") != compiler_version:
+      raise SystemExit("Refusing to merge build receipts from different upstream/compiler inputs")
+    metadata["flavors"] = previous["flavors"]
+  metadata["flavors"][flavor] = dict(
+      wasmSha256=hashlib.sha256((artifact / "mujoco.wasm").read_bytes()).hexdigest(),
+      upstreamDirty=bool(status.strip()),
+      upstreamPatchSha256=hashlib.sha256(patch_text.encode("utf-8")).hexdigest(),
+      settings=dict(profile="fast", simd=True, plugins=True, pthreads=bool(variant)))
+  metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def _run_post_build(
     version: str,
     short: str,
@@ -1044,42 +1092,27 @@ def _run_post_build(
       cwd=str(REPO_ROOT),
       env=env_for_sh,
   )
+  _write_build_metadata(version, build_dir, variant)
 
 
 def _run_checks(env: Mapping[str, str]) -> None:
   """Run smoke/mesh/gates checks against the active dist/<ver> tree."""
-  node_exe = _sh_quote(_resolve_node_executable(env).replace("\\", "/"))
-  emsdk_env_snippet = (
-      'if [ -n "${EMSDK:-}" ] && [ -f "${EMSDK}/emsdk_env.sh" ]; then '
-      '  . "${EMSDK}/emsdk_env.sh"; '
-      'elif [ -f "$HOME/emsdk/emsdk_env.sh" ]; then '
-      '  . "$HOME/emsdk/emsdk_env.sh"; '
-      'fi; '
-  )
-  cmd = (
-      "set -euo pipefail; "
-      + emsdk_env_snippet +
-      f"{node_exe} check/tests/smoke.mjs; "
-      f"{node_exe} check/tests/helper-make-from-xml.mjs; "
-      f"{node_exe} check/tests/helper-handle-lifecycle.mjs; "
-      f"{node_exe} check/tests/mesh-smoke.mjs; "
-      f"{node_exe} check/tests/external-obj-smoke.mjs; "
-      f"{node_exe} check/tests/external-stl-smoke.mjs; "
-      f"{node_exe} check/tests/mesh-texture-smoke.mjs; "
-      f"{node_exe} check/tests/plugin-touch-grid.mjs; "
-      f"{node_exe} check/tests/xml-missing-ref.mjs; "
-      f"{node_exe} check/tests/gates.mjs"
-  )
-  subprocess.run(
-      _bash_argv("-lc", cmd),
-      check=True,
-      cwd=str(REPO_ROOT),
-      env=dict(env),
-  )
+  # Checks only need Node, not a shell or another SDK environment activation.
+  node_exe = _resolve_node_executable(env)
+  for test in (
+      "smoke", "helper-make-from-xml", "helper-handle-lifecycle", "mesh-smoke",
+      "external-obj-smoke", "external-stl-smoke", "mesh-texture-smoke",
+      "plugin-touch-grid", "xml-missing-ref", "scalar-widths", "archive-smoke",
+      "compiler-thread-pool", "aggregate-abi", "gates",
+  ):
+    subprocess.run(
+        [node_exe, str(REPO_ROOT / "check" / "tests" / f"{test}.mjs")],
+        check=True, cwd=str(REPO_ROOT), env=dict(env), timeout=60,
+    )
 
 
 def cmd_collect_versions(args: argparse.Namespace) -> int:
-  """Collect dist versions for local use or GitHub Actions outputs."""
+  """Collect committed deliverable versions for local use or CI outputs."""
   versions = _collect_dist_versions()
   has_versions = bool(versions)
 
@@ -1147,6 +1180,8 @@ _SANITIZE_ABI_FILES = (
     "wrapper_exports_funcs.json",
     "enums.json",
     "nm_coverage.json",
+    "nm_coverage.single.json",
+    "nm_coverage.pthreads.json",
     "nm_symbols.json",
     "enums_introspect_like.json",
     "functions_introspect_like.json",
@@ -1207,19 +1242,15 @@ def _sanitize_meta(dist_dir: Path) -> None:
     text = re.sub(r'"visibility":\s*"default"', "", text)
     f.write_text(text, encoding="utf-8")
 
-  # Normalize nm_coverage.json, which depends on the presence of llvm-nm and
-  # whether the static archive is available in the build tree. For the purpose
-  # of reproducible dist verification, we only care that the file exists and
-  # has a stable shape, not the exact symbol list.
-  nm_cov = abi_dir / "nm_coverage.json"
-  if nm_cov.is_file():
+  # Preserve success, flavor and exact wasm binding. Symbol inventory is
+  # independently retained by semantic nm_symbols.json; only tool-dependent
+  # coverage inventory/path details are normalized for directory comparison.
+  for nm_cov in sorted(abi_dir.glob('nm_coverage*.json')):
     data = json.loads(nm_cov.read_text(encoding="utf-8"))
     data["artifact"] = "NORMALIZED_ARTIFACT"
     data["nmPath"] = "NORMALIZED_NM"
-    data["ok"] = True
     data["symbols"] = []
     data["count"] = 0
-    data["error"] = ""
     nm_cov.write_text(json.dumps(data, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
   # Normalize tool-specific metadata in nm_symbols.json.
@@ -1279,8 +1310,36 @@ def _sanitize_meta(dist_dir: Path) -> None:
     ast_path.write_text(json.dumps(stub, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _validate_nm_reports(dist_root: Path) -> None:
+  flavors = ['single'] + (['pthreads'] if (dist_root / 'pthreads').is_dir() else [])
+  for flavor in flavors:
+    report = dist_root / 'abi' / f'nm_coverage.{flavor}.json'
+    if not report.is_file():
+      raise SystemExit(f'Missing nm coverage at {report}')
+    coverage = json.loads(report.read_text(encoding='utf-8'))
+    if coverage.get('ok') is not True or coverage.get('error'):
+      raise SystemExit(f"Failed nm coverage at {report}: {coverage.get('error') or 'ok is not true'}")
+    wasm = dist_root / ('pthreads' if flavor == 'pthreads' else '') / 'mujoco.wasm'
+    if not wasm.is_file():
+      raise SystemExit(f'Missing audited wasm at {wasm}')
+    if coverage.get('schemaVersion') != 2 or coverage.get('variant') != flavor or coverage.get('wasmSha256') != hashlib.sha256(wasm.read_bytes()).hexdigest():
+      raise SystemExit(f'Stale or wrong-flavor nm coverage at {report}')
+  legacy = dist_root / 'abi' / 'nm_coverage.json'
+  if not legacy.is_file():
+    raise SystemExit(f'Missing nm coverage at {legacy}')
+  shared = json.loads(legacy.read_text(encoding='utf-8'))
+  if shared.get('ok') is not True or shared.get('error'):
+    raise SystemExit(f"Failed nm coverage at {legacy}: {shared.get('error') or 'ok is not true'}")
+  selected = shared.get('variant')
+  if selected not in flavors:
+    raise SystemExit(f'Unknown nm coverage flavor at {legacy}')
+  specific = json.loads((dist_root / 'abi' / f'nm_coverage.{selected}.json').read_text(encoding='utf-8'))
+  if shared != specific:
+    raise SystemExit(f'Stale shared nm coverage alias at {legacy}')
+
+
 def cmd_verify_dist(args: argparse.Namespace) -> int:
-  """Verify that dist/<ver> matches ci-build/dist/<ver> after normalization."""
+  """Verify that deliverables/<ver> matches ci-build/dist/<ver>."""
   if args.version:
     versions = list(dict.fromkeys(args.version))
   else:
@@ -1292,14 +1351,16 @@ def cmd_verify_dist(args: argparse.Namespace) -> int:
 
   ci_root = REPO_ROOT / args.ci_build_dir
   for ver in versions:
-    base = REPO_ROOT / "dist" / ver
+    base = DELIVERABLES_ROOT / ver
     ci_copy = ci_root / "dist" / ver
     if not base.is_dir():
-      raise SystemExit(f"dist/{ver} not found at {base}")
+      raise SystemExit(f"deliverables/{ver} not found at {base}")
     if not ci_copy.is_dir():
       raise SystemExit(f"ci-build dist/{ver} not found at {ci_copy}")
+    for audit_root in (base, ci_copy):
+      _validate_nm_reports(audit_root)
 
-    print(f"[forge-cli] verifying dist/{ver} vs {args.ci_build_dir}/dist/{ver}", file=sys.stderr)
+    print(f"[forge-cli] verifying deliverables/{ver} vs {args.ci_build_dir}/dist/{ver}", file=sys.stderr)
     base_backups = _backup_sanitize_files(base)
     ci_backups = _backup_sanitize_files(ci_copy)
     try:
@@ -1323,7 +1384,7 @@ def cmd_verify_dist(args: argparse.Namespace) -> int:
       if returncode == 1:
         # Differences found.
         raise SystemExit(
-            f"dist/{ver} differs from {args.ci_build_dir}/dist/{ver}"
+            f"deliverables/{ver} differs from {args.ci_build_dir}/dist/{ver}"
         )
     finally:
       _restore_sanitize_files(ci_backups)
@@ -1334,6 +1395,7 @@ def cmd_verify_dist(args: argparse.Namespace) -> int:
 
 def cmd_build(args: argparse.Namespace) -> int:
   """Entry point: prepare → introspect → ABI → build → post_build → checks."""
+  _assert_external_runtime_checkout()
   version: str = args.version
   short = _compute_short(version, args.short)
   enable_pthreads = bool(getattr(args, "pthreads", False))
@@ -1354,7 +1416,7 @@ def cmd_build(args: argparse.Namespace) -> int:
   else:
     env.pop("MJWF_DIST_VARIANT", None)
 
-  _prepare_mujoco(version, enable_pthreads)
+  _prepare_mujoco(version, enable_pthreads, fresh_dependency=bool(getattr(args, "fresh_dependency", False)))
   _run_introspect(abi_dir, env)
   _configure_wasm_build_dir(version, build_dir, env, enable_pthreads)
   _build_wasm(build_dir, env, target="mujoco")
@@ -1395,6 +1457,11 @@ def build_parser() -> argparse.ArgumentParser:
       help="Run smoke/mesh/gates scripts after post-build.",
   )
   p_build.add_argument(
+      "--fresh-dependency",
+      action="store_true",
+      help="Preserve an existing MuJoCo checkout under build/dependency-snapshots and clone fresh sources.",
+  )
+  p_build.add_argument(
       "--pthreads",
       action="store_true",
       help="Build with Emscripten pthreads (-pthread) enabled (requires SharedArrayBuffer in browsers).",
@@ -1403,7 +1470,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   p_collect = subparsers.add_parser(
       "collect-versions",
-      help="Collect dist versions from dist/.",
+      help="Collect committed versions from deliverables/.",
   )
   p_collect.add_argument(
       "--github-output",
@@ -1414,13 +1481,13 @@ def build_parser() -> argparse.ArgumentParser:
 
   p_verify = subparsers.add_parser(
       "verify-dist",
-      help="Verify dist/<ver> vs ci-build/dist/<ver>.",
+      help="Verify deliverables/<ver> vs ci-build/dist/<ver>.",
   )
   p_verify.add_argument(
       "-v",
       "--version",
       action="append",
-      help="Version to verify (default: all dist/* directories). "
+      help="Version to verify (default: all deliverables/* directories). "
            "Can be provided multiple times.",
   )
   p_verify.add_argument(

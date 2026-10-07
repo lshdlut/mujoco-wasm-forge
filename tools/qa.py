@@ -26,7 +26,7 @@ _WINDOW_LINES = 20
 _MAX_TEXT_BYTES = 1_000_000
 
 _EXCLUDED_PREFIXES = (
-    "dist/",
+    "deliverables/",
     "introspect/official/",
 )
 
@@ -380,7 +380,7 @@ def _dist_contract(repo_root: Path, rel_paths: Sequence[str]) -> dict:
   tracked = set(rel_paths)
   versions: set[str] = set()
   for rel in rel_paths:
-    if not rel.startswith("dist/"):
+    if not rel.startswith("deliverables/"):
       continue
     parts = rel.split("/", 2)
     if len(parts) >= 2 and parts[1]:
@@ -389,7 +389,7 @@ def _dist_contract(repo_root: Path, rel_paths: Sequence[str]) -> dict:
   sorted_versions = sorted(versions, key=version_sort_key)
 
   def _req(ver: str, rel: str) -> bool:
-    path = f"dist/{ver}/{rel}"
+    path = f"deliverables/{ver}/{rel}"
     return path in tracked and (repo_root / path).is_file()
 
   results: dict[str, dict] = {}
@@ -400,7 +400,7 @@ def _dist_contract(repo_root: Path, rel_paths: Sequence[str]) -> dict:
         "mujoco.wasm": _req(ver, "mujoco.wasm"),
         "abi/exports.lst": _req(ver, "abi/exports.lst"),
     }
-    pthreads_present = any(p.startswith(f"dist/{ver}/pthreads/") for p in tracked)
+    pthreads_present = any(p.startswith(f"deliverables/{ver}/pthreads/") for p in tracked)
     pthreads_required = {
         "pthreads/mujoco.js": _req(ver, "pthreads/mujoco.js"),
         "pthreads/mujoco.wasm": _req(ver, "pthreads/mujoco.wasm"),
@@ -425,36 +425,36 @@ def _dist_contract(repo_root: Path, rel_paths: Sequence[str]) -> dict:
 def _artifact_graph(repo_root: Path, versions: Sequence[str]) -> dict:
   stage_map = {
       "runtime": [
-          "dist/<ver>/mujoco.js",
-          "dist/<ver>/mujoco.wasm",
+          "deliverables/<ver>/mujoco.js",
+          "deliverables/<ver>/mujoco.wasm",
       ],
       "abi_contract": [
-          "dist/<ver>/abi/exports.lst",
+          "deliverables/<ver>/abi/exports.lst",
       ],
       "introspect": [
-          "dist/<ver>/abi/mujoco_ast.json",
-          "dist/<ver>/abi/functions_introspect_like.json",
-          "dist/<ver>/abi/structs_introspect_like.json",
-          "dist/<ver>/abi/enums_introspect_like.json",
+          "deliverables/<ver>/abi/mujoco_ast.json",
+          "deliverables/<ver>/abi/functions_introspect_like.json",
+          "deliverables/<ver>/abi/structs_introspect_like.json",
+          "deliverables/<ver>/abi/enums_introspect_like.json",
       ],
       "wrappers": [
-          "dist/<ver>/abi/wrapper_exports.json",
-          "dist/<ver>/abi/wrapper_exports_funcs.json",
-          "dist/<ver>/abi/mjapi.json",
+          "deliverables/<ver>/abi/wrapper_exports.json",
+          "deliverables/<ver>/abi/wrapper_exports_funcs.json",
+          "deliverables/<ver>/abi/mjapi.json",
       ],
       "nm_views": [
-          "dist/<ver>/abi/nm_symbols.json",
-          "dist/<ver>/abi/nm_coverage.json",
+          "deliverables/<ver>/abi/nm_symbols.json",
+          "deliverables/<ver>/abi/nm_coverage.json",
       ],
       "pthreads_runtime": [
-          "dist/<ver>/pthreads/mujoco.js",
-          "dist/<ver>/pthreads/mujoco.wasm",
+          "deliverables/<ver>/pthreads/mujoco.js",
+          "deliverables/<ver>/pthreads/mujoco.wasm",
       ],
   }
 
   per_version: dict[str, dict] = {}
   for ver in versions:
-    base = repo_root / "dist" / ver
+    base = repo_root / "deliverables" / ver
     stages: dict[str, dict] = {}
     for stage, templates in stage_map.items():
       resolved: dict[str, bool] = {}
@@ -481,7 +481,7 @@ def _upgrade_story(repo_root: Path, rel_paths: Sequence[str]) -> dict:
       "abi_exports/",
       "introspect/",
       "check/",
-      "dist/<ver>/",
+      "deliverables/<ver>/",
       "docs/en/reference_abi_contract.md",
       "docs/en/reference_checks_gates.md",
       "docs/en/reference_env_vars.md",
@@ -499,8 +499,8 @@ def _upgrade_story(repo_root: Path, rel_paths: Sequence[str]) -> dict:
 
   steps = [
       "Build the new upstream ref: `python forge_cli.py build --version <ver> --with-checks`.",
-      "Review ABI diffs under `dist/<ver>/abi/` (exports.lst + introspect_like + wrapper manifests).",
-      "Commit the new `dist/<ver>/` tree (including `abi/`).",
+      "Review ABI diffs under `deliverables/<ver>/abi/` (exports.lst + introspect_like + wrapper manifests).",
+      "Commit the new `deliverables/<ver>/` tree (including `abi/`).",
       "If CI uses reproducible verification, run `python forge_cli.py verify-dist --version <ver>`.",
   ]
 
@@ -869,7 +869,7 @@ def cmd_arch(args: argparse.Namespace) -> int:
         }
     )
   if dist_contract.get("missing_any"):
-    failures.append({"kind": "dist_contract", "message": "Missing required dist/<ver> artifacts."})
+    failures.append({"kind": "dist_contract", "message": "Missing required deliverables/<ver> artifacts."})
 
   report: dict[str, object] = {
       "generated_at": _now_iso(),

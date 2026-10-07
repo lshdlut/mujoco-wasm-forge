@@ -70,6 +70,8 @@ SRC_PREAMBLE = """\
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <stdio.h>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten/emscripten.h>
@@ -105,6 +107,8 @@ CTYPE_BY_DTYPE = {
     "f64": "double*",
     "f32": "float*",
     "i32": "int32_t*",
+    "i64": "int64_t*",
+    "u64": "uint64_t*",
     "u8": "uint8_t*",
 }
 
@@ -112,6 +116,8 @@ BASETYPE_BY_DTYPE = {
     "f64": "double",
     "f32": "float",
     "i32": "int32_t",
+    "i64": "int64_t",
+    "u64": "uint64_t",
     "u8": "uint8_t",
 }
 
@@ -120,13 +126,17 @@ AUTO_DTYPE_BY_BASE = {
     "double": "f64",
     "float": "f32",
     "mjtFloat": "f32",
-    "mjtSize": "i32",
+    "mjtSize": "i64",
+    "int64_t": "i64",
+    "uint64_t": "u64",
     "int": "i32",
     "int32_t": "i32",
     "uint32_t": "i32",
     "unsigned int": "i32",
     "unsigned": "i32",
     "mjtByte": "u8",
+    "mjtBool": "u8",
+    "bool": "u8",
     "char": "u8",
     "signed char": "u8",
     "unsigned char": "u8",
@@ -184,6 +194,18 @@ ROOT_VAR_BY_STRUCT = {
 }
 
 
+DIMENSION_HELPER = """
+// Preserve the legacy i32/Number API without silently truncating int64 sizes.
+static int mjwf_dimension_i32(int64_t value, const char* field) {
+  if (value < INT_MIN || value > INT_MAX) {
+    fprintf(stderr, "mjwf: dimension %s exceeds i32 range; use its _i64 accessor\\n", field);
+    return -1;
+  }
+  return (int)value;
+}
+"""
+
+
 def sanitize_segment(segment: str) -> str:
     import re
 
@@ -224,6 +246,7 @@ class DimExport:
     struct: str            # "mjModel" or "mjData"
     field: str             # e.g. "nq"
     base_name: str         # e.g. "model_nq"
+    ctype: str = "int"
 
 
 @dataclass
@@ -387,6 +410,8 @@ def collect_dim_exports(structs: Dict[str, List[FieldInfo]]) -> List[DimExport]:
                 continue
             base_name = default_pointer_name(struct_name, f.name)
             exports.append(DimExport(struct=struct_name, field=f.name, base_name=base_name))
+            if base == "mjtSize":
+                exports.append(DimExport(struct=struct_name, field=f.name, base_name=base_name + "_i64", ctype="int64_t"))
     return exports
 
 
@@ -629,7 +654,7 @@ def generate_pointer_decl(pe: PointerExport) -> str:
 
 
 def generate_dim_decl(de: DimExport) -> str:
-    return f"EMSCRIPTEN_KEEPALIVE int mjwf_{de.base_name}(int h);\n"
+    return f"EMSCRIPTEN_KEEPALIVE {de.ctype} mjwf_{de.base_name}(int h);\n"
 
 
 def generate_derived_decl(de: DerivedExport) -> str:
@@ -664,11 +689,12 @@ def generate_dim_impl(de: DimExport) -> str:
     owner_ctype = ROOT_CTYPE_BY_STRUCT[de.struct]
     accessor = ROOT_ACCESSOR_BY_STRUCT[de.struct]
     lines = [
-        f"EMSCRIPTEN_KEEPALIVE int mjwf_{de.base_name}(int h) {{",
+        f"EMSCRIPTEN_KEEPALIVE {de.ctype} mjwf_{de.base_name}(int h) {{",
         "  if (!mjwf_helper_valid(h)) return 0;",
         f"  {owner_ctype} {owner} = {accessor}(h);",
         f"  if (!{owner}) return 0;",
-        f"  return (int)({owner}->{de.field});",
+        (f"  return mjwf_dimension_i32({owner}->{de.field}, \"{de.base_name}\");"
+         if de.ctype == "int" else f"  return ({de.ctype})({owner}->{de.field});"),
         "}",
         "",
     ]
@@ -749,6 +775,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ptr_exports = collect_pointer_exports(structs)
     dim_exports = collect_dim_exports(structs)
     derived_exports = collect_derived_exports(structs)
+    # Existing AoS-derived pointers expose the first record's field; provide
+    # its real C-record stride without changing those pointer contracts.
+    strides = {default_pointer_name(d.owner_struct, d.base_field) + '_stride': d.target_struct
+               for d in derived_exports if d.base_is_pointer}
 
     # -----------------------------------------------------------------------
     # Emit header
@@ -762,6 +792,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             fh.write(generate_dim_decl(de))
         for drv in derived_exports:
             fh.write(generate_derived_decl(drv))
+        for name in sorted(strides):
+            fh.write(f'EMSCRIPTEN_KEEPALIVE int mjwf_{name}(void);\n')
         fh.write(HDR_POST)
 
     # -----------------------------------------------------------------------
@@ -770,12 +802,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     out_c.parent.mkdir(parents=True, exist_ok=True)
     with out_c.open("w", encoding="utf-8") as fc:
         fc.write(SRC_PREAMBLE)
+        fc.write(DIMENSION_HELPER)
         for pe in ptr_exports:
             fc.write(generate_pointer_impl(pe))
         for de in dim_exports:
             fc.write(generate_dim_impl(de))
         for drv in derived_exports:
             fc.write(generate_derived_impl(drv))
+        for name, record in sorted(strides.items()):
+            fc.write(f'EMSCRIPTEN_KEEPALIVE int mjwf_{name}(void) {{ return sizeof({record}); }}\n')
 
     # Extra exports list: all exported symbol base names (ptr + dims).
     extra_names: List[str] = []
@@ -785,6 +820,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         extra_names.append(de.base_name)
     for drv in derived_exports:
         extra_names.append(f"{drv.base_name}_ptr")
+    extra_names.extend(strides)
+    (abi_dir / 'aos_record_strides.json').write_text(json.dumps(
+        {name: dict(record=record, symbol='mjwf_' + name, contract='byte stride between C records; not field width')
+         for name, record in sorted(strides.items())}, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 
     extra_path = out_h.parent / "mjwf_abi_structs.lst"
     with extra_path.open("w", encoding="utf-8") as fe:

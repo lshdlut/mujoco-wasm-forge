@@ -32,8 +32,9 @@ const errnoLast = Module.cwrap("mjwf_helper_errno_last_global", "number", []);
 const errmsgLast = Module.cwrap("mjwf_helper_errmsg_last_global", "string", []);
 
 function tryMake(xml) {
+  Module.FS.writeFile('/helper-error-reporting.xml', xml);
   try {
-    return { handle: makeFromXml(xml), thrown: null };
+    return { handle: makeFromXml('/helper-error-reporting.xml'), thrown: null };
   } catch (err) {
     return { handle: 0, thrown: err };
   }
@@ -52,7 +53,7 @@ const validXml = `<?xml version="1.0"?>
 {
   const r = tryMake(validXml);
   assert.ok(!r.thrown, `make_from_xml(valid) threw: ${r.thrown}`);
-  assert.ok(r.handle !== 0, "make_from_xml(valid) returned 0");
+  assert.ok(r.handle > 0, `make_from_xml(valid) failed: ${r.handle}, ${errmsgLast()}`);
   freeHandle(r.handle);
 }
 

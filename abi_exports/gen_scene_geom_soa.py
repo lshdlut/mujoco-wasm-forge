@@ -50,6 +50,8 @@ AUTO_DTYPE_BY_BASE = {
     "float": "f32",
     "int": "i32",
     "mjtByte": "u8",
+    "mjtBool": "u8",
+    "bool": "u8",
     "char": "u8",
 }
 

@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import load_mujoco from '../../dist/3.3.7/mujoco.js';
+import load_mujoco from '../../deliverables/3.3.7/mujoco.js';
 
-const wasmPath = fileURLToPath(new URL('../../dist/3.3.7/mujoco.wasm', import.meta.url));
+const wasmPath = fileURLToPath(new URL('../../deliverables/3.3.7/mujoco.wasm', import.meta.url));
 
 function writeFileToFS(Module, hostPath, fsPath) {
   const data = readFileSync(hostPath);
