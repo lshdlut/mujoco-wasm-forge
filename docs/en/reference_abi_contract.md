@@ -49,6 +49,11 @@ does not imply JavaScript object marshalling. Pointer calls require valid aligne
 WASM memory and the native lifetime contract; callback and opaque lifecycle APIs
 remain explicitly marked as requiring a bridge or policy review.
 
+Raw WASM i32 returns are signed JavaScript Numbers even for unsigned C types.
+The generated type policy specifies `rawResult >>> 0` for u32 results (including
+wasm32 `size_t`) and `BigInt.asUintN(64, rawResult)` for u64 results. Raw exports
+remain unchanged; callers apply the documented result normalization.
+
 Only records whose complete introspected fields are known scalars, fixed arrays,
 or nested POD records receive type-driven adapters. Aggregate inputs use an
 additive `_ptr` suffix; aggregate outputs use `_out` (combined `_ptr_out` when

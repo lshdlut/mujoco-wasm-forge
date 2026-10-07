@@ -50,6 +50,25 @@ try {
     } finally {m.HEAPU8.set(saved,p); m._mjwf_mju_setLogConfig_ptr(p);}
     assert.equal(capabilities.functions.mju_setLogHandler.rawCall,'needs-callback-bridge');
   }
+  let u32Result='NOT_APPLICABLE';
+  if (capabilities.functions.mj_getCacheCapacity) {
+    for (const name of ['mj_getCacheCapacity','mj_getCacheSize','mj_setCacheCapacity'])
+      assert.equal(capabilities.functions[name].returnType.resultNormalization,'rawResult >>> 0');
+    const cache=m._mjwf_mj_getCache(), saved=m._mjwf_mj_getCacheCapacity(cache)>>>0;
+    const capacity=0x80000017, used=m._mjwf_mj_getCacheSize(cache)>>>0;
+    assert.ok(cache && used<=capacity);
+    // SetCapacity changes a limit and trims existing entries; it does not reserve capacity bytes.
+    try {
+      const raw=m._mjwf_mj_setCacheCapacity(cache,capacity);
+      assert.ok(raw<0); assert.equal(raw>>>0,capacity);
+      assert.equal(m._mjwf_mj_getCacheCapacity(cache)>>>0,capacity);
+      assert.equal(m._mjwf_mj_getCacheSize(cache)>>>0,used);
+      u32Result='PASS';
+    } finally {
+      assert.equal(m._mjwf_mj_setCacheCapacity(cache,saved)>>>0,saved);
+      assert.equal(m._mjwf_mj_getCacheCapacity(cache)>>>0,saved);
+    }
+  }
   let i64Parameter='NOT_APPLICABLE';
   if (capabilities.functions.mju_writeResource) {
     assert.equal(capabilities.functions.mju_writeResource.parameters.find(p=>p.name==='nbytes').kind,'i64');
@@ -71,7 +90,7 @@ try {
   const xs=[0,1].map(i=>view.getFloat64(position+i*stride,true)).sort((a,b)=>a-b);
   assert.ok(Math.abs(xs[0]+.3)<1e-12 && Math.abs(xs[1]-.3)<1e-12);
   for(let i=0;i<2;i++)assert.ok(Math.abs(view.getFloat64(distance+i*stride,true)+.02)<1e-12);
-  console.log(JSON.stringify({aggregateABI:distVersion(),camera:'PASS',logConfig,i64Parameter,contactAoS:'PASS',contactRecordStride:stride}));
+  console.log(JSON.stringify({aggregateABI:distVersion(),camera:'PASS',logConfig,i64Parameter,u32Result,contactAoS:'PASS',contactRecordStride:stride}));
 } finally {
   if(handle)m._mjwf_helper_free(handle);
   for(const p of allocated)m._free(p);

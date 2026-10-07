@@ -66,7 +66,8 @@ class SignaturePolicy:
             dtype = SCALARS.get(name, 'i32')
             return dict(kind='i64' if dtype in ('i64', 'u64') else 'scalar', cType=name, dtype=dtype,
                         jsType='BigInt' if dtype in ('i64', 'u64') else 'undefined' if name == 'void' else 'Number',
-                        resultNormalization='BigInt.asUintN(64, rawResult)' if dtype == 'u64' else 'none')
+                        resultNormalization='BigInt.asUintN(64, rawResult)' if dtype == 'u64' else
+                        'rawResult >>> 0' if dtype == 'u32' else 'none')
         if name in self.structs:
             return dict(kind='aggregate', cType=name, pod=self.pod(name), requirement='pointer-out-adapter')
         if name.startswith('struct ') or name.startswith('mjs'):

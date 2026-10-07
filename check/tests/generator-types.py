@@ -244,6 +244,9 @@ class GeneratorTypes(unittest.TestCase):
         policy = SignaturePolicy({'POD': record, 'Unsafe': unsafe}, {})
         self.assertTrue(policy.pod('POD')); self.assertFalse(policy.pod('Unsafe'))
         self.assertEqual(policy.classify(value('uint64_t'))['resultNormalization'], 'BigInt.asUintN(64, rawResult)')
+        for name in ('uint32_t', 'unsigned int', 'size_t', 'uintptr_t'):
+            self.assertEqual(policy.classify(value(name))['resultNormalization'], 'rawResult >>> 0')
+        self.assertEqual(policy.classify(value('int'))['resultNormalization'], 'none')
         self.assertEqual(policy.classify(value('mjfHook'))['kind'], 'callback')
         self.assertEqual(policy.classify(value('UnknownAlias'))['kind'], 'unknown')
         f = funcs.FunctionDecl('arbitrary_name', 'POD', ['POD input'], ['input'], value('POD'), [value('POD')])
@@ -297,12 +300,13 @@ class GeneratorTypes(unittest.TestCase):
             fixture_funcs = [
                 funcs.FunctionDecl('fixture_i64', 'int64_t', ['int64_t value'], ['value'], value('int64_t'), [value('int64_t')]),
                 funcs.FunctionDecl('fixture_u64', 'uint64_t', ['uint64_t value'], ['value'], value('uint64_t'), [value('uint64_t')]),
+                funcs.FunctionDecl('fixture_u32', 'uint32_t', ['uint32_t value'], ['value'], value('uint32_t'), [value('uint32_t')]),
                 funcs.FunctionDecl('fixture_return', 'POD', [], [], value('POD'), []),
                 funcs.FunctionDecl('fixture_input', 'int', ['POD p'], ['p'], value('int'), [value('POD')]),
             ]
             _, generated = generate_capabilities(fixture_funcs, {'POD': dict(fields=[dict(name='x', type=value('int')),
                                                         dict(name='y', type=value('double'))])}, {}, funcs.FunctionDecl)
-            fixture = '\ntypedef struct {int x; double y;} POD;\nint64_t fixture_i64(int64_t x) {return x*2;}\nuint64_t fixture_u64(uint64_t x) {return x;}\nPOD fixture_return(void) {return (POD){7,3.5};}\nint fixture_input(POD p) {return p.x;}\n'
+            fixture = '\ntypedef struct {int x; double y;} POD;\nint64_t fixture_i64(int64_t x) {return x*2;}\nuint64_t fixture_u64(uint64_t x) {return x;}\nuint32_t fixture_u32(uint32_t x) {return x;}\nPOD fixture_return(void) {return (POD){7,3.5};}\nint fixture_input(POD p) {return p.x;}\n'
             code = funcs.generate_source([*fixture_funcs, *generated]).replace('#include "mjwf_abi_funcs.h"', '')
             source.write_text(source.read_text() + fixture + code)
             env = dict(os.environ, EM_CONFIG=str(sdk / ".emscripten"))
@@ -324,6 +328,7 @@ class GeneratorTypes(unittest.TestCase):
                              "assert.equal(m._mjwf_fixture_i64(1n<<40n),2n<<40n);\n" +
                              "assert.throws(()=>m._mjwf_fixture_i64(5),TypeError);\n" +
                              "const u=(1n<<63n)+7n; assert.equal(BigInt.asUintN(64,m._mjwf_fixture_u64(u)),u);\n" +
+                             "const u32=0x80000017, raw=m._mjwf_fixture_u32(u32); assert.ok(raw<0); assert.equal(raw>>>0,u32);\n" +
                              "const ptr=m._malloc(m._mjwf_sizeof_POD()); m._mjwf_fixture_return_out(ptr);\n" +
                              "const view=new DataView(m.HEAPU8.buffer); assert.equal(view.getInt32(ptr+m._mjwf_offsetof_POD_x(),true),7);\n" +
                              "assert.equal(view.getFloat64(ptr+m._mjwf_offsetof_POD_y(),true),3.5);\n" +

@@ -2731,7 +2731,7 @@
         "dtype": "u32",
         "jsType": "Number",
         "kind": "scalar",
-        "resultNormalization": "none"
+        "resultNormalization": "rawResult >>> 0"
       }
     },
     "mj_getCacheSize": {
@@ -2757,7 +2757,7 @@
         "dtype": "u32",
         "jsType": "Number",
         "kind": "scalar",
-        "resultNormalization": "none"
+        "resultNormalization": "rawResult >>> 0"
       }
     },
     "mj_getPluginConfig": {
@@ -7367,7 +7367,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "size",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
@@ -7377,7 +7377,7 @@
         "dtype": "u32",
         "jsType": "Number",
         "kind": "scalar",
-        "resultNormalization": "none"
+        "resultNormalization": "rawResult >>> 0"
       }
     },
     "mj_setConst": {
@@ -7840,7 +7840,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "bytes",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         },
         {
           "cType": "size_t",
@@ -7848,7 +7848,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "alignment",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
@@ -7887,7 +7887,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "size",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
@@ -7926,7 +7926,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "size",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
@@ -17325,7 +17325,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "size",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
@@ -18927,7 +18927,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "nerror",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "needs-policy-review",
@@ -20955,7 +20955,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "info",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
@@ -21022,7 +21022,7 @@
           "jsType": "Number",
           "kind": "scalar",
           "name": "nbytes",
-          "resultNormalization": "none"
+          "resultNormalization": "rawResult >>> 0"
         }
       ],
       "rawCall": "pointer-memory-contract",
