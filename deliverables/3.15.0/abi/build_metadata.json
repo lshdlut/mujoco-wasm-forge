@@ -7,22 +7,24 @@
         "plugins": true,
         "profile": "fast",
         "pthreads": true,
-        "simd": true
+        "simd": true,
+        "sourceLocationPaths": "repository-relative"
       },
       "upstreamDirty": true,
-      "upstreamPatchSha256": "2a0dd04ab10127142235aa06dba4b38be3e69d012f73cdc8246d25fdda1339a4",
-      "wasmSha256": "949d5aeb960a6c8aeaf5235642a91fea1abcb183ebeb4d885b6fa3576ab47210"
+      "upstreamPatchSha256": "149f6439b29774f194f074b762ce96f8194a37606f0ae63a5c12c0306df577ec",
+      "wasmSha256": "6b3659a43154e2d8701af240639a9480d6d781eeff8d77e1ab65963b19f0766f"
     },
     "single": {
       "settings": {
         "plugins": true,
         "profile": "fast",
         "pthreads": false,
-        "simd": true
+        "simd": true,
+        "sourceLocationPaths": "repository-relative"
       },
       "upstreamDirty": true,
-      "upstreamPatchSha256": "2a0dd04ab10127142235aa06dba4b38be3e69d012f73cdc8246d25fdda1339a4",
-      "wasmSha256": "485c61bd2f541d6057c7ae4f272e5e7c81a24af02d6cbaf7448f96a0f042f6e9"
+      "upstreamPatchSha256": "149f6439b29774f194f074b762ce96f8194a37606f0ae63a5c12c0306df577ec",
+      "wasmSha256": "d9e78d1c7e8d7cc876c4de7197deaee4cb136a34d56b8aaf047bd971191b5ea8"
     }
   },
   "schemaVersion": 1,

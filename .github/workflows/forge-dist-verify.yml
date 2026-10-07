@@ -46,7 +46,9 @@ jobs:
           all_tests = unittest.TestLoader().loadTestsFromTestCase(module.GeneratorTypes)
           selected = [
               test for test in all_tests
-              if not test.id().endswith(".test_checked_narrowing_in_wasm")
+              # The _in_wasm suffix marks mandatory SDK-compiled fixtures;
+              # they run in the SDK-enabled build job, not this cheap job.
+              if not test.id().endswith("_in_wasm")
           ]
           result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(selected))
           raise SystemExit(0 if result.wasSuccessful() else 1)

@@ -922,6 +922,9 @@ def _configure_wasm_build_dir(
       f"-S '{app_dir}' "
       f"-B '{build_dir}' "
       "-DCMAKE_BUILD_TYPE=Release "
+      + f"-DCMAKE_C_FLAGS={_sh_quote(_source_prefix_flags())} "
+      + f"-DCMAKE_CXX_FLAGS={_sh_quote(_source_prefix_flags())} "
+      +
       "-DMUJOCO_ENABLE_QHULL=OFF "
       "-DMUJOCO_BUILD_EXAMPLES=OFF "
       "-DMUJOCO_BUILD_SIMULATE=OFF "
@@ -1028,13 +1031,21 @@ def _copy_wasm_artifacts(build_dir: Path, dist_dir: Path, enable_pthreads: bool)
     shutil.copy2(worker_map_src, dist_dir / worker_map_src.name)
 
 
+def _source_prefix_flags() -> str:
+  """Keep structured log __FILE__ locations readable and host-independent."""
+  roots = [(REPO_ROOT.resolve(), "."),
+           ((REPO_ROOT / "external" / "mujoco").resolve(), "./external/mujoco"),
+           (_resolve_build_root().resolve(), "./build")]
+  return " ".join(f"-ffile-prefix-map={root.as_posix()}={relative}" for root, relative in roots)
+
+
 def _write_build_metadata(version: str, build_dir: Path, variant: str) -> None:
   """Record actual, path-free inputs, including intentional upstream patches."""
   dependency = REPO_ROOT / "external" / "mujoco"
   upstream_sha = subprocess.check_output(
       ["git", "-C", str(dependency), "rev-parse", "HEAD"], text=True).strip()
   patch_text = subprocess.check_output(
-      ["git", "-C", str(dependency), "diff", "--binary", "--no-ext-diff"], text=True)
+      ["git", "-C", str(dependency), "diff", "--binary", "--full-index", "--no-ext-diff"], text=True)
   status = subprocess.check_output(
       ["git", "-C", str(dependency), "status", "--porcelain"], text=True)
   cache = (build_dir / "CMakeCache.txt").read_text(encoding="utf-8")
@@ -1052,6 +1063,9 @@ def _write_build_metadata(version: str, build_dir: Path, variant: str) -> None:
   compiler_version = version_file.read_text(encoding="utf-8").strip().strip('"')
   if not re.fullmatch(r"\d+\.\d+\.\d+(?:[-+].*)?", compiler_version):
     raise SystemExit("Invalid actual Emscripten compiler version")
+  prefix_flags = _source_prefix_flags()
+  if any(f"CMAKE_{language}_FLAGS:STRING={prefix_flags}" not in cache for language in ("C", "CXX")):
+    raise SystemExit("Build receipt requires actual configured C/C++ source prefix maps")
   flavor = variant or "single"
   root = REPO_ROOT / "dist" / version
   artifact = root / variant if variant else root
@@ -1067,7 +1081,8 @@ def _write_build_metadata(version: str, build_dir: Path, variant: str) -> None:
       wasmSha256=hashlib.sha256((artifact / "mujoco.wasm").read_bytes()).hexdigest(),
       upstreamDirty=bool(status.strip()),
       upstreamPatchSha256=hashlib.sha256(patch_text.encode("utf-8")).hexdigest(),
-      settings=dict(profile="fast", simd=True, plugins=True, pthreads=bool(variant)))
+      settings=dict(profile="fast", simd=True, plugins=True, pthreads=bool(variant),
+                    sourceLocationPaths="repository-relative"))
   metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 

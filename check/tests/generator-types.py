@@ -177,6 +177,10 @@ class GeneratorTypes(unittest.TestCase):
             (compiler / 'emscripten-version.txt').write_text('"4.0.10"')
             build = root / 'build'; build.mkdir()
             (build / 'CMakeCache.txt').write_text('CMAKE_C_COMPILER:FILEPATH=' + str(compiler / 'emcc') + '\n')
+            with patch.object(forge_cli, 'REPO_ROOT', root):
+                prefix_flags = forge_cli._source_prefix_flags()
+            cache_text = (build / 'CMakeCache.txt').read_text()
+            (build / 'CMakeCache.txt').write_text(cache_text + 'CMAKE_C_FLAGS:STRING=' + prefix_flags + '\nCMAKE_CXX_FLAGS:STRING=' + prefix_flags + '\n')
             dist = root / 'dist' / '3.15.0'; (dist / 'abi').mkdir(parents=True)
             (dist / 'mujoco.wasm').write_bytes(b'single')
             (dist / 'pthreads').mkdir(); (dist / 'pthreads' / 'mujoco.wasm').write_bytes(b'threads')
@@ -191,6 +195,11 @@ class GeneratorTypes(unittest.TestCase):
             self.assertTrue(metadata['flavors']['single']['upstreamDirty'])
             self.assertEqual(metadata['flavors']['single']['upstreamPatchSha256'], hashlib.sha256(patch_text.encode()).hexdigest())
             self.assertNotIn(str(root), json.dumps(metadata))
+            (build / 'CMakeCache.txt').write_text(cache_text)
+            with patch.object(forge_cli, 'REPO_ROOT', root), patch.object(forge_cli.subprocess, 'check_output',
+                    side_effect=['a' * 40, patch_text, ' M source.c\n']):
+                with self.assertRaisesRegex(SystemExit, r'actual configured C/C\+\+ source prefix maps'):
+                    forge_cli._write_build_metadata('3.15.0', build, '')
             (build / 'CMakeCache.txt').write_text('')
             with patch.object(forge_cli, 'REPO_ROOT', root), patch.object(forge_cli.subprocess, 'check_output',
                     side_effect=['a' * 40, patch_text, ' M source.c\n']):
@@ -212,6 +221,36 @@ class GeneratorTypes(unittest.TestCase):
         source = funcs.generate_source(adapters)
         self.assertIn('*mjwf_out = arbitrary_name(*input)', source)
         self.assertIn('offsetof(POD, x)', source)
+
+    def test_file_prefix_map_reproducible_in_wasm(self):
+        sdk = Path(os.environ.get('EMSDK', 'C:/emsdk'))
+        work = Path(__file__).resolve().parents[2] / 'build' / 'type-tests'; work.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=work) as directory:
+            root = Path(directory)
+            binaries = []
+            unmapped_binaries = []
+            for name in ('a', 'different-longer-checkout'):
+                folder = root / name; folder.mkdir()
+                source = folder / 'probe.c'; source.write_text('const char* path(void) {return __FILE__;}\n')
+                env = dict(os.environ, EM_CONFIG=str(sdk / '.emscripten'))
+                command = [sys.executable, str(sdk / 'upstream/emscripten/emcc.py'), source.as_posix(),
+                                '-ffile-prefix-map=' + folder.as_posix() + '=.', '--no-entry', '-O3',
+                                '-sMODULARIZE=1', '-sEXPORT_ES6=1', '-sENVIRONMENT=node',
+                                '-sEXPORTED_FUNCTIONS=["_path"]', '-sEXPORTED_RUNTIME_METHODS=["UTF8ToString"]',
+                           '-o', str(folder / 'probe.mjs')]
+                subprocess.run(command, env=env, check=True)
+                binaries.append((folder / 'probe.wasm').read_bytes())
+                unmapped = [arg for arg in command if not arg.startswith('-ffile-prefix-map=')]
+                unmapped[-1] = str(folder / 'unmapped.mjs')
+                subprocess.run(unmapped, env=env, check=True)
+                unmapped_binaries.append((folder / 'unmapped.wasm').read_bytes())
+                runner = folder / 'runner.mjs'
+                runner.write_text("import assert from 'node:assert/strict'; import fs from 'node:fs'; import factory from './probe.mjs';\n"
+                                  "const m=await factory({wasmBinary:fs.readFileSync(new URL('./probe.wasm',import.meta.url))});\n"
+                                  "assert.equal(m.UTF8ToString(m._path()),'probe.c');\n")
+                subprocess.run([forge_cli._resolve_node_executable(dict(os.environ, EMSDK=str(sdk))), str(runner)], check=True)
+            self.assertEqual(binaries[0], binaries[1])
+            self.assertNotEqual(unmapped_binaries[0], unmapped_binaries[1])
 
     def test_checked_narrowing_in_wasm(self):
         sdk = Path(os.environ.get("EMSDK", "C:/emsdk"))
