@@ -8,7 +8,7 @@ The suite exists to justify *why forge exists*:
 - **Rule-based, auditable generation**: wrappers/exports are generated and checked by rules so changes are explicit and reviewable.
 
 In forge, **flexibility** is framed as a complement to the official embind distribution. Official embind typically offers
-a richer, stable, and ergonomic binding surface, but that breadth also comes with a larger surface area and a more
+a richer object-oriented and ergonomic binding surface, but that breadth also comes with a larger surface area and a more
 standardized distribution shape, which can make fine-grained control over variants and exported ABI less direct. Forge
 instead relies on the **flat ABI organization**
 and the **automated output structure** (stable dist layout + ABI artifacts + rules/gates): most changes are
@@ -16,6 +16,39 @@ and the **automated output structure** (stable dist layout + ABI artifacts + rul
 
 Forge is intended to be usable in **extreme deployment environments** (e.g. online demos with strict security and
 resource constraints) and in **research prototyping** workflows, while still being a reasonable base for routine use.
+
+The 3.5.0 tables below are a historical reference snapshot. They are retained for continuity with the original
+benchmark discussion and are not a claim about the current 3.15.0 release state.
+
+## 3.15.0 quick deployment comparison (reference snapshot)
+
+This bounded comparison is preserved in the [public reference receipt](../../evidence/bench/mujoco-3.15-reference-20261007.json).
+Its Forge hashes precede the closing ABI adapters and are not the final canary bytes.
+It used four rows (`forge` single, official single, forge pthreads, and
+official `mt`), three processes per row (12/12 passed), the same `humanoid` and `cards` models, warmup 10, and
+2,000 measured steps. The Forge pthread and official `mt` rows used a pooled target of 4; the MuJoCo engine pool
+was 0 in all rows. `strictApplesToApples` was `false` because this compares deployment bundles, not identical
+binding implementations.
+
+| Row | Runtime pair bytes | Init median (ms) | Humanoid ms/step | Cards ms/step | RSS peak (MiB) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| forge-3.15.0-single | 4,290,837 | 24.50 | 0.04993 | 0.34880 | 199.96 |
+| official-3.15.0-single | 10,664,021 | 72.40 | 0.04058 | 0.42072 | 215.44 |
+| forge-3.15.0-pthreads | 4,293,867 | 58.13 | 0.04607 | 0.34482 | 257.72 |
+| official-3.15.0-mt | 10,789,205 | 94.50 | 0.03902 | 0.42376 | 266.45 |
+
+The frozen reference artifact hashes are:
+
+| Row | JS SHA-256 | WASM SHA-256 |
+| --- | --- | --- |
+| forge-3.15.0-single | `4ab960926cb4d5d315e8db0b411638542a6e15e767d7f415c6f92343ba8ee5b6` | `dc56872be3ed03610398b5ad441766c4f16eeac43f652e9a04c6f2e9649939b8` |
+| forge-3.15.0-pthreads | `f2145ff5e51fb0118e627e1b505bc62ea6f9d6644c3a725d01e3623e06ad278a` | `6a74011ecd6ddc6c661a7fcc88b713c6e6c13a29d6fbadde39a49d28ba9bb20f` |
+| official-3.15.0-single | `a5d5f00c4c16d327cf8275f88ddd47c857a5e9baec8ca4174d676fe299267a0c` | `d59c489dd521c80af6965756c5b90daff549fa281566544e4540c170d937633d` |
+| official-3.15.0-mt | `75809df07e334932a0cde9b3dda9440783b247f2345c2de029e5db4fe471988` | `a65e46a955044a1d85bf02cdf41ea9d1d42a94ea70eac5ff5a91978cce3f2019` |
+
+This is deployment-bundle evidence only: it does not isolate binding overhead, claim that Forge or official
+bindings are universally better, or certify the final byte sizes after any later ABI regeneration. If the final
+release artifacts change, rerun the bounded comparison and update this reference snapshot.
 
 The benchmark asks a concrete question:
 

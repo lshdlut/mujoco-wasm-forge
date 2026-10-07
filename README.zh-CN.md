@@ -16,15 +16,19 @@
 ## 快速开始
 
 ```bash
-python forge_cli.py build --version 3.8.1 --with-checks
+python forge_cli.py build --version 3.15.0 --with-checks
 ```
 
 产物位置：
-- `dist/3.8.1/mujoco.js`, `dist/3.8.1/mujoco.wasm`
-- `dist/3.8.1/abi/exports.lst` 等 ABI 产物
-- 可选 pthreads 运行时：`dist/3.8.1/pthreads/`
+- `dist/3.15.0/mujoco.js`, `dist/3.15.0/mujoco.wasm`
+- `dist/3.15.0/abi/exports.lst` 等 ABI 产物
+- 可选 pthreads 运行时：`dist/3.15.0/pthreads/`
 
-当前已提交的 release 产物覆盖 MuJoCo `3.3.7`、`3.4.0`、`3.5.0`、`3.6.0`、`3.7.0`、`3.8.0`、`3.8.1`。
+已提交的 release 产物存放在 `deliverables/<ver>/`，当前覆盖 MuJoCo `3.3.7`、`3.4.0`、`3.5.0`、`3.6.0`、`3.7.0`、`3.8.0`、`3.8.1`。`dist/<ver>/` 只用于 dev 构建暂存；提交前把验证通过的版本提升到 `deliverables/<ver>/`。
+
+已提交的 3.9.0--3.15.0 升级批次包含 single 与 pthreads 两路，均通过本地检查和全新 Linux CI 的逐字节复现。
+它们是仓库中的已检查基线，不是新的 GitHub release；已发布序列仍止于 `forge-3.8.1-r1`。
+详见[已支持版本](docs/zh/supported_versions.md)。
 
 ## 为什么需要 forge
 
@@ -52,6 +56,8 @@ python forge_cli.py build --version 3.8.1 --with-checks
 
 > 数值随机器与环境变化；完整表格与局限性说明见 `docs/zh/bench.md`。
 
+下面是历史 3.5.0 快照。3.15.0 的有界 deployment 对照另见 Bench 章节；它不是 binding 优越性或全面性能胜出的声明。
+
 | 指标（参考运行） | Forge 3.5.0 pthreads（pool=4） | Official 3.5.0（hc=4） |
 | --- | --- | --- |
 | wasm / JS | 3.33 MiB / 272.6 KiB | 8.24 MiB / 296.7 KiB |
@@ -73,6 +79,8 @@ Bench 工具与输出：
 - 输出：`dist/<ver>/mujoco.{js,wasm}` + `dist/<ver>/abi/*`。
 - 可选 pthreads 运行时：`dist/<ver>/pthreads/`（ABI 仍共用 `dist/<ver>/abi/`）。
 - Release tag 使用 `forge-<mujoco-version>-rN`，CI 会发布 `dist-runtime.zip` 和 `dist-audit.zip`。
+- Runtime 包携带 `version.json`、additive 的 `provenance.json`、`LICENSE` 与已有 notice 材料；runtime zip 不含 `abi/`，
+  audit zip 包含 `abi/`。历史 build receipt 缺失时保留明确的 `null` / unknown provenance，不从本机 SDK 路径推造。
 
 ## 备注
 

@@ -13,7 +13,7 @@ plus ABI artifacts under `dist/<ver>/abi/`.
 
 ## 30-second summary
 
-- If you just want artifacts: use a committed `dist/<ver>/` or run `python forge_cli.py build --version <mjver>`.
+- If you just want artifacts: use a committed `deliverables/<ver>/` or run `python forge_cli.py build --version <mjver>` in the dev checkout.
 - Exports are explicitly defined by `dist/<ver>/abi/exports.lst` and enforced at link time.
 - `--with-checks` runs smoke + quality gates (`check/tests/*.mjs`) against the produced dist.
 - Maintainers can use the ABI artifacts to audit diffs when upgrading MuJoCo.

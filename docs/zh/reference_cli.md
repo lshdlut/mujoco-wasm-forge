@@ -13,7 +13,7 @@ python3 forge_cli.py build --version 3.5.0
 构建 pthreads 变体（浏览器端需要 COOP/COEP + `SharedArrayBuffer`）：
 
 ```bash
-python3 forge_cli.py build --version 3.5.0 --pthreads
+python3 forge_cli.py build --version 3.5.0 --pthreads --fresh-dependency
 ```
 
 构建后执行 smoke + quality gates：
@@ -38,7 +38,7 @@ python3 forge_cli.py collect-versions --github-output
 
 ## `verify-dist`
 
-对比“已提交 dist”与“可复现构建检出”：
+对比“已提交 deliverables”与“可复现构建检出”：
 
 ```bash
 python3 forge_cli.py verify-dist --version 3.5.0 --ci-build-dir ci-build

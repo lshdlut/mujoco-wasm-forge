@@ -16,15 +16,19 @@ Docs are published on Read the Docs (links above; Sphinx sources live under `doc
 ## Quickstart
 
 ```bash
-python forge_cli.py build --version 3.8.1 --with-checks
+python forge_cli.py build --version 3.15.0 --with-checks
 ```
 
 Artifacts:
-- `dist/3.8.1/mujoco.js`, `dist/3.8.1/mujoco.wasm`
-- `dist/3.8.1/abi/exports.lst` and other ABI artifacts
-- optional pthreads runtime under `dist/3.8.1/pthreads/`
+- `dist/3.15.0/mujoco.js`, `dist/3.15.0/mujoco.wasm`
+- `dist/3.15.0/abi/exports.lst` and other ABI artifacts
+- optional pthreads runtime under `dist/3.15.0/pthreads/`
 
-Committed release artifacts currently cover MuJoCo `3.3.7`, `3.4.0`, `3.5.0`, `3.6.0`, `3.7.0`, `3.8.0`, and `3.8.1`.
+Committed release artifacts live under `deliverables/<ver>/` and currently cover MuJoCo `3.3.7`, `3.4.0`, `3.5.0`, `3.6.0`, `3.7.0`, `3.8.0`, and `3.8.1`. The `dist/<ver>/` tree is dev-only build staging; promote a validated version into `deliverables/<ver>/` before committing it.
+
+The committed 3.9.0--3.15.0 upgrade batch includes both single and pthreads variants, checked locally and
+byte-for-byte reproduced by fresh Linux CI. These are checked repository baselines, not new GitHub releases:
+the published release sequence still ends at `forge-3.8.1-r1`. See [supported versions](docs/en/supported_versions.md).
 
 ## Why forge
 
@@ -52,6 +56,9 @@ This is a practical "what you get" view. Methodology and reference snapshots are
 
 > Numbers vary by machine; see `docs/en/bench.md` for full tables and limitations.
 
+The table below is the historical 3.5.0 snapshot. The bounded 3.15.0 deployment comparison is documented separately
+in the Bench chapter and is not a binding-superiority or universal-performance claim.
+
 | Metric (reference run) | Forge 3.5.0 pthreads (pool=4) | Official 3.5.0 (hc=4) |
 | --- | --- | --- |
 | wasm / JS | 3.33 MiB / 272.6 KiB | 8.24 MiB / 296.7 KiB |
@@ -73,6 +80,9 @@ Bench harness and generated outputs live in:
 - Output: `dist/<ver>/mujoco.{js,wasm}` + `dist/<ver>/abi/*`.
 - Optional pthreads runtime: `dist/<ver>/pthreads/` (shared ABI under `dist/<ver>/abi/`).
 - Release tags use `forge-<mujoco-version>-rN` and publish `dist-runtime.zip` plus `dist-audit.zip`.
+- Runtime packages carry `version.json`, additive `provenance.json`, `LICENSE`, and existing notice material. The
+  runtime zip excludes `abi/`; the audit zip includes it. Missing legacy build receipts remain explicit `null` / unknown
+  provenance rather than being inferred from a local SDK path.
 
 ## Notes
 

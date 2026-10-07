@@ -8,9 +8,9 @@
 - `abi_exports/`：生成 wrappers、manifests 与 `exports.lst`。
 - `abi_impl/`：实现侧符号清单/覆盖率相关工具。
 - `check/`：post-build 校验，以及 Node 下的 smoke/quality gates。
-- `dist/`：已提交的产物目录（`dist/<ver>/...`）。
+- `dist/`：仅在 dev 检出中使用的构建暂存目录（`dist/<ver>/...`）。
+- `deliverables/`：已提交、验证过的发布基线（`deliverables/<ver>/...`）。
 
 ## 外部源码
 
 - `external/mujoco`：上游 MuJoCo 检出（在本仓库里不被 git 追踪；由 forge CLI 自动创建/更新）。
-

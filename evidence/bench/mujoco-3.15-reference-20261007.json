@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "mujoco-wasm-3.15-deployment-bundle",
+  "source": "2026-10-07 bounded deployment comparison",
+  "version": "3.15.0",
+  "status": "PASS",
+  "denominator": {
+    "rows": 4,
+    "processesPerRow": 3,
+    "expectedProcesses": 12,
+    "observedProcesses": 12,
+    "passedProcesses": 12,
+    "failedProcesses": 0
+  },
+  "scope": {
+    "models": [
+      "humanoid",
+      "cards"
+    ],
+    "warmupCount": 10,
+    "measuredSteps": 2000,
+    "pooledTarget": 4,
+    "engineThreadpool": 0,
+    "strictApplesToApples": false,
+    "interpretation": "Deployment-bundle evidence only; no binding-superiority or universal-performance claim."
+  },
+  "rows": [
+    {
+      "label": "forge-3.15.0-single",
+      "runtimePairBytes": 4290837,
+      "initMedianMs": 24.5042,
+      "rssPeakMiB": 199.96,
+      "humanoidMsPerStep": 0.0499297,
+      "cardsMsPerStep": 0.34879795,
+      "jsSha256": "4ab960926cb4d5d315e8db0b411638542a6e15e767d7f415c6f92343ba8ee5b6",
+      "wasmSha256": "dc56872be3ed03610398b5ad441766c4f16eeac43f652e9a04c6f2e9649939b8"
+    },
+    {
+      "label": "official-3.15.0-single",
+      "runtimePairBytes": 10664021,
+      "initMedianMs": 72.4027,
+      "rssPeakMiB": 215.44,
+      "humanoidMsPerStep": 0.0405769,
+      "cardsMsPerStep": 0.42072335,
+      "jsSha256": "a5d5f00c4c16d327cf8275f88ddd47c857a5e9baec8ca4174d676fe299267a0c",
+      "wasmSha256": "d59c489dd521c80af6965756c5b90daff549fa281566544e4540c170d937633d"
+    },
+    {
+      "label": "forge-3.15.0-pthreads",
+      "runtimePairBytes": 4293867,
+      "initMedianMs": 58.1267,
+      "rssPeakMiB": 257.72,
+      "humanoidMsPerStep": 0.04607025,
+      "cardsMsPerStep": 0.3448174,
+      "jsSha256": "f2145ff5e51fb0118e627e1b505bc62ea6f9d6644c3a725d01e3623e06ad278a",
+      "wasmSha256": "6a74011ecd6ddc6c661a7fcc88b713c6e6c13a29d6fbadde39a49d28ba9bb20f"
+    },
+    {
+      "label": "official-3.15.0-mt",
+      "runtimePairBytes": 10789205,
+      "initMedianMs": 94.4962,
+      "rssPeakMiB": 266.45,
+      "humanoidMsPerStep": 0.03902025,
+      "cardsMsPerStep": 0.42375885,
+      "jsSha256": "75809df07e334932a0cde9b3dda9440783b247f2345c2de029e5db4fe471988",
+      "wasmSha256": "a65e46a955044a1d85bf02cdf41ea9d1d42a94ea70eac5ff5a91978cce3f2019"
+    }
+  ],
+  "caveat": "If final ABI regeneration changes the runtime bytes, rerun this bounded comparison before calling it a final release snapshot.",
+  "artifactPhase": "Pre-closeout ABI reference; not the final checked canary bytes"
+}

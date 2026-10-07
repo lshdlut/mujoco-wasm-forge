@@ -8,9 +8,9 @@
 - `abi_exports/`: generates wrappers, manifests, and `exports.lst`.
 - `abi_impl/`: symbol inventory helpers (e.g. `nm` coverage).
 - `check/`: post-build validation plus Node-based smoke and quality gates.
-- `dist/`: committed build outputs (`dist/<ver>/...`).
+- `dist/`: local build staging (`dist/<ver>/...`); keep it in the dev checkout.
+- `deliverables/`: committed, validated release baselines (`deliverables/<ver>/...`).
 
 ## External sources
 
 - `external/mujoco`: upstream MuJoCo checkout (not tracked by git in this repo; created/updated by the forge CLI).
-

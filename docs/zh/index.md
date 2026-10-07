@@ -12,7 +12,7 @@
 
 ## 给使用者的 30 秒版本
 
-- 只想拿到可用产物：直接使用仓库里已提交的 `dist/<ver>/`，或运行 `python forge_cli.py build --version <mjver>` 自己构建。
+- 只想拿到可用产物：直接使用仓库里已提交的 `deliverables/<ver>/`，或在 dev 检出中运行 `python forge_cli.py build --version <mjver>` 自己构建。
 - 导出符号由 `dist/<ver>/abi/exports.lst` 显式定义，并在链接阶段强制执行。
 - `--with-checks` 会在构建后跑 smoke + 质量门控（`check/tests/*.mjs`）。
 - 维护者可以用 `dist/<ver>/abi/*` 快速审计升级时的接口变化与差异来源。

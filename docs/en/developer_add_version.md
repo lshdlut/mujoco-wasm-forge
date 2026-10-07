@@ -1,6 +1,6 @@
 # Add a new MuJoCo version
 
-This page describes the typical workflow for adding a new `dist/<ver>/` to the repository.
+This page describes the typical workflow for adding a new committed `deliverables/<ver>/` baseline. Builds are staged under `dist/<ver>/` in the dev checkout.
 
 ## Steps
 
@@ -15,10 +15,9 @@ This page describes the typical workflow for adding a new `dist/<ver>/` to the r
    - `dist/<mjver>/abi/exports.lst`
    - `dist/<mjver>/abi/exports_report_funcs.md`
 4. If exports changed, decide whether it’s acceptable and update wrappers/gates as needed.
-5. Commit the new `dist/<mjver>/` directory (and any pipeline changes).
+5. Copy the validated `dist/<mjver>/` tree to `deliverables/<mjver>/` in the source checkout, then commit that baseline and any pipeline changes.
 
 ## Tips
 
 - Prefer building tags like `3.5.0` unless you need a specific commit.
-- Run `verify-dist` in CI when committing new `dist/<ver>`.
-
+- Run `verify-dist` in CI when committing a new `deliverables/<ver>` baseline.
