@@ -137,12 +137,13 @@ def _resolve_clang_executable(env: Mapping[str, str]) -> str:
   return "clang"
 
 
-def _resolve_ninja_executable(env: Mapping[str, str]) -> str | None:
+def _resolve_ninja_executable(env: Mapping[str, str]) -> str:
   override = env.get("MJWF_NINJA", "").strip()
   if override:
     path = Path(override)
     if path.is_file():
       return str(path)
+    raise SystemExit(f"Invalid MJWF_NINJA executable: {override}")
 
   if os.name == "nt":
     vs_ninja = Path(
@@ -152,7 +153,10 @@ def _resolve_ninja_executable(env: Mapping[str, str]) -> str | None:
     if vs_ninja.is_file():
       return str(vs_ninja)
 
-  return None
+  found = shutil.which("ninja", path=env.get("PATH", os.defpath))
+  if found:
+    return found
+  raise SystemExit("Ninja is required for reproducible builds; install Ninja or set MJWF_NINJA")
 
 
 def _maybe_extend_env_include_path(env: MutableMapping[str, str], key: str, value: str) -> None:
@@ -832,6 +836,11 @@ def _configure_wasm_build_dir(
 ) -> None:
   """Configure the Emscripten + CMake build directory."""
   build_dir.mkdir(parents=True, exist_ok=True)
+  cache_path = build_dir / "CMakeCache.txt"
+  if cache_path.is_file():
+    generator = re.search(r"^CMAKE_GENERATOR:INTERNAL=(.+)$", cache_path.read_text(encoding="utf-8"), re.MULTILINE)
+    if generator and generator[1] != "Ninja":
+      raise SystemExit("Existing non-Ninja cache is preserved; select a new owned MJWF_BUILD_ROOT")
 
   def _apply_qhull_emscripten_patch(build_root: Path) -> bool:
     """Apply the qhull Emscripten patch in the fetched qhull git checkout.
@@ -914,11 +923,7 @@ def _configure_wasm_build_dir(
       "set -euo pipefail; "
       + emsdk_env_snippet +
       f"emcmake cmake "
-      + (
-          f"-G Ninja -DCMAKE_MAKE_PROGRAM='{_resolve_ninja_executable(env)}' "
-          if _resolve_ninja_executable(env) and os.name == "nt"
-          else ""
-      ) +
+      + f"-G Ninja -DCMAKE_MAKE_PROGRAM='{_resolve_ninja_executable(env)}' " +
       f"-S '{app_dir}' "
       f"-B '{build_dir}' "
       "-DCMAKE_BUILD_TYPE=Release "
@@ -1066,6 +1071,8 @@ def _write_build_metadata(version: str, build_dir: Path, variant: str) -> None:
   prefix_flags = _source_prefix_flags()
   if any(f"CMAKE_{language}_FLAGS:STRING={prefix_flags}" not in cache for language in ("C", "CXX")):
     raise SystemExit("Build receipt requires actual configured C/C++ source prefix maps")
+  if "CMAKE_GENERATOR:INTERNAL=Ninja" not in cache.splitlines():
+    raise SystemExit("Build receipt requires actual Ninja generator; use a new owned build root for old Makefiles caches")
   flavor = variant or "single"
   root = REPO_ROOT / "dist" / version
   artifact = root / variant if variant else root
@@ -1082,7 +1089,7 @@ def _write_build_metadata(version: str, build_dir: Path, variant: str) -> None:
       upstreamDirty=bool(status.strip()),
       upstreamPatchSha256=hashlib.sha256(patch_text.encode("utf-8")).hexdigest(),
       settings=dict(profile="fast", simd=True, plugins=True, pthreads=bool(variant),
-                    sourceLocationPaths="repository-relative"))
+                    sourceLocationPaths="repository-relative", cmakeGenerator="Ninja"))
   metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 

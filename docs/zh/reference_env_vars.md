@@ -13,10 +13,13 @@
 
 - `EMSDK`：emsdk 目录路径（需包含 `emsdk_env.sh`）。Emscripten 的 CMake 构建需要它。
 - `MJWF_BASH`：覆盖 `forge_cli.py` 在执行 `bash -lc ...` 时使用的 `bash` 可执行文件路径（Windows 上常用）。
+- `MJWF_NINJA`：可选的 Ninja 可执行文件路径。所有宿主都要求 Ninja；无效覆盖或缺少可执行文件会明确失败。
 
 ## 上游检出清理策略
 
-- `MJWF_GIT_CLEAN_IGNORED=1`：在刷新 `external/mujoco` 时启用 `git clean -fdx`（默认 `git clean -fd`，用于规避 OneDrive 权限问题）。
+默认拒绝替换 dirty dependency。显式使用 CLI 的 `--fresh-dependency` 时，会先把整个旧检出
+保存到唯一的 build-root snapshot，再克隆新 dependency。历史 `MJWF_GIT_CLEAN_IGNORED`
+清理开关已不再使用；当前流程不会自动清理 dirty checkout。
 
 ## build tree 放置
 

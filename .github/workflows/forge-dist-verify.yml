@@ -231,6 +231,15 @@ jobs:
         with:
           version: ${{ env.EMSDK_VERSION }}
 
+      - name: Ensure reproducible Ninja generator
+        run: |
+          set -euxo pipefail
+          if ! command -v ninja; then
+            sudo apt-get update
+            sudo apt-get install -y ninja-build
+          fi
+          ninja --version
+
       - name: Checkout repo for reproducible build
         uses: actions/checkout@v4
         with:
@@ -294,6 +303,8 @@ jobs:
           set -euxo pipefail
           mkdir -p repro-diagnostics
           emcc --version > repro-diagnostics/compiler-version.txt
+          "${EMSDK}/upstream/bin/clang" --version > repro-diagnostics/clang-version.txt
+          "${EMSDK}/upstream/bin/wasm-ld" --version > repro-diagnostics/linker-version.txt
           "${EMSDK}/upstream/bin/wasm-opt" --version > repro-diagnostics/binaryen-version.txt
           python3 - <<'PY'
           from pathlib import Path
@@ -323,6 +334,8 @@ jobs:
             ci-build/dist/${{ matrix.ver }}/abi/nm_coverage*.json
             ci-build/build/forge/*/*/compile_commands.json
             ci-build/build/forge/*/*/build.ninja
+            ci-build/build/forge/*/*/CMakeFiles/mjwasm_forge.dir/link.txt
+            ci-build/build/forge/*/*/CMakeFiles/mjwasm_forge.dir/flags.make
 
   release-dist:
     needs: [select-dist-versions, verify-dist]

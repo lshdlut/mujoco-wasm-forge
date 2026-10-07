@@ -13,10 +13,14 @@ They are consumed by `dist_version.py` and `check/dist_paths.mjs`.
 
 - `EMSDK`: path to your emsdk directory (must contain `emsdk_env.sh`). Required by the Emscripten CMake build.
 - `MJWF_BASH`: override the `bash` executable used by `forge_cli.py` for `bash -lc ...` invocations (useful on Windows).
+- `MJWF_NINJA`: optional path to the Ninja executable. Ninja is required on every host; an invalid override or missing executable fails explicitly.
 
 ## Upstream checkout hygiene
 
-- `MJWF_GIT_CLEAN_IGNORED=1`: enable `git clean -fdx` when refreshing `external/mujoco` (default is `git clean -fd` to avoid OneDrive permission issues).
+Dirty dependencies are refused by default. Use the explicit `--fresh-dependency`
+CLI flag to preserve the entire previous checkout in a unique build-root snapshot
+before cloning a fresh dependency. The historical `MJWF_GIT_CLEAN_IGNORED` cleanup
+knob is no longer used; the current workflow does not automatically clean a dirty checkout.
 
 ## Build tree placement
 

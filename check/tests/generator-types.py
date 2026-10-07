@@ -18,6 +18,30 @@ from abi_exports.signature_caps import generate_capabilities, SignaturePolicy
 
 
 class GeneratorTypes(unittest.TestCase):
+    def test_non_ninja_cache_is_refused_without_modification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            build = Path(directory)
+            cache = build / 'CMakeCache.txt'
+            original = b'CMAKE_GENERATOR:INTERNAL=Unix Makefiles\n'
+            cache.write_bytes(original)
+            with patch.object(forge_cli.subprocess, 'run') as run:
+                with self.assertRaisesRegex(SystemExit, 'cache is preserved'):
+                    forge_cli._configure_wasm_build_dir('3.15.0', build, {}, False)
+                run.assert_not_called()
+            self.assertEqual(cache.read_bytes(), original)
+
+    def test_ninja_resolution_requires_explicit_reproducible_generator(self):
+        with patch.object(forge_cli.os, 'name', 'posix'), patch.object(forge_cli.shutil, 'which', return_value='/usr/bin/ninja'):
+            self.assertEqual(forge_cli._resolve_ninja_executable({'PATH': '/usr/bin'}), '/usr/bin/ninja')
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / 'ninja'; executable.write_bytes(b'fixture')
+            self.assertEqual(forge_cli._resolve_ninja_executable({'MJWF_NINJA': str(executable)}), str(executable))
+            with self.assertRaisesRegex(SystemExit, 'Invalid MJWF_NINJA'):
+                forge_cli._resolve_ninja_executable({'MJWF_NINJA': str(executable) + '-missing'})
+        with patch.object(forge_cli.os, 'name', 'posix'), patch.object(forge_cli.shutil, 'which', return_value=None):
+            with self.assertRaisesRegex(SystemExit, 'Ninja is required'):
+                forge_cli._resolve_ninja_executable({'PATH': ''})
+
     def test_selector_ignores_only_exact_namespace_migration(self):
         records = '\n'.join((
             'R100\tdist/3.8.1/mujoco.wasm\tdeliverables/3.8.1/mujoco.wasm',
@@ -180,7 +204,8 @@ class GeneratorTypes(unittest.TestCase):
             with patch.object(forge_cli, 'REPO_ROOT', root):
                 prefix_flags = forge_cli._source_prefix_flags()
             cache_text = (build / 'CMakeCache.txt').read_text()
-            (build / 'CMakeCache.txt').write_text(cache_text + 'CMAKE_C_FLAGS:STRING=' + prefix_flags + '\nCMAKE_CXX_FLAGS:STRING=' + prefix_flags + '\n')
+            valid_cache = cache_text + 'CMAKE_C_FLAGS:STRING=' + prefix_flags + '\nCMAKE_CXX_FLAGS:STRING=' + prefix_flags + '\nCMAKE_GENERATOR:INTERNAL=Ninja\n'
+            (build / 'CMakeCache.txt').write_text(valid_cache)
             dist = root / 'dist' / '3.15.0'; (dist / 'abi').mkdir(parents=True)
             (dist / 'mujoco.wasm').write_bytes(b'single')
             (dist / 'pthreads').mkdir(); (dist / 'pthreads' / 'mujoco.wasm').write_bytes(b'threads')
@@ -193,8 +218,14 @@ class GeneratorTypes(unittest.TestCase):
             self.assertEqual(metadata['emsdkVersion'], '4.0.10')
             self.assertEqual(set(metadata['flavors']), {'single', 'pthreads'})
             self.assertTrue(metadata['flavors']['single']['upstreamDirty'])
+            self.assertEqual(metadata['flavors']['single']['settings']['cmakeGenerator'], 'Ninja')
             self.assertEqual(metadata['flavors']['single']['upstreamPatchSha256'], hashlib.sha256(patch_text.encode()).hexdigest())
             self.assertNotIn(str(root), json.dumps(metadata))
+            (build / 'CMakeCache.txt').write_text(valid_cache.replace('CMAKE_GENERATOR:INTERNAL=Ninja', 'CMAKE_GENERATOR:INTERNAL=Unix Makefiles'))
+            with patch.object(forge_cli, 'REPO_ROOT', root), patch.object(forge_cli.subprocess, 'check_output',
+                    side_effect=['a' * 40, patch_text, ' M source.c\n']):
+                with self.assertRaisesRegex(SystemExit, 'actual Ninja generator'):
+                    forge_cli._write_build_metadata('3.15.0', build, '')
             (build / 'CMakeCache.txt').write_text(cache_text)
             with patch.object(forge_cli, 'REPO_ROOT', root), patch.object(forge_cli.subprocess, 'check_output',
                     side_effect=['a' * 40, patch_text, ' M source.c\n']):

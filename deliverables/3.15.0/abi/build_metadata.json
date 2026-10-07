@@ -4,6 +4,7 @@
   "flavors": {
     "pthreads": {
       "settings": {
+        "cmakeGenerator": "Ninja",
         "plugins": true,
         "profile": "fast",
         "pthreads": true,
@@ -16,6 +17,7 @@
     },
     "single": {
       "settings": {
+        "cmakeGenerator": "Ninja",
         "plugins": true,
         "profile": "fast",
         "pthreads": false,
