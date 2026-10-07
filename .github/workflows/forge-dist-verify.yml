@@ -338,7 +338,7 @@ jobs:
             ci-build/build/forge/*/*/CMakeFiles/mjwasm_forge.dir/flags.make
 
   release-dist:
-    needs: [select-dist-versions, verify-dist]
+    needs: [unit-contract, select-dist-versions, verify-dist]
     if: startsWith(github.ref, 'refs/tags/forge-') && needs.select-dist-versions.outputs.has_versions == 'true'
     runs-on: ubuntu-latest
     permissions:
