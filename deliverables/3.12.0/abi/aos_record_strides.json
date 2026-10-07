@@ -1,0 +1,22 @@
+{
+  "data_contact_stride": {
+    "contract": "byte stride between C records; not field width",
+    "record": "mjContact",
+    "symbol": "mjwf_data_contact_stride"
+  },
+  "data_solver_stride": {
+    "contract": "byte stride between C records; not field width",
+    "record": "mjSolverStat",
+    "symbol": "mjwf_data_solver_stride"
+  },
+  "data_timer_stride": {
+    "contract": "byte stride between C records; not field width",
+    "record": "mjTimerStat",
+    "symbol": "mjwf_data_timer_stride"
+  },
+  "data_warning_stride": {
+    "contract": "byte stride between C records; not field width",
+    "record": "mjWarningStat",
+    "symbol": "mjwf_data_warning_stride"
+  }
+}
