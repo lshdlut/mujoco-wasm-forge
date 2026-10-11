@@ -21,7 +21,7 @@
 下面的 3.5.0 表格是历史参考快照。保留它是为了延续最初的 benchmark 讨论；它不代表当前 3.15.0 的
 release 状态。
 
-## 3.15.0 快速 deployment 对照（参考快照）
+## 3.15.0 有界 deployment 参考
 
 这组有界对照已保存为[公开参考 receipt](../../evidence/bench/mujoco-3.15-reference-20261007.json)。
 其中 Forge hashes 对应收尾 ABI adapters 之前的参考产物，不是最终 canary 字节。共有四行（forge single、
@@ -46,8 +46,7 @@ official single、forge pthreads、official `mt`），每行 3 个进程（12/12
 | official-3.15.0-single | `a5d5f00c4c16d327cf8275f88ddd47c857a5e9baec8ca4174d676fe299267a0c` | `d59c489dd521c80af6965756c5b90daff549fa281566544e4540c170d937633d` |
 | official-3.15.0-mt | `75809df07e334932a0cde9b3dda9440783b247f2345c2de029e5db4fe471988` | `a65e46a955044a1d85bf02cdf41ea9d1d42a94ea70eac5ff5a91978cce3f2019` |
 
-这只是 deployment-bundle 证据：不能把它解释为 binding overhead 的隔离实验，也不能据此宣称 Forge 或
-official binding 全面更优；如果后续 ABI 重生成改变最终字节，应重新运行这组有界对照并更新快照。
+这只是 deployment-bundle 证据；应将其作为参考快照，而不是全面排名。
 
 这不是“打榜”。我们不会刻意强调 forge 一定优于 official，也不会回避两者在目标与取舍上的差异；bench 的目的是把这些取舍用可复现的数据与门控标准表达清楚。
 

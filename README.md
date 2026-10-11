@@ -46,7 +46,7 @@ byte-for-byte reproduced by fresh Linux CI. GitHub Release publication is driven
 - **Variants without breaking names**: `dist/<ver>/mujoco.{js,wasm}` (single) and `dist/<ver>/pthreads/mujoco.{js,wasm}` (pthreads).
 - **Plugins included by default** (e.g. `mujoco.sensor.touch_grid`), so Simulate workloads do not silently regress.
 - **Quality gates**: smoke + mesh-smoke + export/ABI checks are runnable locally and in CI.
-- **Performance is measurable**: the bench suite thread-matches against official embind and uses Simulate TTFS to validate that flexibility does not imply unacceptable regressions.
+- **Performance is measurable**: the public bench suite provides reference measurements for deployment and Simulate-style workflows; see [`docs/en/bench.md`](docs/en/bench.md) for methods and limitations.
 
 ## Official embind and forge (positioning)
 

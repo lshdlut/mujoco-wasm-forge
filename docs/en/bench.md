@@ -20,7 +20,7 @@ resource constraints) and in **research prototyping** workflows, while still bei
 The 3.5.0 tables below are a historical reference snapshot. They are retained for continuity with the original
 benchmark discussion and are not a claim about the current 3.15.0 release state.
 
-## 3.15.0 quick deployment comparison (reference snapshot)
+## 3.15.0 bounded deployment reference
 
 This bounded comparison is preserved in the [public reference receipt](../../evidence/bench/mujoco-3.15-reference-20261007.json).
 Its Forge hashes precede the closing ABI adapters and are not the final canary bytes.
@@ -46,9 +46,7 @@ The frozen reference artifact hashes are:
 | official-3.15.0-single | `a5d5f00c4c16d327cf8275f88ddd47c857a5e9baec8ca4174d676fe299267a0c` | `d59c489dd521c80af6965756c5b90daff549fa281566544e4540c170d937633d` |
 | official-3.15.0-mt | `75809df07e334932a0cde9b3dda9440783b247f2345c2de029e5db4fe471988` | `a65e46a955044a1d85bf02cdf41ea9d1d42a94ea70eac5ff5a91978cce3f2019` |
 
-This is deployment-bundle evidence only: it does not isolate binding overhead, claim that Forge or official
-bindings are universally better, or certify the final byte sizes after any later ABI regeneration. If the final
-release artifacts change, rerun the bounded comparison and update this reference snapshot.
+This is deployment-bundle evidence only; use it as a reference snapshot rather than a universal ranking.
 
 The benchmark asks a concrete question:
 

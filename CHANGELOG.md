@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## forge-3.15.0-r1 / forge-3.14.0-r1 / forge-3.13.0-r1 / forge-3.12.0-r1 / forge-3.11.0-r1 / forge-3.10.0-r1 / forge-3.9.0-r1
+
+- Added committed MuJoCo `3.9.0` through `3.15.0` runtime and ABI audit artifacts, with single-threaded and optional pthreads variants.
+- Updated the ABI/wrapper generation and retained external OBJ/STL mesh smoke coverage for the upgrade batch.
+- Release packaging provides `dist-runtime.zip` for runtime hosting and `dist-audit.zip` for ABI audit material.
+
 ## forge-3.8.1-r1 / forge-3.8.0-r1 / forge-3.7.0-r1 / forge-3.6.0-r1
 
 - Added committed runtime and ABI audit artifacts for MuJoCo `3.6.0`, `3.7.0`, `3.8.0`, and `3.8.1`.

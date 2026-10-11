@@ -44,7 +44,7 @@ GitHub Release 由匹配的 `forge-<ver>-r1` tag 触发，并且只有对应版�
 - **变体不改对外命名**：`dist/<ver>/mujoco.{js,wasm}`（single）与 `dist/<ver>/pthreads/mujoco.{js,wasm}`（pthreads）。
 - **默认带插件**（例如 `mujoco.sensor.touch_grid`），避免 Simulate 工作负载“静默退化”。
 - **质量门控**：smoke + mesh-smoke + 导出/ABI 检查可在本地与 CI 中跑。
-- **性能边界可验证**：bench 对位 official embind（线程对位 + Simulate TTFS），用于确认“可定制/可审计”不以不可接受的性能退化为代价。
+- **性能可以比较**：公开 bench 套件提供 deployment 与 Simulate-style workflow 的参考测量；方法和限制见 [`docs/zh/bench.md`](docs/zh/bench.md)。
 
 ## Official embind 与 forge（定位与取舍）
 
